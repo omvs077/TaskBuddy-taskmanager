@@ -1,6 +1,7 @@
 ﻿#include "imgui.h"
 #include "imgui_impl_win32.h"
 #include "imgui_impl_dx11.h"
+#include "ProcessEnumerator.h"
 #include <d3d11.h>
 #include <windows.h>
 #include <tchar.h>
@@ -102,7 +103,30 @@ int RunAppWindow() {
         ImGui::NewFrame();
 
         ImGui::Begin("TaskBuddy");
-        ImGui::Text("Phase 2.1: UI shell online.");
+        static auto processes = GetProcessSnapshot();
+        static float refreshTimer = 0.0f;
+        refreshTimer += ImGui::GetIO().DeltaTime;
+        if (refreshTimer > 1.0f) { processes = GetProcessSnapshot(); refreshTimer = 0.0f; }
+
+        ImGui::Text("Processes: %zu", processes.size());
+        if (ImGui::BeginTable("ProcessTable", 4, ImGuiTableFlags_Borders | ImGuiTableFlags_RowBg | ImGuiTableFlags_ScrollY | ImGuiTableFlags_Sortable, ImVec2(0, 600))) {
+            ImGui::TableSetupColumn("PID");
+            ImGui::TableSetupColumn("PPID");
+            ImGui::TableSetupColumn("Working Set (KB)");
+            ImGui::TableSetupColumn("Name");
+            ImGui::TableSetupScrollFreeze(0, 1);
+            ImGui::TableHeadersRow();
+            for (const auto& p : processes) {
+                ImGui::TableNextRow();
+                ImGui::TableSetColumnIndex(0); ImGui::Text("%u", p.Pid);
+                ImGui::TableSetColumnIndex(1); ImGui::Text("%u", p.ParentPid);
+                ImGui::TableSetColumnIndex(2); ImGui::Text("%llu", p.WorkingSetBytes / 1024);
+                ImGui::TableSetColumnIndex(3);
+                ImGui::SameLine(0, 0);
+                ImGui::Text("%ls", p.ImageName.c_str());
+            }
+            ImGui::EndTable();
+        }
         ImGui::End();
 
         ImGui::Render();
@@ -122,3 +146,4 @@ int RunAppWindow() {
     UnregisterClassW(wc.lpszClassName, wc.hInstance);
     return 0;
 }
+
