@@ -1,4 +1,6 @@
-﻿#include "imgui.h"
+﻿#include <algorithm>
+#include <shlwapi.h>
+#include "imgui.h"
 #include "imgui_impl_win32.h"
 #include "imgui_impl_dx11.h"
 #include "ProcessEnumerator.h"
@@ -109,6 +111,8 @@ int RunAppWindow() {
         if (refreshTimer > 1.0f) { processes = GetProcessSnapshot(); refreshTimer = 0.0f; }
 
         ImGui::Text("Processes: %zu", processes.size());
+        static char filterBuf[128] = "";
+        ImGui::InputTextWithHint("##filter", "Filter by name...", filterBuf, IM_ARRAYSIZE(filterBuf));
         if (ImGui::BeginTable("ProcessTable", 4, ImGuiTableFlags_Borders | ImGuiTableFlags_RowBg | ImGuiTableFlags_ScrollY | ImGuiTableFlags_Sortable, ImVec2(0, 600))) {
             ImGui::TableSetupColumn("PID");
             ImGui::TableSetupColumn("PPID");
@@ -116,7 +120,36 @@ int RunAppWindow() {
             ImGui::TableSetupColumn("Name");
             ImGui::TableSetupScrollFreeze(0, 1);
             ImGui::TableHeadersRow();
+
+            std::vector<const ProcessInfo*> view;
             for (const auto& p : processes) {
+                if (filterBuf[0] != 0) {
+                    char narrow[256];
+                    WideCharToMultiByte(CP_UTF8, 0, p.ImageName.c_str(), -1, narrow, sizeof(narrow), nullptr, nullptr);
+                    if (StrStrIA(narrow, filterBuf) == nullptr) continue;
+                }
+                view.push_back(&p);
+            }
+
+            if (ImGuiTableSortSpecs* sortSpecs = ImGui::TableGetSortSpecs()) {
+                if (sortSpecs->SpecsCount > 0) {
+                    const auto& spec = sortSpecs->Specs[0];
+                    bool asc = spec.SortDirection == ImGuiSortDirection_Ascending;
+                    std::sort(view.begin(), view.end(), [&](const ProcessInfo* a, const ProcessInfo* b) {
+                        switch (spec.ColumnIndex) {
+                            case 0: return asc ? a->Pid < b->Pid : a->Pid > b->Pid;
+                            case 1: return asc ? a->ParentPid < b->ParentPid : a->ParentPid > b->ParentPid;
+                            case 2: return asc ? a->WorkingSetBytes < b->WorkingSetBytes : a->WorkingSetBytes > b->WorkingSetBytes;
+                            case 3: return asc ? a->ImageName < b->ImageName : a->ImageName > b->ImageName;
+                            default: return false;
+                        }
+                    });
+                    sortSpecs->SpecsDirty = false;
+                }
+            }
+
+            for (const auto* pp : view) {
+                const auto& p = *pp;
                 ImGui::TableNextRow();
                 ImGui::TableSetColumnIndex(0); ImGui::Text("%u", p.Pid);
                 ImGui::TableSetColumnIndex(1); ImGui::Text("%u", p.ParentPid);
@@ -146,4 +179,8 @@ int RunAppWindow() {
     UnregisterClassW(wc.lpszClassName, wc.hInstance);
     return 0;
 }
+
+
+
+
 

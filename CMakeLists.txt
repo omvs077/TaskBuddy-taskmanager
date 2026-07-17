@@ -15,4 +15,4 @@ find_package(imgui CONFIG REQUIRED)
 
 add_executable(TaskBuddy WIN32 src/main.cpp src/AppWindow.cpp src/ProcessEnumerator.cpp)
 target_include_directories(TaskBuddy PRIVATE include)
-target_link_libraries(TaskBuddy PRIVATE ntdll imgui::imgui d3d11 dxgi)
+target_link_libraries(TaskBuddy PRIVATE ntdll imgui::imgui d3d11 dxgi shlwapi)
