@@ -1,0 +1,7 @@
+﻿build/
+bin/
+out/
+*.user
+*.suo
+config.ini
+.vs/
