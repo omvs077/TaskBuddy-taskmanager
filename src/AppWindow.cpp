@@ -1,4 +1,5 @@
 ﻿#include <algorithm>
+#include <cfloat>
 #include <shlwapi.h>
 #include "imgui.h"
 #include "imgui_impl_win32.h"
@@ -6,6 +7,7 @@
 #include "ProcessEnumerator.h"
 #include "ProcessOps.h"
 #include "ServiceMapper.h"
+#include "ResourceMonitor.h"
 #include <d3d11.h>
 #include <windows.h>
 #include <tchar.h>
@@ -113,6 +115,26 @@ int RunAppWindow() {
         static auto servicesByPid = GetServicesByPid();
         if (refreshTimer > 1.0f) { processes = GetProcessSnapshot(); servicesByPid = GetServicesByPid(); refreshTimer = 0.0f; }
 
+        static const int kHistoryLen = 120;
+        static float cpuHistory[kHistoryLen] = {};
+        static float ramHistory[kHistoryLen] = {};
+        static float diskHistory[kHistoryLen] = {};
+        static int historyOffset = 0;
+        static float sampleTimer = 0.0f;
+        sampleTimer += ImGui::GetIO().DeltaTime;
+        if (sampleTimer > 0.5f) {
+            ResourceSample sample = SampleResources(processes);
+            cpuHistory[historyOffset] = sample.CpuPercent;
+            ramHistory[historyOffset] = sample.RamPercent;
+            diskHistory[historyOffset] = sample.DiskBytesPerSec / (1024.0f * 1024.0f);
+            historyOffset = (historyOffset + 1) % kHistoryLen;
+            sampleTimer = 0.0f;
+        }
+
+        ImGui::PlotLines("CPU %%", cpuHistory, kHistoryLen, historyOffset, nullptr, 0.0f, 100.0f, ImVec2(0, 60));
+        ImGui::PlotLines("RAM %%", ramHistory, kHistoryLen, historyOffset, nullptr, 0.0f, 100.0f, ImVec2(0, 60));
+        ImGui::PlotLines("Disk MB/s", diskHistory, kHistoryLen, historyOffset, nullptr, 0.0f, FLT_MAX, ImVec2(0, 60));
+
         ImGui::Text("Processes: %zu", processes.size());
         static char filterBuf[128] = "";
         ImGui::InputTextWithHint("##filter", "Filter by name...", filterBuf, IM_ARRAYSIZE(filterBuf));
@@ -212,6 +234,9 @@ int RunAppWindow() {
     UnregisterClassW(wc.lpszClassName, wc.hInstance);
     return 0;
 }
+
+
+
 
 
 
