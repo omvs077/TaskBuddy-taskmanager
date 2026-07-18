@@ -5,6 +5,7 @@
 #include "imgui_impl_dx11.h"
 #include "ProcessEnumerator.h"
 #include "ProcessOps.h"
+#include "ServiceMapper.h"
 #include <d3d11.h>
 #include <windows.h>
 #include <tchar.h>
@@ -109,7 +110,8 @@ int RunAppWindow() {
         static auto processes = GetProcessSnapshot();
         static float refreshTimer = 0.0f;
         refreshTimer += ImGui::GetIO().DeltaTime;
-        if (refreshTimer > 1.0f) { processes = GetProcessSnapshot(); refreshTimer = 0.0f; }
+        static auto servicesByPid = GetServicesByPid();
+        if (refreshTimer > 1.0f) { processes = GetProcessSnapshot(); servicesByPid = GetServicesByPid(); refreshTimer = 0.0f; }
 
         ImGui::Text("Processes: %zu", processes.size());
         static char filterBuf[128] = "";
@@ -156,8 +158,21 @@ int RunAppWindow() {
                 ImGui::TableSetColumnIndex(1); ImGui::Text("%u", p.ParentPid);
                 ImGui::TableSetColumnIndex(2); ImGui::Text("%llu", p.WorkingSetBytes / 1024);
                 ImGui::TableSetColumnIndex(3);
-                ImGui::SameLine(0, 0);
-                ImGui::Text("%ls", p.ImageName.c_str());
+                auto svcIt = servicesByPid.find(p.Pid);
+                bool hasServices = (svcIt != servicesByPid.end() && !svcIt->second.empty());
+                if (hasServices) {
+                    ImGui::SetNextItemOpen(false, ImGuiCond_FirstUseEver);
+                    bool open = ImGui::TreeNodeEx((void*)(intptr_t)p.Pid, ImGuiTreeNodeFlags_SpanAvailWidth, "%ls", p.ImageName.c_str());
+                    if (open) {
+                        for (const auto& svcName : svcIt->second) {
+                            ImGui::BulletText("%ls", svcName.c_str());
+                        }
+                        ImGui::TreePop();
+                    }
+                } else {
+                    ImGui::SameLine(0, 0);
+                    ImGui::Text("%ls", p.ImageName.c_str());
+                }
                 ImGui::PushID((int)p.Pid);
                 if (ImGui::BeginPopupContextItem("RowCtx")) {
                     if (ImGui::MenuItem("Terminate")) TerminateTargetProcess(p.Pid);
@@ -197,6 +212,10 @@ int RunAppWindow() {
     UnregisterClassW(wc.lpszClassName, wc.hInstance);
     return 0;
 }
+
+
+
+
 
 
 
