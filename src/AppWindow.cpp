@@ -4,6 +4,7 @@
 #include "imgui_impl_win32.h"
 #include "imgui_impl_dx11.h"
 #include "ProcessEnumerator.h"
+#include "ProcessOps.h"
 #include <d3d11.h>
 #include <windows.h>
 #include <tchar.h>
@@ -157,6 +158,23 @@ int RunAppWindow() {
                 ImGui::TableSetColumnIndex(3);
                 ImGui::SameLine(0, 0);
                 ImGui::Text("%ls", p.ImageName.c_str());
+                ImGui::PushID((int)p.Pid);
+                if (ImGui::BeginPopupContextItem("RowCtx")) {
+                    if (ImGui::MenuItem("Terminate")) TerminateTargetProcess(p.Pid);
+                    if (ImGui::MenuItem("Suspend")) SuspendTargetProcess(p.Pid);
+                    if (ImGui::MenuItem("Resume")) ResumeTargetProcess(p.Pid);
+                    if (ImGui::BeginMenu("Priority")) {
+                        if (ImGui::MenuItem("Realtime")) SetTargetProcessPriority(p.Pid, REALTIME_PRIORITY_CLASS);
+                        if (ImGui::MenuItem("High")) SetTargetProcessPriority(p.Pid, HIGH_PRIORITY_CLASS);
+                        if (ImGui::MenuItem("Above Normal")) SetTargetProcessPriority(p.Pid, ABOVE_NORMAL_PRIORITY_CLASS);
+                        if (ImGui::MenuItem("Normal")) SetTargetProcessPriority(p.Pid, NORMAL_PRIORITY_CLASS);
+                        if (ImGui::MenuItem("Below Normal")) SetTargetProcessPriority(p.Pid, BELOW_NORMAL_PRIORITY_CLASS);
+                        if (ImGui::MenuItem("Idle")) SetTargetProcessPriority(p.Pid, IDLE_PRIORITY_CLASS);
+                        ImGui::EndMenu();
+                    }
+                    ImGui::EndPopup();
+                }
+                ImGui::PopID();
             }
             ImGui::EndTable();
         }
@@ -179,6 +197,8 @@ int RunAppWindow() {
     UnregisterClassW(wc.lpszClassName, wc.hInstance);
     return 0;
 }
+
+
 
 
 
