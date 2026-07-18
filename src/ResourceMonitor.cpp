@@ -1,5 +1,6 @@
 ﻿#include <windows.h>
 #include <psapi.h>
+#include <pdh.h>
 #include "ResourceMonitor.h"
 
 static uint64_t FileTimeToU64(const FILETIME& ft) {
@@ -32,25 +33,27 @@ static float SampleRamPercent() {
     return (float)mem.dwMemoryLoad;
 }
 
-static float SampleDiskBytesPerSec(const std::vector<ProcessInfo>& processes) {
-    static uint64_t prevTotalBytes = 0;
-    static bool firstRun = true;
+static float SampleDiskBytesPerSec(const std::vector<ProcessInfo>&) {
+    static HQUERY query = nullptr;
+    static HCOUNTER counter = nullptr;
+    static bool initFailed = false;
 
-    uint64_t totalBytes = 0;
-    for (const auto& p : processes) {
-        HANDLE h = OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, FALSE, p.Pid);
-        if (!h) continue;
-        IO_COUNTERS io{};
-        if (GetProcessIoCounters(h, &io)) {
-            totalBytes += io.ReadTransferCount + io.WriteTransferCount;
+    if (!query && !initFailed) {
+        if (PdhOpenQueryW(nullptr, 0, &query) != ERROR_SUCCESS) { initFailed = true; return 0.0f; }
+        if (PdhAddEnglishCounterW(query, L"\\PhysicalDisk(_Total)\\Disk Bytes/sec", 0, &counter) != ERROR_SUCCESS) {
+            initFailed = true;
+            return 0.0f;
         }
-        CloseHandle(h);
+        PdhCollectQueryData(query);
+        return 0.0f;
     }
+    if (initFailed) return 0.0f;
 
-    uint64_t delta = firstRun ? 0 : (totalBytes >= prevTotalBytes ? totalBytes - prevTotalBytes : 0);
-    prevTotalBytes = totalBytes;
-    firstRun = false;
-    return (float)delta;
+    if (PdhCollectQueryData(query) != ERROR_SUCCESS) return 0.0f;
+
+    PDH_FMT_COUNTERVALUE value{};
+    if (PdhGetFormattedCounterValue(counter, PDH_FMT_DOUBLE, nullptr, &value) != ERROR_SUCCESS) return 0.0f;
+    return (float)value.doubleValue;
 }
 
 ResourceSample SampleResources(const std::vector<ProcessInfo>& processes) {
@@ -60,3 +63,5 @@ ResourceSample SampleResources(const std::vector<ProcessInfo>& processes) {
     s.DiskBytesPerSec = SampleDiskBytesPerSec(processes);
     return s;
 }
+
+
