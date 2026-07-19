@@ -23,3 +23,8 @@ target_link_libraries(TaskBuddy PRIVATE ntdll imgui::imgui d3d11 dxgi shlwapi sh
 
 
 
+
+target_sources(TaskBuddy PRIVATE app.manifest)
+
+
+set_target_properties(TaskBuddy PROPERTIES LINK_FLAGS "/MANIFESTUAC:NO")

@@ -43,6 +43,7 @@ std::vector<ProcessInfo> GetProcessSnapshot() {
     auto result = ParseSnapshot(buffer.data());
 
     static std::unordered_map<uint32_t, uint64_t> prevCpuTime;
+    static std::unordered_map<uint32_t, std::wstring> pathCache;
     static uint64_t prevTick = 0;
     static int numCores = [] { SYSTEM_INFO si; GetSystemInfo(&si); return (int)si.dwNumberOfProcessors; }();
 
@@ -57,10 +58,26 @@ std::vector<ProcessInfo> GetProcessSnapshot() {
             p.CpuPercent = (float)((double)delta / (double)(elapsed100ns * numCores) * 100.0);
         }
         prevCpuTime[p.Pid] = p.CpuTime100ns;
+
+        auto pathIt = pathCache.find(p.Pid);
+        if (pathIt != pathCache.end() && !pathIt->second.empty()) {
+            p.ImagePath = pathIt->second;
+        } else {
+            wchar_t buf[MAX_PATH]; DWORD size = MAX_PATH;
+            HANDLE h = OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, FALSE, p.Pid);
+            if (h) {
+                if (QueryFullProcessImageNameW(h, 0, buf, &size)) p.ImagePath = buf;
+                CloseHandle(h);
+            }
+            if (!p.ImagePath.empty()) pathCache[p.Pid] = p.ImagePath;
+        }
     }
     prevTick = nowTick;
 
     return result;
 }
+
+
+
 
 
