@@ -1,5 +1,6 @@
 ﻿#include <windows.h>
 #include <vector>
+#include <unordered_map>
 #include "ProcessInfo.h"
 #include "ProcessEnumerator.h"
 
@@ -39,5 +40,27 @@ std::vector<ProcessInfo> GetProcessSnapshot() {
     } while (status == 0xC0000004);
 
     if (status < 0) return {};
-    return ParseSnapshot(buffer.data());
+    auto result = ParseSnapshot(buffer.data());
+
+    static std::unordered_map<uint32_t, uint64_t> prevCpuTime;
+    static uint64_t prevTick = 0;
+    static int numCores = [] { SYSTEM_INFO si; GetSystemInfo(&si); return (int)si.dwNumberOfProcessors; }();
+
+    uint64_t nowTick = GetTickCount64();
+    uint64_t elapsedMs = prevTick ? (nowTick - prevTick) : 0;
+    uint64_t elapsed100ns = elapsedMs * 10000ULL;
+
+    for (auto& p : result) {
+        auto it = prevCpuTime.find(p.Pid);
+        if (it != prevCpuTime.end() && elapsed100ns > 0) {
+            uint64_t delta = (p.CpuTime100ns >= it->second) ? (p.CpuTime100ns - it->second) : 0;
+            p.CpuPercent = (float)((double)delta / (double)(elapsed100ns * numCores) * 100.0);
+        }
+        prevCpuTime[p.Pid] = p.CpuTime100ns;
+    }
+    prevTick = nowTick;
+
+    return result;
 }
+
+
