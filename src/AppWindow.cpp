@@ -91,6 +91,20 @@ int RunAppWindow() {
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
     ImGui::StyleColorsDark();
+    { ImGuiStyle& style = ImGui::GetStyle();
+      style.WindowRounding = 3.0f; style.FrameRounding = 3.0f; style.GrabRounding = 3.0f;
+      style.WindowPadding = ImVec2(8,8); style.FramePadding = ImVec2(6,4); style.ItemSpacing = ImVec2(8,6);
+      ImVec4* c = style.Colors;
+      c[ImGuiCol_WindowBg] = ImVec4(0.11f,0.11f,0.12f,1.00f);
+      c[ImGuiCol_ChildBg]  = ImVec4(0.13f,0.13f,0.14f,1.00f);
+      c[ImGuiCol_FrameBg]  = ImVec4(0.16f,0.16f,0.17f,1.00f);
+      c[ImGuiCol_Header]        = ImVec4(0.00f,0.47f,0.83f,0.35f);
+      c[ImGuiCol_HeaderHovered] = ImVec4(0.00f,0.47f,0.83f,0.55f);
+      c[ImGuiCol_HeaderActive]  = ImVec4(0.00f,0.47f,0.83f,0.75f);
+      c[ImGuiCol_Button]        = ImVec4(0.16f,0.16f,0.17f,1.00f);
+      c[ImGuiCol_ButtonHovered] = ImVec4(0.00f,0.47f,0.83f,0.55f);
+      c[ImGuiCol_ButtonActive]  = ImVec4(0.00f,0.47f,0.83f,0.85f);
+    }
     ImGui_ImplWin32_Init(hwnd);
     ImGui_ImplDX11_Init(g_pd3dDevice, g_pd3dDeviceContext);
 
