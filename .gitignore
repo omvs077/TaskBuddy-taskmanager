@@ -5,3 +5,6 @@ out/
 *.suo
 config.ini
 .vs/
+build_log.txt
+imgui.ini
+vcpkg_installed/
