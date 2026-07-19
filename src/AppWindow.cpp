@@ -146,8 +146,8 @@ int RunAppWindow() {
             sampleTimer = 0.0f;
         }
 
-        ImGui::PlotLines("CPU %%", cpuHistory, kHistoryLen, historyOffset, nullptr, 0.0f, 100.0f, ImVec2(0, 60));
-        ImGui::PlotLines("RAM %%", ramHistory, kHistoryLen, historyOffset, nullptr, 0.0f, 100.0f, ImVec2(0, 60));
+        ImGui::PlotLines("CPU %", cpuHistory, kHistoryLen, historyOffset, nullptr, 0.0f, 100.0f, ImVec2(0, 60));
+        ImGui::PlotLines("RAM %", ramHistory, kHistoryLen, historyOffset, nullptr, 0.0f, 100.0f, ImVec2(0, 60));
         ImGui::PlotLines("Disk MB/s", diskHistory, kHistoryLen, historyOffset, nullptr, 0.0f, FLT_MAX, ImVec2(0, 60));
 
         ImGui::Text("Processes: %zu", processes.size());
@@ -209,7 +209,7 @@ int RunAppWindow() {
                 bool hasServices = (svcIt != servicesByPid.end() && !svcIt->second.empty());
                 if (hasServices) {
                     ImGui::SetNextItemOpen(false, ImGuiCond_FirstUseEver);
-                    void* icon = IconCache_Get(g_pd3dDevice, p.ImageName);
+                    void* icon = IconCache_Get(g_pd3dDevice, p.ImagePath);
                     if (icon) { ImGui::Image(icon, ImVec2(16, 16)); ImGui::SameLine(); }
                     bool open = ImGui::TreeNodeEx((void*)(intptr_t)p.Pid, ImGuiTreeNodeFlags_SpanAvailWidth, "%ls", p.ImageName.c_str());
                     if (open) {
@@ -262,6 +262,8 @@ int RunAppWindow() {
     UnregisterClassW(wc.lpszClassName, wc.hInstance);
     return 0;
 }
+
+
 
 
 
