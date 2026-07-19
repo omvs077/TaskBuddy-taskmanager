@@ -8,6 +8,7 @@
 #include "ProcessOps.h"
 #include "ServiceMapper.h"
 #include "ResourceMonitor.h"
+#include "IconCache.h"
 #include <d3d11.h>
 #include <windows.h>
 #include <tchar.h>
@@ -198,6 +199,8 @@ int RunAppWindow() {
                 bool hasServices = (svcIt != servicesByPid.end() && !svcIt->second.empty());
                 if (hasServices) {
                     ImGui::SetNextItemOpen(false, ImGuiCond_FirstUseEver);
+                    void* icon = IconCache_Get(g_pd3dDevice, p.ImageName);
+                    if (icon) { ImGui::Image(icon, ImVec2(16, 16)); ImGui::SameLine(); }
                     bool open = ImGui::TreeNodeEx((void*)(intptr_t)p.Pid, ImGuiTreeNodeFlags_SpanAvailWidth, "%ls", p.ImageName.c_str());
                     if (open) {
                         for (const auto& svcName : svcIt->second) {
@@ -240,6 +243,7 @@ int RunAppWindow() {
         g_pSwapChain->Present(1, 0);
     }
 
+    IconCache_Shutdown();
     ImGui_ImplDX11_Shutdown();
     ImGui_ImplWin32_Shutdown();
     ImGui::DestroyContext();
@@ -248,6 +252,8 @@ int RunAppWindow() {
     UnregisterClassW(wc.lpszClassName, wc.hInstance);
     return 0;
 }
+
+
 
 
 
