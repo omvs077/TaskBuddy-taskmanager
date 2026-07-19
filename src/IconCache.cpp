@@ -7,20 +7,17 @@
 static std::unordered_map<std::wstring, ID3D11ShaderResourceView*> g_cache;
 
 void* IconCache_Get(ID3D11Device* device, const std::wstring& path) {
+    if (path.empty()) return nullptr;
     auto it = g_cache.find(path);
     if (it != g_cache.end()) return (void*)it->second;
 
     SHFILEINFOW sfi{};
-    if (!SHGetFileInfoW(path.c_str(), 0, &sfi, sizeof(sfi), SHGFI_ICON | SHGFI_SMALLICON))
+    if (!SHGetFileInfoW(path.c_str(), 0, &sfi, sizeof(sfi), SHGFI_ICON | SHGFI_SMALLICON)) {
+        g_cache[path] = nullptr;
         return nullptr;
+    }
 
-    ICONINFO ii{};
-    if (!GetIconInfo(sfi.hIcon, &ii)) { DestroyIcon(sfi.hIcon); return nullptr; }
-
-    BITMAP bmColor{};
-    GetObject(ii.hbmColor, sizeof(bmColor), &bmColor);
-    int w = bmColor.bmWidth, h = bmColor.bmHeight;
-
+    const int w = 16, h = 16;
     BITMAPINFO bmi{};
     bmi.bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
     bmi.bmiHeader.biWidth = w;
@@ -29,13 +26,31 @@ void* IconCache_Get(ID3D11Device* device, const std::wstring& path) {
     bmi.bmiHeader.biBitCount = 32;
     bmi.bmiHeader.biCompression = BI_RGB;
 
-    std::vector<uint8_t> px(w * h * 4);
-    HDC hdc = GetDC(nullptr);
-    GetDIBits(hdc, ii.hbmColor, 0, h, px.data(), &bmi, DIB_RGB_COLORS);
-    ReleaseDC(nullptr, hdc);
-    DeleteObject(ii.hbmColor); DeleteObject(ii.hbmMask); DestroyIcon(sfi.hIcon);
+    void* dibBits = nullptr;
+    HDC screenDC = GetDC(nullptr);
+    HDC memDC = CreateCompatibleDC(screenDC);
+    HBITMAP dib = CreateDIBSection(screenDC, &bmi, DIB_RGB_COLORS, &dibBits, nullptr, 0);
+    ReleaseDC(nullptr, screenDC);
 
-    for (int i = 0; i < w * h; i++) std::swap(px[i*4], px[i*4+2]);
+    if (!dib || !dibBits) {
+        if (dib) DeleteObject(dib);
+        DeleteDC(memDC);
+        DestroyIcon(sfi.hIcon);
+        g_cache[path] = nullptr;
+        return nullptr;
+    }
+
+    HGDIOBJ oldBmp = SelectObject(memDC, dib);
+    ZeroMemory(dibBits, w * h * 4);
+    DrawIconEx(memDC, 0, 0, sfi.hIcon, w, h, 0, nullptr, DI_NORMAL);
+    SelectObject(memDC, oldBmp);
+    DeleteDC(memDC);
+    DestroyIcon(sfi.hIcon);
+
+    std::vector<uint8_t> px(w * h * 4);
+    memcpy(px.data(), dibBits, px.size());
+    DeleteObject(dib);
+    for (int i = 0; i < w * h; i++) std::swap(px[i * 4], px[i * 4 + 2]);
 
     D3D11_TEXTURE2D_DESC desc{};
     desc.Width = w; desc.Height = h; desc.MipLevels = 1; desc.ArraySize = 1;
@@ -44,7 +59,10 @@ void* IconCache_Get(ID3D11Device* device, const std::wstring& path) {
     D3D11_SUBRESOURCE_DATA sub{ px.data(), (UINT)(w * 4), 0 };
 
     ID3D11Texture2D* tex = nullptr;
-    if (FAILED(device->CreateTexture2D(&desc, &sub, &tex))) return nullptr;
+    if (FAILED(device->CreateTexture2D(&desc, &sub, &tex))) {
+        g_cache[path] = nullptr;
+        return nullptr;
+    }
 
     ID3D11ShaderResourceView* srv = nullptr;
     D3D11_SHADER_RESOURCE_VIEW_DESC svd{};
