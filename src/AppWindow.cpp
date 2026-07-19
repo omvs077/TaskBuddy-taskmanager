@@ -153,6 +153,7 @@ int RunAppWindow() {
         ImGui::Text("Processes: %zu", processes.size());
         static char filterBuf[128] = "";
         ImGui::InputTextWithHint("##filter", "Filter by name...", filterBuf, IM_ARRAYSIZE(filterBuf));
+        ImGui::Text("Total CPU: %.1f%%   Total RAM: %.1f%%", cpuHistory[historyOffset], ramHistory[historyOffset]);
         if (ImGui::BeginTable("ProcessTable", 4, ImGuiTableFlags_Borders | ImGuiTableFlags_RowBg | ImGuiTableFlags_ScrollY | ImGuiTableFlags_Sortable, ImVec2(0, 600))) {
             ImGui::TableSetupColumn("PID");
             ImGui::TableSetupColumn("PPID");
@@ -252,6 +253,7 @@ int RunAppWindow() {
     UnregisterClassW(wc.lpszClassName, wc.hInstance);
     return 0;
 }
+
 
 
 
