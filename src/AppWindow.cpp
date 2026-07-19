@@ -154,7 +154,8 @@ int RunAppWindow() {
         static char filterBuf[128] = "";
         ImGui::InputTextWithHint("##filter", "Filter by name...", filterBuf, IM_ARRAYSIZE(filterBuf));
         ImGui::Text("Total CPU: %.1f%%   Total RAM: %.1f%%", cpuHistory[historyOffset], ramHistory[historyOffset]);
-        if (ImGui::BeginTable("ProcessTable", 4, ImGuiTableFlags_Borders | ImGuiTableFlags_RowBg | ImGuiTableFlags_ScrollY | ImGuiTableFlags_Sortable, ImVec2(0, 600))) {
+        if (ImGui::BeginTable("ProcessTable", 5, ImGuiTableFlags_Borders | ImGuiTableFlags_RowBg | ImGuiTableFlags_ScrollY | ImGuiTableFlags_Sortable, ImVec2(0, 600))) {
+            ImGui::TableSetupColumn("CPU %");
             ImGui::TableSetupColumn("PID");
             ImGui::TableSetupColumn("PPID");
             ImGui::TableSetupColumn("Working Set (KB)");
@@ -178,10 +179,11 @@ int RunAppWindow() {
                     bool asc = spec.SortDirection == ImGuiSortDirection_Ascending;
                     std::sort(view.begin(), view.end(), [&](const ProcessInfo* a, const ProcessInfo* b) {
                         switch (spec.ColumnIndex) {
-                            case 0: return asc ? a->Pid < b->Pid : a->Pid > b->Pid;
-                            case 1: return asc ? a->ParentPid < b->ParentPid : a->ParentPid > b->ParentPid;
-                            case 2: return asc ? a->WorkingSetBytes < b->WorkingSetBytes : a->WorkingSetBytes > b->WorkingSetBytes;
-                            case 3: return asc ? a->ImageName < b->ImageName : a->ImageName > b->ImageName;
+                            case 0: return asc ? a->CpuPercent < b->CpuPercent : a->CpuPercent > b->CpuPercent;
+                            case 1: return asc ? a->Pid < b->Pid : a->Pid > b->Pid;
+                            case 2: return asc ? a->ParentPid < b->ParentPid : a->ParentPid > b->ParentPid;
+                            case 3: return asc ? a->WorkingSetBytes < b->WorkingSetBytes : a->WorkingSetBytes > b->WorkingSetBytes;
+                            case 4: return asc ? a->ImageName < b->ImageName : a->ImageName > b->ImageName;
                             default: return false;
                         }
                     });
@@ -192,10 +194,17 @@ int RunAppWindow() {
             for (const auto* pp : view) {
                 const auto& p = *pp;
                 ImGui::TableNextRow();
-                ImGui::TableSetColumnIndex(0); ImGui::Text("%u", p.Pid);
-                ImGui::TableSetColumnIndex(1); ImGui::Text("%u", p.ParentPid);
-                ImGui::TableSetColumnIndex(2); ImGui::Text("%llu", p.WorkingSetBytes / 1024);
-                ImGui::TableSetColumnIndex(3);
+                ImGui::TableSetColumnIndex(0);
+                {
+                    ImVec4 cpuColor = p.CpuPercent > 50.0f ? ImVec4(0.90f,0.30f,0.25f,1.0f)
+                                     : p.CpuPercent > 20.0f ? ImVec4(0.90f,0.65f,0.15f,1.0f)
+                                     : ImGui::GetStyleColorVec4(ImGuiCol_Text);
+                    ImGui::TextColored(cpuColor, "%.1f%%", p.CpuPercent);
+                }
+                ImGui::TableSetColumnIndex(1); ImGui::Text("%u", p.Pid);
+                ImGui::TableSetColumnIndex(2); ImGui::Text("%u", p.ParentPid);
+                ImGui::TableSetColumnIndex(3); ImGui::Text("%llu", p.WorkingSetBytes / 1024);
+                ImGui::TableSetColumnIndex(4);
                 auto svcIt = servicesByPid.find(p.Pid);
                 bool hasServices = (svcIt != servicesByPid.end() && !svcIt->second.empty());
                 if (hasServices) {
@@ -253,6 +262,10 @@ int RunAppWindow() {
     UnregisterClassW(wc.lpszClassName, wc.hInstance);
     return 0;
 }
+
+
+
+
 
 
 
