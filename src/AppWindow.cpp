@@ -1,5 +1,7 @@
 ﻿#include <algorithm>
 #include <cfloat>
+#include <unordered_map>
+#include <unordered_set>
 #include <shlwapi.h>
 #include "imgui.h"
 #include "imgui_impl_win32.h"
@@ -10,6 +12,7 @@
 #include "ResourceMonitor.h"
 #include "IconCache.h"
 #include <d3d11.h>
+#define NOMINMAX
 #include <windows.h>
 #include <tchar.h>
 
@@ -128,7 +131,21 @@ int RunAppWindow() {
         static float refreshTimer = 0.0f;
         refreshTimer += ImGui::GetIO().DeltaTime;
         static auto servicesByPid = GetServicesByPid();
-        if (refreshTimer > 1.0f) { processes = GetProcessSnapshot(); servicesByPid = GetServicesByPid(); refreshTimer = 0.0f; }
+        static std::unordered_map<uint32_t, double> spawnTimes;
+        if (refreshTimer > 1.0f) {
+            auto fresh = GetProcessSnapshot();
+            std::unordered_set<uint32_t> currentPids;
+            for (auto& p : fresh) {
+                currentPids.insert(p.Pid);
+                if (spawnTimes.find(p.Pid) == spawnTimes.end()) spawnTimes[p.Pid] = ImGui::GetTime();
+            }
+            for (auto it = spawnTimes.begin(); it != spawnTimes.end(); ) {
+                if (currentPids.find(it->first) == currentPids.end()) it = spawnTimes.erase(it); else ++it;
+            }
+            processes = std::move(fresh);
+            servicesByPid = GetServicesByPid();
+            refreshTimer = 0.0f;
+        }
 
         static const int kHistoryLen = 120;
         static float cpuHistory[kHistoryLen] = {};
@@ -193,6 +210,9 @@ int RunAppWindow() {
 
             for (const auto* pp : view) {
                 const auto& p = *pp;
+                double elapsed = ImGui::GetTime() - (spawnTimes.count(p.Pid) ? spawnTimes[p.Pid] : -1000.0);
+                float rowAlpha = (float)(elapsed < 0.4 ? (std::max)(0.0, elapsed) / 0.4 : 1.0);
+                ImGui::PushStyleVar(ImGuiStyleVar_Alpha, rowAlpha);
                 ImGui::TableNextRow();
                 ImGui::TableSetColumnIndex(0);
                 {
@@ -239,6 +259,7 @@ int RunAppWindow() {
                     ImGui::EndPopup();
                 }
                 ImGui::PopID();
+                ImGui::PopStyleVar();
             }
             ImGui::EndTable();
         }
@@ -262,6 +283,12 @@ int RunAppWindow() {
     UnregisterClassW(wc.lpszClassName, wc.hInstance);
     return 0;
 }
+
+
+
+
+
+
 
 
 
