@@ -1,4 +1,4 @@
-# TaskBuddy
+﻿# TaskBuddy
 
 A lightweight, native Windows Task Manager replacement built with C++ and WinAPI/NTAPI.
 
@@ -15,3 +15,4 @@ cmake --build build --config Release
 
 ## License
 TBD
+
