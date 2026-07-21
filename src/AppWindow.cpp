@@ -171,7 +171,7 @@ int RunAppWindow() {
         static char filterBuf[128] = "";
         ImGui::InputTextWithHint("##filter", "Filter by name...", filterBuf, IM_ARRAYSIZE(filterBuf));
         ImGui::Text("Total CPU: %.1f%%   Total RAM: %.1f%%", cpuHistory[historyOffset], ramHistory[historyOffset]);
-        if (ImGui::BeginTable("ProcessTable", 5, ImGuiTableFlags_Borders | ImGuiTableFlags_RowBg | ImGuiTableFlags_ScrollY | ImGuiTableFlags_Sortable, ImVec2(0, 600))) {
+        if (ImGui::BeginTable("ProcessTable", 5, ImGuiTableFlags_Borders | ImGuiTableFlags_RowBg | ImGuiTableFlags_ScrollY | ImGuiTableFlags_Sortable | ImGuiTableFlags_Hideable | ImGuiTableFlags_Reorderable | ImGuiTableFlags_Resizable, ImVec2(0, 600))) {
             ImGui::TableSetupColumn("CPU %");
             ImGui::TableSetupColumn("PID");
             ImGui::TableSetupColumn("PPID");
@@ -283,6 +283,7 @@ int RunAppWindow() {
     UnregisterClassW(wc.lpszClassName, wc.hInstance);
     return 0;
 }
+
 
 
 
