@@ -1,6 +1,7 @@
 ﻿#include <windows.h>
 #include <vector>
 #include <unordered_map>
+#include <unordered_set>
 #include "ProcessInfo.h"
 #include "ProcessEnumerator.h"
 
@@ -46,6 +47,7 @@ std::vector<ProcessInfo> GetProcessSnapshot() {
     static std::unordered_map<uint32_t, std::wstring> pathCache;
     static uint64_t prevTick = 0;
     static int numCores = [] { SYSTEM_INFO si; GetSystemInfo(&si); return (int)si.dwNumberOfProcessors; }();
+    std::unordered_set<uint32_t> currentPidsForPrune;
 
     uint64_t nowTick = GetTickCount64();
     uint64_t elapsedMs = prevTick ? (nowTick - prevTick) : 0;
@@ -57,6 +59,7 @@ std::vector<ProcessInfo> GetProcessSnapshot() {
             uint64_t delta = (p.CpuTime100ns >= it->second) ? (p.CpuTime100ns - it->second) : 0;
             p.CpuPercent = (float)((double)delta / (double)(elapsed100ns * numCores) * 100.0);
         }
+        currentPidsForPrune.insert(p.Pid);
         prevCpuTime[p.Pid] = p.CpuTime100ns;
 
         auto pathIt = pathCache.find(p.Pid);
@@ -72,10 +75,20 @@ std::vector<ProcessInfo> GetProcessSnapshot() {
             if (!p.ImagePath.empty()) pathCache[p.Pid] = p.ImagePath;
         }
     }
+    for (auto it = prevCpuTime.begin(); it != prevCpuTime.end(); ) {
+        if (currentPidsForPrune.find(it->first) == currentPidsForPrune.end()) it = prevCpuTime.erase(it); else ++it;
+    }
+    for (auto it = pathCache.begin(); it != pathCache.end(); ) {
+        if (currentPidsForPrune.find(it->first) == currentPidsForPrune.end()) it = pathCache.erase(it); else ++it;
+    }
     prevTick = nowTick;
 
     return result;
 }
+
+
+
+
 
 
 
