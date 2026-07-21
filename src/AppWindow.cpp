@@ -16,6 +16,47 @@
 #include <windows.h>
 #include <tchar.h>
 
+static void ApplyDarkTheme() {
+    ImGui::StyleColorsDark();
+    ImGuiStyle& style = ImGui::GetStyle();
+    style.WindowRounding = 3.0f; style.FrameRounding = 3.0f; style.GrabRounding = 3.0f;
+    style.WindowPadding = ImVec2(8,8); style.FramePadding = ImVec2(6,4); style.ItemSpacing = ImVec2(8,6);
+    style.FrameBorderSize = 0.0f;
+    ImVec4* c = style.Colors;
+    c[ImGuiCol_WindowBg] = ImVec4(0.11f,0.11f,0.12f,1.00f);
+    c[ImGuiCol_ChildBg]  = ImVec4(0.13f,0.13f,0.14f,1.00f);
+    c[ImGuiCol_FrameBg]  = ImVec4(0.16f,0.16f,0.17f,1.00f);
+    c[ImGuiCol_Header]        = ImVec4(0.00f,0.47f,0.83f,0.35f);
+    c[ImGuiCol_HeaderHovered] = ImVec4(0.00f,0.47f,0.83f,0.55f);
+    c[ImGuiCol_HeaderActive]  = ImVec4(0.00f,0.47f,0.83f,0.75f);
+    c[ImGuiCol_Button]        = ImVec4(0.16f,0.16f,0.17f,1.00f);
+    c[ImGuiCol_ButtonHovered] = ImVec4(0.00f,0.47f,0.83f,0.55f);
+    c[ImGuiCol_ButtonActive]  = ImVec4(0.00f,0.47f,0.83f,0.85f);
+}
+
+static void ApplyHighContrastTheme() {
+    ImGui::StyleColorsDark();
+    ImGuiStyle& style = ImGui::GetStyle();
+    style.WindowRounding = 0.0f; style.FrameRounding = 0.0f; style.GrabRounding = 0.0f;
+    style.WindowPadding = ImVec2(8,8); style.FramePadding = ImVec2(6,4); style.ItemSpacing = ImVec2(8,6);
+    style.FrameBorderSize = 1.0f;
+    ImVec4* c = style.Colors;
+    c[ImGuiCol_Text]           = ImVec4(1.00f,1.00f,1.00f,1.00f);
+    c[ImGuiCol_WindowBg]       = ImVec4(0.00f,0.00f,0.00f,1.00f);
+    c[ImGuiCol_ChildBg]        = ImVec4(0.00f,0.00f,0.00f,1.00f);
+    c[ImGuiCol_FrameBg]        = ImVec4(0.05f,0.05f,0.05f,1.00f);
+    c[ImGuiCol_Border]         = ImVec4(1.00f,1.00f,0.00f,1.00f);
+    c[ImGuiCol_Header]         = ImVec4(1.00f,1.00f,0.00f,0.40f);
+    c[ImGuiCol_HeaderHovered]  = ImVec4(1.00f,1.00f,0.00f,0.65f);
+    c[ImGuiCol_HeaderActive]   = ImVec4(1.00f,1.00f,0.00f,0.85f);
+    c[ImGuiCol_Button]         = ImVec4(0.05f,0.05f,0.05f,1.00f);
+    c[ImGuiCol_ButtonHovered]  = ImVec4(1.00f,1.00f,0.00f,0.65f);
+    c[ImGuiCol_ButtonActive]   = ImVec4(1.00f,1.00f,0.00f,0.90f);
+    c[ImGuiCol_TableHeaderBg]  = ImVec4(0.10f,0.10f,0.10f,1.00f);
+    c[ImGuiCol_TableBorderStrong] = ImVec4(1.00f,1.00f,0.00f,1.00f);
+    c[ImGuiCol_TableBorderLight]  = ImVec4(0.80f,0.80f,0.80f,1.00f);
+}
+
 extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND, UINT, WPARAM, LPARAM);
 
 static ID3D11Device* g_pd3dDevice = nullptr;
@@ -94,21 +135,7 @@ int RunAppWindow() {
 
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
-    ImGui::StyleColorsDark();
-    { ImGuiStyle& style = ImGui::GetStyle();
-      style.WindowRounding = 3.0f; style.FrameRounding = 3.0f; style.GrabRounding = 3.0f;
-      style.WindowPadding = ImVec2(8,8); style.FramePadding = ImVec2(6,4); style.ItemSpacing = ImVec2(8,6);
-      ImVec4* c = style.Colors;
-      c[ImGuiCol_WindowBg] = ImVec4(0.11f,0.11f,0.12f,1.00f);
-      c[ImGuiCol_ChildBg]  = ImVec4(0.13f,0.13f,0.14f,1.00f);
-      c[ImGuiCol_FrameBg]  = ImVec4(0.16f,0.16f,0.17f,1.00f);
-      c[ImGuiCol_Header]        = ImVec4(0.00f,0.47f,0.83f,0.35f);
-      c[ImGuiCol_HeaderHovered] = ImVec4(0.00f,0.47f,0.83f,0.55f);
-      c[ImGuiCol_HeaderActive]  = ImVec4(0.00f,0.47f,0.83f,0.75f);
-      c[ImGuiCol_Button]        = ImVec4(0.16f,0.16f,0.17f,1.00f);
-      c[ImGuiCol_ButtonHovered] = ImVec4(0.00f,0.47f,0.83f,0.55f);
-      c[ImGuiCol_ButtonActive]  = ImVec4(0.00f,0.47f,0.83f,0.85f);
-    }
+    ApplyDarkTheme();
     ImGui_ImplWin32_Init(hwnd);
     ImGui_ImplDX11_Init(g_pd3dDevice, g_pd3dDeviceContext);
 
@@ -170,6 +197,11 @@ int RunAppWindow() {
         ImGui::Text("Processes: %zu", processes.size());
         static char filterBuf[128] = "";
         ImGui::InputTextWithHint("##filter", "Filter by name...", filterBuf, IM_ARRAYSIZE(filterBuf));
+        ImGui::SameLine();
+        static bool highContrast = false;
+        if (ImGui::Checkbox("High Contrast", &highContrast)) {
+            if (highContrast) ApplyHighContrastTheme(); else ApplyDarkTheme();
+        }
         ImGui::Text("Total CPU: %.1f%%   Total RAM: %.1f%%", cpuHistory[historyOffset], ramHistory[historyOffset]);
         if (ImGui::BeginTable("ProcessTable", 5, ImGuiTableFlags_Borders | ImGuiTableFlags_RowBg | ImGuiTableFlags_ScrollY | ImGuiTableFlags_Sortable | ImGuiTableFlags_Hideable | ImGuiTableFlags_Reorderable | ImGuiTableFlags_Resizable, ImVec2(0, 600))) {
             ImGui::TableSetupColumn("CPU %");
@@ -283,6 +315,9 @@ int RunAppWindow() {
     UnregisterClassW(wc.lpszClassName, wc.hInstance);
     return 0;
 }
+
+
+
 
 
 
