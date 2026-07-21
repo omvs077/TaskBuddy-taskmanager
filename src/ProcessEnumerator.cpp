@@ -27,6 +27,7 @@ static std::vector<ProcessInfo> ParseSnapshot(BYTE* buffer) {
 }
 
 std::vector<ProcessInfo> GetProcessSnapshot() {
+    try {
     static auto NtQuerySystemInformation = (NtQuerySystemInformation_t)GetProcAddress(
         GetModuleHandleW(L"ntdll.dll"), "NtQuerySystemInformation");
     if (!NtQuerySystemInformation) return {};
@@ -84,6 +85,10 @@ std::vector<ProcessInfo> GetProcessSnapshot() {
     prevTick = nowTick;
 
     return result;
+    } catch (const std::bad_alloc&) {
+        OutputDebugStringA("TaskBuddy: bad_alloc during process snapshot, skipping refresh.\n");
+        return {};
+    }
 }
 
 

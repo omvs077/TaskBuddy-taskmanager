@@ -203,6 +203,18 @@ int RunAppWindow() {
             if (highContrast) ApplyHighContrastTheme(); else ApplyDarkTheme();
         }
         ImGui::Text("Total CPU: %.1f%%   Total RAM: %.1f%%", cpuHistory[historyOffset], ramHistory[historyOffset]);
+        {
+            static uint32_t selfPid = GetCurrentProcessId();
+            for (const auto& p : processes) {
+                if (p.Pid == selfPid) {
+                    ImVec4 col = (p.CpuPercent > 2.0f || p.WorkingSetBytes > 20u*1024*1024)
+                        ? ImVec4(0.90f,0.30f,0.25f,1.0f) : ImVec4(0.40f,0.85f,0.40f,1.0f);
+                    ImGui::TextColored(col, "TaskBuddy self: %.1f%% CPU, %.1f MB RAM (target: <2%% / <20MB)",
+                        p.CpuPercent, p.WorkingSetBytes / (1024.0f * 1024.0f));
+                    break;
+                }
+            }
+        }
         if (ImGui::BeginTable("ProcessTable", 5, ImGuiTableFlags_Borders | ImGuiTableFlags_RowBg | ImGuiTableFlags_ScrollY | ImGuiTableFlags_Sortable | ImGuiTableFlags_Hideable | ImGuiTableFlags_Reorderable | ImGuiTableFlags_Resizable, ImVec2(0, 600))) {
             ImGui::TableSetupColumn("CPU %");
             ImGui::TableSetupColumn("PID");
@@ -315,6 +327,8 @@ int RunAppWindow() {
     UnregisterClassW(wc.lpszClassName, wc.hInstance);
     return 0;
 }
+
+
 
 
 
