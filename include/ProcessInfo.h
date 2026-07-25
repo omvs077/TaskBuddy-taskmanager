@@ -48,5 +48,7 @@ struct ProcessInfo {
     uint64_t CpuTime100ns;
     float CpuPercent = 0.0f;
     std::wstring ImageName;
+    std::wstring ImagePath;
 };
+
 
