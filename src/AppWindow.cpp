@@ -159,19 +159,28 @@ int RunAppWindow() {
         refreshTimer += ImGui::GetIO().DeltaTime;
         static auto servicesByPid = GetServicesByPid();
         static std::unordered_map<uint32_t, double> spawnTimes;
+        static std::unordered_map<uint32_t, std::pair<ProcessInfo, double>> fadingOut;
         if (refreshTimer > 1.0f) {
             auto fresh = GetProcessSnapshot();
-            std::unordered_set<uint32_t> currentPids;
-            for (auto& p : fresh) {
-                currentPids.insert(p.Pid);
-                if (spawnTimes.find(p.Pid) == spawnTimes.end()) spawnTimes[p.Pid] = ImGui::GetTime();
+            if (!fresh.empty()) {
+                std::unordered_set<uint32_t> currentPids;
+                for (auto& p : fresh) {
+                    currentPids.insert(p.Pid);
+                    if (spawnTimes.find(p.Pid) == spawnTimes.end()) spawnTimes[p.Pid] = ImGui::GetTime();
+                }
+                for (auto it = spawnTimes.begin(); it != spawnTimes.end(); ) {
+                    if (currentPids.find(it->first) == currentPids.end()) it = spawnTimes.erase(it); else ++it;
+                }
+                for (auto& p : processes) {
+                    if (currentPids.find(p.Pid) == currentPids.end()) fadingOut[p.Pid] = { p, ImGui::GetTime() };
+                }
+                processes = std::move(fresh);
+                servicesByPid = GetServicesByPid();
             }
-            for (auto it = spawnTimes.begin(); it != spawnTimes.end(); ) {
-                if (currentPids.find(it->first) == currentPids.end()) it = spawnTimes.erase(it); else ++it;
-            }
-            processes = std::move(fresh);
-            servicesByPid = GetServicesByPid();
             refreshTimer = 0.0f;
+        }
+        for (auto it = fadingOut.begin(); it != fadingOut.end(); ) {
+            if (ImGui::GetTime() - it->second.second > 0.4) it = fadingOut.erase(it); else ++it;
         }
 
         static const int kHistoryLen = 120;
@@ -303,6 +312,20 @@ int RunAppWindow() {
                     ImGui::EndPopup();
                 }
                 ImGui::PopID();
+                ImGui::PopStyleVar();
+            }
+            for (auto& kv : fadingOut) {
+                const ProcessInfo& p = kv.second.first;
+                double elapsed = ImGui::GetTime() - kv.second.second;
+                float alpha = (float)(1.0 - (elapsed / 0.4));
+                if (alpha < 0.0f) alpha = 0.0f;
+                ImGui::PushStyleVar(ImGuiStyleVar_Alpha, alpha * 0.6f);
+                ImGui::TableNextRow();
+                ImGui::TableSetColumnIndex(0); ImGui::Text("%.1f%%", p.CpuPercent);
+                ImGui::TableSetColumnIndex(1); ImGui::Text("%u", p.Pid);
+                ImGui::TableSetColumnIndex(2); ImGui::Text("%u", p.ParentPid);
+                ImGui::TableSetColumnIndex(3); ImGui::Text("%llu", p.WorkingSetBytes / 1024);
+                ImGui::TableSetColumnIndex(4); ImGui::TextDisabled("%ls (closed)", p.ImageName.c_str());
                 ImGui::PopStyleVar();
             }
             ImGui::EndTable();
