@@ -8,3 +8,5 @@ config.ini
 build_log.txt
 imgui.ini
 vcpkg_installed/
+build_log_debug.txt
+build_log_release.txt
