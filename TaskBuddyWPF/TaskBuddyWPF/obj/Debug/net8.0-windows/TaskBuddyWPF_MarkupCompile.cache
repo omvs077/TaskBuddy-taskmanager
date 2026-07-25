@@ -1,0 +1,20 @@
+﻿TaskBuddyWPF
+
+
+winexe
+C#
+.cs
+D:\My projects\TaskBuddy\TaskBuddyWPF\TaskBuddyWPF\obj\Debug\net8.0-windows\
+TaskBuddyWPF
+none
+false
+TRACE;DEBUG;NET;NET8_0;NETCOREAPP
+D:\My projects\TaskBuddy\TaskBuddyWPF\TaskBuddyWPF\App.xaml
+9-834102330
+
+12-297505109
+2001838288307
+MainWindow.xaml;Pages\AppHistoryPage.xaml;Pages\DetailsPage.xaml;Pages\PerformancePage.xaml;Pages\ProcessesPage.xaml;Pages\ServicesPage.xaml;Pages\SettingsPage.xaml;Pages\StartupPage.xaml;Pages\UsersPage.xaml;
+
+False
+

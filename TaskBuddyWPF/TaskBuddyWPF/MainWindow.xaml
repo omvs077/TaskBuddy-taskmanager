@@ -1,0 +1,35 @@
+﻿<ui:FluentWindow x:Class="TaskBuddyWPF.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+        mc:Ignorable="d"
+        Title="TaskBuddy" Height="720" Width="1100"
+        ExtendsContentIntoTitleBar="True"
+        WindowBackdropType="Mica"
+        WindowStartupLocation="CenterScreen">
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+        <ui:TitleBar Grid.Row="0" Title="TaskBuddy"/>
+        <ui:NavigationView x:Name="RootNav" Grid.Row="1"
+                            OpenPaneLength="220"
+                            PaneDisplayMode="Left">
+            <ui:NavigationView.MenuItems>
+                <ui:NavigationViewItem Content="Processes" TargetPageType="{x:Type Pages:ProcessesPage}" Icon="{ui:SymbolIcon Apps24}" xmlns:Pages="clr-namespace:TaskBuddyWPF.Pages"/>
+                <ui:NavigationViewItem Content="Performance" TargetPageType="{x:Type Pages:PerformancePage}" Icon="{ui:SymbolIcon DataTrending24}" xmlns:Pages="clr-namespace:TaskBuddyWPF.Pages"/>
+                <ui:NavigationViewItem Content="App History" TargetPageType="{x:Type Pages:AppHistoryPage}" Icon="{ui:SymbolIcon History24}" xmlns:Pages="clr-namespace:TaskBuddyWPF.Pages"/>
+                <ui:NavigationViewItem Content="Startup Apps" TargetPageType="{x:Type Pages:StartupPage}" Icon="{ui:SymbolIcon Rocket24}" xmlns:Pages="clr-namespace:TaskBuddyWPF.Pages"/>
+                <ui:NavigationViewItem Content="Users" TargetPageType="{x:Type Pages:UsersPage}" Icon="{ui:SymbolIcon People24}" xmlns:Pages="clr-namespace:TaskBuddyWPF.Pages"/>
+                <ui:NavigationViewItem Content="Details" TargetPageType="{x:Type Pages:DetailsPage}" Icon="{ui:SymbolIcon List24}" xmlns:Pages="clr-namespace:TaskBuddyWPF.Pages"/>
+                <ui:NavigationViewItem Content="Services" TargetPageType="{x:Type Pages:ServicesPage}" Icon="{ui:SymbolIcon Settings24}" xmlns:Pages="clr-namespace:TaskBuddyWPF.Pages"/>
+            </ui:NavigationView.MenuItems>
+            <ui:NavigationView.FooterMenuItems>
+                <ui:NavigationViewItem Content="Settings" TargetPageType="{x:Type Pages:SettingsPage}" Icon="{ui:SymbolIcon Settings24}" xmlns:Pages="clr-namespace:TaskBuddyWPF.Pages"/>
+            </ui:NavigationView.FooterMenuItems>
+        </ui:NavigationView>
+    </Grid>
+</ui:FluentWindow>

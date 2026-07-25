@@ -1,0 +1,8 @@
+﻿<Page x:Class="TaskBuddyWPF.Pages.StartupPage"
+      xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+      Title="Startup">
+    <Grid>
+        <TextBlock Text="Startup - coming soon" FontSize="20" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+    </Grid>
+</Page>
