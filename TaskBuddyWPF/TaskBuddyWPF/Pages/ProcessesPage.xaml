@@ -2,15 +2,46 @@
       xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
       xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
       Title="ProcessesPage">
-    <Grid>
+    <Grid Margin="12">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <Grid Grid.Row="0" HorizontalAlignment="Left" Width="260" Margin="0,0,0,10">
+            <Border Background="#22FFFFFF" CornerRadius="4" BorderBrush="#33FFFFFF" BorderThickness="1">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Grid.Column="0" Text="&#xE721;" FontFamily="Segoe MDL2 Assets"
+                               Foreground="#99FFFFFF" VerticalAlignment="Center" Margin="8,0,4,0" FontSize="14"/>
+                    <Grid Grid.Column="1">
+                        <TextBox x:Name="SearchBox"
+                                 Background="Transparent"
+                                 BorderThickness="0"
+                                 Padding="0,6,8,6"
+                                 Foreground="White"
+                                 CaretBrush="White"
+                                 VerticalContentAlignment="Center"
+                                 TextChanged="SearchBox_TextChanged"/>
+                        <TextBlock x:Name="SearchPlaceholder" Text="Search processes..."
+                                   Foreground="#66FFFFFF" VerticalAlignment="Center"
+                                   Margin="2,0,0,0" IsHitTestVisible="False"/>
+                    </Grid>
+                </Grid>
+            </Border>
+        </Grid>
+
         <DataGrid x:Name="ProcessGrid"
+                  Grid.Row="1"
                   AutoGenerateColumns="False"
                   IsReadOnly="True"
                   CanUserAddRows="False"
                   CanUserDeleteRows="False"
                   GridLinesVisibility="None"
-                  PreviewMouseRightButtonDown="ProcessGrid_PreviewMouseRightButtonDown"
-                  Margin="12">
+                  PreviewMouseRightButtonDown="ProcessGrid_PreviewMouseRightButtonDown">
             <DataGrid.Columns>
                 <DataGridTextColumn Header="Name" Binding="{Binding ImageName}" Width="2*"/>
                 <DataGridTextColumn Header="PID" Binding="{Binding Pid}" Width="*"/>

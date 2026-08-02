@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Windows.Data;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Threading.Tasks;
@@ -22,6 +23,7 @@ namespace TaskBuddyWPF.Pages
         {
             InitializeComponent();
             ProcessGrid.ItemsSource = _processes;
+            CollectionViewSource.GetDefaultView(_processes).Filter = FilterProcess;
 
             _timer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(1) };
             _timer.Tick += async (s, e) => await RefreshAsync();
@@ -124,6 +126,25 @@ namespace TaskBuddyWPF.Pages
             }
 
             await RefreshAsync();
+        }
+
+        private bool FilterProcess(object obj)
+        {
+            if (string.IsNullOrWhiteSpace(SearchBox.Text))
+                return true;
+
+            if (obj is not ProcessInfo p)
+                return false;
+
+            string query = SearchBox.Text.Trim();
+            return p.ImageName.Contains(query, StringComparison.OrdinalIgnoreCase)
+                || p.Pid.ToString().Contains(query, StringComparison.OrdinalIgnoreCase);
+        }
+
+        private void SearchBox_TextChanged(object sender, TextChangedEventArgs e)
+        {
+            SearchPlaceholder.Visibility = string.IsNullOrEmpty(SearchBox.Text) ? Visibility.Visible : Visibility.Collapsed;
+            CollectionViewSource.GetDefaultView(_processes).Refresh();
         }
     }
 }
