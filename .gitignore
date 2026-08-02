@@ -5,3 +5,10 @@ out/
 *.suo
 config.ini
 .vs/
+[Bb]in/
+[Oo]bj/
+*.user
+*.suo
+build_log*.txt
+imgui.ini
+vcpkg_installed/
