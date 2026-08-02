@@ -46,8 +46,6 @@ namespace TaskBuddyWPF.Pages
             }
         }
 
-        // Updates existing rows in place (preserves selection + avoids full rebuild),
-        // only adds/removes rows for processes that actually started or exited.
         private void ApplyDiff(List<ProcessInfo> snapshot)
         {
             var incoming = new Dictionary<uint, ProcessInfo>();
@@ -72,6 +70,7 @@ namespace TaskBuddyWPF.Pages
                     current.CpuTime100ns = fresh.CpuTime100ns;
                     current.WorkingSetBytes = fresh.WorkingSetBytes;
                     current.ImagePath = fresh.ImagePath;
+                    current.IsSuspended = fresh.IsSuspended;
                 }
                 else
                 {
@@ -85,6 +84,31 @@ namespace TaskBuddyWPF.Pages
             var row = ItemsControl.ContainerFromElement(ProcessGrid, (DependencyObject)e.OriginalSource) as DataGridRow;
             if (row != null)
                 row.IsSelected = true;
+        }
+
+        private void ContextMenu_Opened(object sender, RoutedEventArgs e)
+        {
+            if (ProcessGrid.SelectedItem is ProcessInfo selected)
+                SuspendResumeMenuItem.Header = selected.IsSuspended ? "Resume" : "Suspend";
+        }
+
+        private async void SuspendResume_Click(object sender, RoutedEventArgs e)
+        {
+            if (ProcessGrid.SelectedItem is not ProcessInfo selected)
+                return;
+
+            bool success = selected.IsSuspended
+                ? await Task.Run(() => _enumerator.ResumeProcess(selected.Pid))
+                : await Task.Run(() => _enumerator.SuspendProcess(selected.Pid));
+
+            if (!success)
+            {
+                string action = selected.IsSuspended ? "resume" : "suspend";
+                MessageBox.Show($"Unable to {action} '{selected.ImageName}' (PID {selected.Pid}). It may require elevated permissions.",
+                    "TaskBuddy", MessageBoxButton.OK, MessageBoxImage.Warning);
+            }
+
+            await RefreshAsync();
         }
 
         private async void EndTask_Click(object sender, RoutedEventArgs e)

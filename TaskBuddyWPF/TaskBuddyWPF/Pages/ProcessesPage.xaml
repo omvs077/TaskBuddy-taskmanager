@@ -14,11 +14,13 @@
             <DataGrid.Columns>
                 <DataGridTextColumn Header="Name" Binding="{Binding ImageName}" Width="2*"/>
                 <DataGridTextColumn Header="PID" Binding="{Binding Pid}" Width="*"/>
+                <DataGridTextColumn Header="Status" Binding="{Binding StatusText}" Width="*"/>
                 <DataGridTextColumn Header="CPU %" Binding="{Binding CpuPercent, StringFormat={}{0:F1}}" Width="*"/>
                 <DataGridTextColumn Header="Memory (MB)" Binding="{Binding WorkingSetBytes, Converter={StaticResource BytesToMbConverter}}" Width="*"/>
             </DataGrid.Columns>
             <DataGrid.ContextMenu>
-                <ContextMenu>
+                <ContextMenu Opened="ContextMenu_Opened">
+                    <MenuItem x:Name="SuspendResumeMenuItem" Header="Suspend" Click="SuspendResume_Click"/>
                     <MenuItem Header="End Task" Click="EndTask_Click"/>
                 </ContextMenu>
             </DataGrid.ContextMenu>

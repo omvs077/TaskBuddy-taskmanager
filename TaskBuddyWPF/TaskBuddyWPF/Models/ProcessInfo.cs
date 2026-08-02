@@ -33,5 +33,14 @@ namespace TaskBuddyWPF.Models
             get => _cpuPercent;
             set { if (_cpuPercent != value) { _cpuPercent = value; Notify(nameof(CpuPercent)); } }
         }
+
+        private bool _isSuspended;
+        public bool IsSuspended
+        {
+            get => _isSuspended;
+            set { if (_isSuspended != value) { _isSuspended = value; Notify(nameof(IsSuspended)); Notify(nameof(StatusText)); } }
+        }
+
+        public string StatusText => IsSuspended ? "Suspended" : "Running";
     }
 }

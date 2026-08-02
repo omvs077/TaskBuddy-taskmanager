@@ -50,6 +50,7 @@ namespace TaskBuddyWPF.Native
         internal const uint STATUS_INFO_LENGTH_MISMATCH = 0xC0000004;
         internal const uint PROCESS_QUERY_LIMITED_INFORMATION = 0x1000;
         internal const uint PROCESS_TERMINATE = 0x0001;
+        internal const uint PROCESS_SUSPEND_RESUME = 0x0800;
 
         [DllImport("ntdll.dll")]
         internal static extern uint NtQuerySystemInformation(
@@ -68,6 +69,12 @@ namespace TaskBuddyWPF.Native
         [DllImport("kernel32.dll", SetLastError = true)]
         [return: MarshalAs(UnmanagedType.Bool)]
         internal static extern bool TerminateProcess(IntPtr hProcess, uint uExitCode);
+
+        [DllImport("ntdll.dll")]
+        internal static extern uint NtSuspendProcess(IntPtr processHandle);
+
+        [DllImport("ntdll.dll")]
+        internal static extern uint NtResumeProcess(IntPtr processHandle);
 
         [DllImport("kernel32.dll", SetLastError = true, CharSet = CharSet.Unicode)]
         [return: MarshalAs(UnmanagedType.Bool)]

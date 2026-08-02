@@ -11,6 +11,7 @@ namespace TaskBuddyWPF.Services
     {
         private readonly Dictionary<uint, (long cpuTime, DateTime timestamp)> _cpuCache = new();
         private readonly Dictionary<uint, string> _pathCache = new();
+        private readonly HashSet<uint> _suspendedByUs = new();
         private readonly int _coreCount = Environment.ProcessorCount;
 
         public List<ProcessInfo> GetSnapshot()
@@ -81,7 +82,8 @@ namespace TaskBuddyWPF.Services
                         CpuTime100ns = cpuTime,
                         CpuPercent = Math.Max(0, cpuPercent),
                         ImageName = imageName ?? string.Empty,
-                        ImagePath = imagePath
+                        ImagePath = imagePath,
+                        IsSuspended = _suspendedByUs.Contains(pid)
                     });
 
                     if (entry.NextEntryOffset == 0) break;
@@ -140,10 +142,55 @@ namespace TaskBuddyWPF.Services
             }
         }
 
+        public bool SuspendProcess(uint pid)
+        {
+            IntPtr hProcess = NativeMethods.OpenProcess(NativeMethods.PROCESS_SUSPEND_RESUME, false, pid);
+            if (hProcess == IntPtr.Zero)
+                return false;
+
+            try
+            {
+                uint status = NativeMethods.NtSuspendProcess(hProcess);
+                if (status == 0)
+                {
+                    _suspendedByUs.Add(pid);
+                    return true;
+                }
+                return false;
+            }
+            finally
+            {
+                NativeMethods.CloseHandle(hProcess);
+            }
+        }
+
+        public bool ResumeProcess(uint pid)
+        {
+            IntPtr hProcess = NativeMethods.OpenProcess(NativeMethods.PROCESS_SUSPEND_RESUME, false, pid);
+            if (hProcess == IntPtr.Zero)
+                return false;
+
+            try
+            {
+                uint status = NativeMethods.NtResumeProcess(hProcess);
+                if (status == 0)
+                {
+                    _suspendedByUs.Remove(pid);
+                    return true;
+                }
+                return false;
+            }
+            finally
+            {
+                NativeMethods.CloseHandle(hProcess);
+            }
+        }
+
         private void PruneStale(HashSet<uint> seenPids)
         {
             PruneDict(_cpuCache, seenPids);
             PruneDict(_pathCache, seenPids);
+            _suspendedByUs.RemoveWhere(pid => !seenPids.Contains(pid));
         }
 
         private static void PruneDict<T>(Dictionary<uint, T> dict, HashSet<uint> seenPids)
