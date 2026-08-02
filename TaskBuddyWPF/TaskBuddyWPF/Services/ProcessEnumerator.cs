@@ -64,6 +64,13 @@ namespace TaskBuddyWPF.Services
                     }
                     _cpuCache[pid] = (cpuTime, now);
 
+                    if (pid == 0)
+                    {
+                        if (entry.NextEntryOffset == 0) break;
+                        current = IntPtr.Add(current, (int)entry.NextEntryOffset);
+                        continue;
+                    }
+
                     string imagePath = ResolveImagePath(pid);
 
                     results.Add(new ProcessInfo
