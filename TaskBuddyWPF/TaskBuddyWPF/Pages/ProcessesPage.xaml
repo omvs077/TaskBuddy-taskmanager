@@ -9,6 +9,7 @@
                   CanUserAddRows="False"
                   CanUserDeleteRows="False"
                   GridLinesVisibility="None"
+                  PreviewMouseRightButtonDown="ProcessGrid_PreviewMouseRightButtonDown"
                   Margin="12">
             <DataGrid.Columns>
                 <DataGridTextColumn Header="Name" Binding="{Binding ImageName}" Width="2*"/>
@@ -16,6 +17,11 @@
                 <DataGridTextColumn Header="CPU %" Binding="{Binding CpuPercent, StringFormat={}{0:F1}}" Width="*"/>
                 <DataGridTextColumn Header="Memory (MB)" Binding="{Binding WorkingSetBytes, Converter={StaticResource BytesToMbConverter}}" Width="*"/>
             </DataGrid.Columns>
+            <DataGrid.ContextMenu>
+                <ContextMenu>
+                    <MenuItem Header="End Task" Click="EndTask_Click"/>
+                </ContextMenu>
+            </DataGrid.ContextMenu>
         </DataGrid>
     </Grid>
 </Page>

@@ -124,6 +124,22 @@ namespace TaskBuddyWPF.Services
             }
         }
 
+        public bool TerminateProcess(uint pid)
+        {
+            IntPtr hProcess = NativeMethods.OpenProcess(NativeMethods.PROCESS_TERMINATE, false, pid);
+            if (hProcess == IntPtr.Zero)
+                return false;
+
+            try
+            {
+                return NativeMethods.TerminateProcess(hProcess, 1);
+            }
+            finally
+            {
+                NativeMethods.CloseHandle(hProcess);
+            }
+        }
+
         private void PruneStale(HashSet<uint> seenPids)
         {
             PruneDict(_cpuCache, seenPids);
