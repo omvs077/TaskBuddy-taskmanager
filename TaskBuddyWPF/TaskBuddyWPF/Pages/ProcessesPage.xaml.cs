@@ -1,14 +1,16 @@
 ﻿using System;
 using System.ComponentModel;
-using System.Windows.Media;
 using System.Windows.Data;
+using System.Windows.Media;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Diagnostics;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Threading;
+using TaskBuddyWPF.Dialogs;
 using TaskBuddyWPF.Models;
 using TaskBuddyWPF.Services;
 
@@ -24,8 +26,8 @@ namespace TaskBuddyWPF.Pages
         public ProcessesPage()
         {
             InitializeComponent();
-            SizeChanged += ProcessesPage_SizeChanged;
             ProcessGrid.ItemsSource = _processes;
+            SizeChanged += ProcessesPage_SizeChanged;
 
             var view = (ListCollectionView)CollectionViewSource.GetDefaultView(_processes);
             view.Filter = FilterProcess;
@@ -137,6 +139,51 @@ namespace TaskBuddyWPF.Pages
             }
 
             await RefreshAsync();
+        }
+
+        private void RunNewTask_Click(object sender, RoutedEventArgs e)
+        {
+            var dialog = new RunTaskDialog { Owner = Window.GetWindow(this) };
+            if (dialog.ShowDialog() == true && !string.IsNullOrWhiteSpace(dialog.SelectedPath))
+            {
+                try
+                {
+                    Process.Start(new ProcessStartInfo(dialog.SelectedPath) { UseShellExecute = true });
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show($"Could not start '{dialog.SelectedPath}':\n{ex.Message}",
+                        "TaskBuddy", MessageBoxButton.OK, MessageBoxImage.Warning);
+                }
+            }
+        }
+
+        private void OpenFileLocation_Click(object sender, RoutedEventArgs e)
+        {
+            if (ProcessGrid.SelectedItem is not ProcessInfo selected || string.IsNullOrEmpty(selected.ImagePath))
+            {
+                MessageBox.Show("File location is not available for this process.",
+                    "TaskBuddy", MessageBoxButton.OK, MessageBoxImage.Information);
+                return;
+            }
+
+            try
+            {
+                Process.Start(new ProcessStartInfo("explorer.exe", $"/select,\"{selected.ImagePath}\"") { UseShellExecute = true });
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Could not open file location:\n{ex.Message}",
+                    "TaskBuddy", MessageBoxButton.OK, MessageBoxImage.Warning);
+            }
+        }
+
+        private void CopyPid_Click(object sender, RoutedEventArgs e)
+        {
+            if (ProcessGrid.SelectedItem is not ProcessInfo selected)
+                return;
+
+            Clipboard.SetText(selected.Pid.ToString());
         }
 
         private bool FilterProcess(object obj)

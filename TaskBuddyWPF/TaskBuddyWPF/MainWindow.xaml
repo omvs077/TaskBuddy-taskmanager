@@ -15,7 +15,7 @@
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
-        <ui:TitleBar x:Name="AppTitleBar" Grid.Row="0" Title="TaskBuddy" Icon="{ui:ImageIcon 'pack://application:,,,/TaskBuddy.ico', Height=24}"/>
+        <ui:TitleBar x:Name="AppTitleBar" Grid.Row="0" Title="TaskBuddy" Icon="{ui:ImageIcon 'pack://application:,,,/TaskBuddy.ico', Width=16, Height=16}"/>
         <ui:NavigationView x:Name="RootNav" Grid.Row="1"
                             OpenPaneLength="220"
                             PaneDisplayMode="Left"

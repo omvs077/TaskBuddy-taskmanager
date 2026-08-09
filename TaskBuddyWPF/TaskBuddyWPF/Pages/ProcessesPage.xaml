@@ -9,31 +9,36 @@
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
 
-        <Grid Grid.Row="0" HorizontalAlignment="Left" Width="260" Margin="0,0,0,10">
-            <Border Background="#22FFFFFF" CornerRadius="4" BorderBrush="#33FFFFFF" BorderThickness="1">
-                <Grid>
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="Auto"/>
-                        <ColumnDefinition Width="*"/>
-                    </Grid.ColumnDefinitions>
-                    <TextBlock Grid.Column="0" Text="&#xE721;" FontFamily="Segoe MDL2 Assets"
-                               Foreground="#99FFFFFF" VerticalAlignment="Center" Margin="8,0,4,0" FontSize="14"/>
-                    <Grid Grid.Column="1">
-                        <TextBox x:Name="SearchBox"
-                                 Background="Transparent"
-                                 BorderThickness="0"
-                                 Padding="0,6,8,6"
-                                 Foreground="White"
-                                 CaretBrush="White"
-                                 VerticalContentAlignment="Center"
-                                 TextChanged="SearchBox_TextChanged"/>
-                        <TextBlock x:Name="SearchPlaceholder" Text="Search processes..."
-                                   Foreground="#66FFFFFF" VerticalAlignment="Center"
-                                   Margin="2,0,0,0" IsHitTestVisible="False"/>
+        <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,10">
+            <Grid Width="260">
+                <Border Background="#22FFFFFF" CornerRadius="4" BorderBrush="#33FFFFFF" BorderThickness="1">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Grid.Column="0" Text="&#xE721;" FontFamily="Segoe MDL2 Assets"
+                                   Foreground="#99FFFFFF" VerticalAlignment="Center" Margin="8,0,4,0" FontSize="14"/>
+                        <Grid Grid.Column="1">
+                            <TextBox x:Name="SearchBox"
+                                     Background="Transparent"
+                                     BorderThickness="0"
+                                     Padding="0,6,8,6"
+                                     Foreground="White"
+                                     CaretBrush="White"
+                                     VerticalContentAlignment="Center"
+                                     TextChanged="SearchBox_TextChanged"/>
+                            <TextBlock x:Name="SearchPlaceholder" Text="Search processes..."
+                                       Foreground="#66FFFFFF" VerticalAlignment="Center"
+                                       Margin="2,0,0,0" IsHitTestVisible="False"/>
+                        </Grid>
                     </Grid>
-                </Grid>
-            </Border>
-        </Grid>
+                </Border>
+            </Grid>
+
+            <Button Content="Run new task" Margin="10,0,0,0" Padding="10,6" Click="RunNewTask_Click"/>
+            <Button Content="End task" Margin="8,0,0,0" Padding="10,6" Click="EndTask_Click"/>
+        </StackPanel>
 
         <DataGrid x:Name="ProcessGrid"
                   Grid.Row="1"
@@ -82,6 +87,9 @@
                 <ContextMenu Opened="ContextMenu_Opened">
                     <MenuItem x:Name="SuspendResumeMenuItem" Header="Suspend" Click="SuspendResume_Click"/>
                     <MenuItem Header="End Task" Click="EndTask_Click"/>
+                    <Separator/>
+                    <MenuItem Header="Open File Location" Click="OpenFileLocation_Click"/>
+                    <MenuItem Header="Copy PID" Click="CopyPid_Click"/>
                 </ContextMenu>
             </DataGrid.ContextMenu>
         </DataGrid>
