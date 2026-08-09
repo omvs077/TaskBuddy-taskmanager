@@ -1,4 +1,6 @@
-﻿using Wpf.Ui.Controls;
+﻿using System.Windows;
+using TaskBuddyWPF.Pages;
+using Wpf.Ui.Controls;
 
 namespace TaskBuddyWPF
 {
@@ -7,6 +9,11 @@ namespace TaskBuddyWPF
         public MainWindow()
         {
             InitializeComponent();
+        }
+
+        private void RootNav_Loaded(object sender, RoutedEventArgs e)
+        {
+            RootNav.Navigate(typeof(ProcessesPage));
         }
     }
 }

@@ -223,6 +223,9 @@ namespace TaskBuddyWPF.Pages
         private void UpdatePinnedHeight()
         {
             var scrollViewer = FindAncestorScrollViewer(this);
+            if (scrollViewer == null) return;
+
+            scrollViewer.VerticalScrollBarVisibility = ScrollBarVisibility.Hidden;
             if (scrollViewer != null && scrollViewer.ActualHeight > 0)
                 RootGrid.Height = scrollViewer.ActualHeight;
         }

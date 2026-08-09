@@ -166,14 +166,13 @@ namespace TaskBuddyWPF.Services
             {
                 if (_defaultIcon == null)
                 {
-                    var drawing = new GeometryDrawing
-                    {
-                        Brush = new SolidColorBrush(Color.FromRgb(120, 120, 120)),
-                        Geometry = new RectangleGeometry(new Rect(1, 1, 14, 14), 3, 3)
-                    };
-                    var image = new DrawingImage(drawing);
-                    image.Freeze();
-                    _defaultIcon = image;
+                    var bitmap = new BitmapImage();
+                    bitmap.BeginInit();
+                    bitmap.UriSource = new Uri("pack://application:,,,/DefaultProcessIcon.png");
+                    bitmap.CacheOption = BitmapCacheOption.OnLoad;
+                    bitmap.EndInit();
+                    bitmap.Freeze();
+                    _defaultIcon = bitmap;
                 }
                 return _defaultIcon;
             }

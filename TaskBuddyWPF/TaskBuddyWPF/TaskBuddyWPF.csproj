@@ -15,6 +15,7 @@
 
   <ItemGroup>
     <Resource Include="TaskBuddy.ico" />
+    <Resource Include="DefaultProcessIcon.png" />
   </ItemGroup>
 
 </Project>
