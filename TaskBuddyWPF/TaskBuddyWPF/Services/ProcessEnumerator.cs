@@ -2,6 +2,10 @@
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
 using System.Text;
+using System.Windows;
+using System.Windows.Interop;
+using System.Windows.Media;
+using System.Windows.Media.Imaging;
 using TaskBuddyWPF.Models;
 using TaskBuddyWPF.Native;
 
@@ -11,6 +15,8 @@ namespace TaskBuddyWPF.Services
     {
         private readonly Dictionary<uint, (long cpuTime, DateTime timestamp)> _cpuCache = new();
         private readonly Dictionary<uint, string> _pathCache = new();
+        private readonly Dictionary<uint, (ulong totalBytes, DateTime timestamp)> _ioCache = new();
+        private readonly Dictionary<string, ImageSource> _iconCache = new();
         private readonly HashSet<uint> _suspendedByUs = new();
         private readonly int _coreCount = Environment.ProcessorCount;
 
@@ -72,7 +78,7 @@ namespace TaskBuddyWPF.Services
                         continue;
                     }
 
-                    string imagePath = ResolveImagePath(pid);
+                    var (imagePath, diskBytesPerSec, icon) = ResolveProcessDetails(pid, now);
 
                     results.Add(new ProcessInfo
                     {
@@ -83,7 +89,9 @@ namespace TaskBuddyWPF.Services
                         CpuPercent = Math.Max(0, cpuPercent),
                         ImageName = imageName ?? string.Empty,
                         ImagePath = imagePath,
-                        IsSuspended = _suspendedByUs.Contains(pid)
+                        IsSuspended = _suspendedByUs.Contains(pid),
+                        DiskBytesPerSec = diskBytesPerSec,
+                        Icon = icon
                     });
 
                     if (entry.NextEntryOffset == 0) break;
@@ -99,30 +107,102 @@ namespace TaskBuddyWPF.Services
             return results;
         }
 
-        private string ResolveImagePath(uint pid)
+        // Opens one handle per process (PROCESS_QUERY_LIMITED_INFORMATION is sufficient
+        // for path resolution + I/O counters, avoiding a second OpenProcess call).
+        private (string path, double diskBytesPerSec, ImageSource? icon) ResolveProcessDetails(uint pid, DateTime now)
         {
-            if (_pathCache.TryGetValue(pid, out var cached))
-                return cached;
+            string path = _pathCache.TryGetValue(pid, out var cachedPath) ? cachedPath : string.Empty;
+            double diskBytesPerSec = 0.0;
 
             IntPtr hProcess = NativeMethods.OpenProcess(NativeMethods.PROCESS_QUERY_LIMITED_INFORMATION, false, pid);
             if (hProcess == IntPtr.Zero)
-                return string.Empty; // do NOT cache failures — retry next cycle
+                return (path, diskBytesPerSec, string.IsNullOrEmpty(path) ? DefaultIcon : ResolveIcon(path));
 
             try
             {
-                var sb = new StringBuilder(1024);
-                int size = sb.Capacity;
-                if (NativeMethods.QueryFullProcessImageNameW(hProcess, 0, sb, ref size))
+                if (string.IsNullOrEmpty(path))
                 {
-                    string path = sb.ToString();
-                    _pathCache[pid] = path; // only cache on success
-                    return path;
+                    var sb = new StringBuilder(1024);
+                    int size = sb.Capacity;
+                    if (NativeMethods.QueryFullProcessImageNameW(hProcess, 0, sb, ref size))
+                    {
+                        path = sb.ToString();
+                        _pathCache[pid] = path; // only cache on success
+                    }
                 }
-                return string.Empty;
+
+                ImageSource? icon = string.IsNullOrEmpty(path) ? DefaultIcon : ResolveIcon(path);
+
+                if (NativeMethods.GetProcessIoCounters(hProcess, out var io))
+                {
+                    ulong totalBytes = io.ReadTransferCount + io.WriteTransferCount;
+                    if (_ioCache.TryGetValue(pid, out var prevIo))
+                    {
+                        double elapsedSeconds = (now - prevIo.timestamp).TotalSeconds;
+                        if (elapsedSeconds > 0 && totalBytes >= prevIo.totalBytes)
+                            diskBytesPerSec = (totalBytes - prevIo.totalBytes) / elapsedSeconds;
+                    }
+                    _ioCache[pid] = (totalBytes, now);
+                }
+
+                return (path, diskBytesPerSec, icon);
             }
             finally
             {
                 NativeMethods.CloseHandle(hProcess);
+            }
+        }
+
+        // Icon cache keyed by path (not PID) — an exe's icon never changes, so this
+        // cache is never pruned; naturally bounded by the number of distinct exe paths seen.
+        // Runs on a background thread (see ProcessesPage.RefreshAsync); BitmapSource.Freeze()
+        // makes the result safe to hand to the UI thread for binding.
+        // Simple generic fallback (gray rounded square) for processes whose icon can't
+        // be extracted — drawn in code, no bundled asset needed. Computed once, reused.
+        private static ImageSource? _defaultIcon;
+        private static ImageSource? DefaultIcon
+        {
+            get
+            {
+                if (_defaultIcon == null)
+                {
+                    var drawing = new GeometryDrawing
+                    {
+                        Brush = new SolidColorBrush(Color.FromRgb(120, 120, 120)),
+                        Geometry = new RectangleGeometry(new Rect(1, 1, 14, 14), 3, 3)
+                    };
+                    var image = new DrawingImage(drawing);
+                    image.Freeze();
+                    _defaultIcon = image;
+                }
+                return _defaultIcon;
+            }
+        }
+
+        private ImageSource? ResolveIcon(string path)
+        {
+            if (_iconCache.TryGetValue(path, out var cached))
+                return cached;
+
+            var shfi = new SHFILEINFO();
+            IntPtr result = NativeMethods.SHGetFileInfo(path, 0, ref shfi, (uint)Marshal.SizeOf(shfi), NativeMethods.SHGFI_ICON | NativeMethods.SHGFI_SMALLICON);
+            if (result == IntPtr.Zero || shfi.hIcon == IntPtr.Zero)
+                return DefaultIcon;
+
+            try
+            {
+                var bitmapSource = Imaging.CreateBitmapSourceFromHIcon(shfi.hIcon, Int32Rect.Empty, BitmapSizeOptions.FromEmptyOptions());
+                bitmapSource.Freeze();
+                _iconCache[path] = bitmapSource;
+                return bitmapSource;
+            }
+            catch
+            {
+                return DefaultIcon; // some paths (protected/system) can throw on icon extraction — non-fatal
+            }
+            finally
+            {
+                NativeMethods.DestroyIcon(shfi.hIcon);
             }
         }
 
@@ -190,6 +270,7 @@ namespace TaskBuddyWPF.Services
         {
             PruneDict(_cpuCache, seenPids);
             PruneDict(_pathCache, seenPids);
+            PruneDict(_ioCache, seenPids);
             _suspendedByUs.RemoveWhere(pid => !seenPids.Contains(pid));
         }
 

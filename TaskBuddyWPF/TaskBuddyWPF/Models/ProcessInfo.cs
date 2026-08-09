@@ -1,4 +1,5 @@
 ﻿using System.ComponentModel;
+using System.Windows.Media;
 
 namespace TaskBuddyWPF.Models
 {
@@ -12,6 +13,7 @@ namespace TaskBuddyWPF.Models
         public uint ParentPid { get; set; }
         public string ImageName { get; set; } = string.Empty;
         public string ImagePath { get; set; } = string.Empty;
+        public ImageSource? Icon { get; set; }
 
         private ulong _workingSetBytes;
         public ulong WorkingSetBytes
@@ -42,5 +44,12 @@ namespace TaskBuddyWPF.Models
         }
 
         public string StatusText => IsSuspended ? "Suspended" : "Running";
+
+        private double _diskBytesPerSec;
+        public double DiskBytesPerSec
+        {
+            get => _diskBytesPerSec;
+            set { if (_diskBytesPerSec != value) { _diskBytesPerSec = value; Notify(nameof(DiskBytesPerSec)); } }
+        }
     }
 }

@@ -1,4 +1,6 @@
 ﻿using System;
+using System.ComponentModel;
+using System.Windows.Media;
 using System.Windows.Data;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
@@ -22,8 +24,15 @@ namespace TaskBuddyWPF.Pages
         public ProcessesPage()
         {
             InitializeComponent();
+            SizeChanged += ProcessesPage_SizeChanged;
             ProcessGrid.ItemsSource = _processes;
-            CollectionViewSource.GetDefaultView(_processes).Filter = FilterProcess;
+
+            var view = (ListCollectionView)CollectionViewSource.GetDefaultView(_processes);
+            view.Filter = FilterProcess;
+            view.SortDescriptions.Add(new SortDescription(nameof(ProcessInfo.WorkingSetBytes), ListSortDirection.Descending));
+            view.IsLiveSorting = true;
+            view.LiveSortingProperties.Add(nameof(ProcessInfo.WorkingSetBytes));
+            view.LiveSortingProperties.Add(nameof(ProcessInfo.CpuPercent));
 
             _timer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(1) };
             _timer.Tick += async (s, e) => await RefreshAsync();
@@ -73,6 +82,8 @@ namespace TaskBuddyWPF.Pages
                     current.WorkingSetBytes = fresh.WorkingSetBytes;
                     current.ImagePath = fresh.ImagePath;
                     current.IsSuspended = fresh.IsSuspended;
+                    current.DiskBytesPerSec = fresh.DiskBytesPerSec;
+                    current.Icon = fresh.Icon;
                 }
                 else
                 {
@@ -145,6 +156,40 @@ namespace TaskBuddyWPF.Pages
         {
             SearchPlaceholder.Visibility = string.IsNullOrEmpty(SearchBox.Text) ? Visibility.Visible : Visibility.Collapsed;
             CollectionViewSource.GetDefaultView(_processes).Refresh();
+        }
+
+        // WPF-UI's NavigationView wraps its Frame content in its own ScrollViewer that
+        // ignores the Page's row layout, letting the whole page scroll instead of just
+        // the DataGrid. Fix: pin RootGrid's height to that ScrollViewer's actual viewport
+        // size, so the ancestor ScrollViewer never has anything to scroll, and the
+        // DataGrid's own internal scrolling (with fixed headers) takes over naturally.
+        private void Page_Loaded(object sender, RoutedEventArgs e)
+        {
+            UpdatePinnedHeight();
+        }
+
+        private void ProcessesPage_SizeChanged(object sender, SizeChangedEventArgs e)
+        {
+            UpdatePinnedHeight();
+        }
+
+        private void UpdatePinnedHeight()
+        {
+            var scrollViewer = FindAncestorScrollViewer(this);
+            if (scrollViewer != null && scrollViewer.ActualHeight > 0)
+                RootGrid.Height = scrollViewer.ActualHeight;
+        }
+
+        private static ScrollViewer? FindAncestorScrollViewer(DependencyObject child)
+        {
+            DependencyObject? parent = VisualTreeHelper.GetParent(child);
+            while (parent != null)
+            {
+                if (parent is ScrollViewer sv)
+                    return sv;
+                parent = VisualTreeHelper.GetParent(parent);
+            }
+            return null;
         }
     }
 }

@@ -12,6 +12,10 @@
                 <ui:ControlsDictionary />
             </ResourceDictionary.MergedDictionaries>
             <conv:BytesToMbConverter x:Key="BytesToMbConverter"/>
+            <conv:BytesPerSecToMBpsConverter x:Key="BytesPerSecToMBpsConverter"/>
+            <conv:CpuHeatBrushConverter x:Key="CpuHeatBrushConverter"/>
+            <conv:MemoryHeatBrushConverter x:Key="MemoryHeatBrushConverter"/>
+            <conv:DiskHeatBrushConverter x:Key="DiskHeatBrushConverter"/>
         </ResourceDictionary>
     </Application.Resources>
 </Application>

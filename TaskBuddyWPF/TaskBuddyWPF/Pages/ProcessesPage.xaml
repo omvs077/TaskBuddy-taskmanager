@@ -1,8 +1,9 @@
 ﻿<Page x:Class="TaskBuddyWPF.Pages.ProcessesPage"
       xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
       xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-      Title="ProcessesPage">
-    <Grid Margin="12">
+      Title="ProcessesPage"
+      Loaded="Page_Loaded">
+    <Grid x:Name="RootGrid" Margin="12">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
@@ -43,11 +44,39 @@
                   GridLinesVisibility="None"
                   PreviewMouseRightButtonDown="ProcessGrid_PreviewMouseRightButtonDown">
             <DataGrid.Columns>
-                <DataGridTextColumn Header="Name" Binding="{Binding ImageName}" Width="2*"/>
+                <DataGridTemplateColumn Header="Name" Width="2*">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                <Image Source="{Binding Icon}" Width="16" Height="16" Margin="0,0,8,0"/>
+                                <TextBlock Text="{Binding ImageName}" VerticalAlignment="Center"/>
+                            </StackPanel>
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
                 <DataGridTextColumn Header="PID" Binding="{Binding Pid}" Width="*"/>
                 <DataGridTextColumn Header="Status" Binding="{Binding StatusText}" Width="*"/>
-                <DataGridTextColumn Header="CPU %" Binding="{Binding CpuPercent, StringFormat={}{0:F1}}" Width="*"/>
-                <DataGridTextColumn Header="Memory (MB)" Binding="{Binding WorkingSetBytes, Converter={StaticResource BytesToMbConverter}}" Width="*"/>
+                <DataGridTextColumn Header="CPU %" Binding="{Binding CpuPercent, StringFormat={}{0:F1}}" Width="*">
+                    <DataGridTextColumn.CellStyle>
+                        <Style TargetType="DataGridCell">
+                            <Setter Property="Background" Value="{Binding CpuPercent, Converter={StaticResource CpuHeatBrushConverter}}"/>
+                        </Style>
+                    </DataGridTextColumn.CellStyle>
+                </DataGridTextColumn>
+                <DataGridTextColumn Header="Memory (MB)" Binding="{Binding WorkingSetBytes, Converter={StaticResource BytesToMbConverter}}" Width="*">
+                    <DataGridTextColumn.CellStyle>
+                        <Style TargetType="DataGridCell">
+                            <Setter Property="Background" Value="{Binding WorkingSetBytes, Converter={StaticResource MemoryHeatBrushConverter}}"/>
+                        </Style>
+                    </DataGridTextColumn.CellStyle>
+                </DataGridTextColumn>
+                <DataGridTextColumn Header="Disk (MB/s)" Binding="{Binding DiskBytesPerSec, Converter={StaticResource BytesPerSecToMBpsConverter}}" Width="*">
+                    <DataGridTextColumn.CellStyle>
+                        <Style TargetType="DataGridCell">
+                            <Setter Property="Background" Value="{Binding DiskBytesPerSec, Converter={StaticResource DiskHeatBrushConverter}}"/>
+                        </Style>
+                    </DataGridTextColumn.CellStyle>
+                </DataGridTextColumn>
             </DataGrid.Columns>
             <DataGrid.ContextMenu>
                 <ContextMenu Opened="ContextMenu_Opened">
