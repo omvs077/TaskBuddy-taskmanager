@@ -81,6 +81,13 @@ namespace TaskBuddyWPF.Native
         public ulong ullAvailExtendedVirtual;
     }
 
+    [StructLayout(LayoutKind.Explicit)]
+    internal struct PDH_FMT_COUNTERVALUE
+    {
+        [FieldOffset(0)] public int CStatus;
+        [FieldOffset(8)] public double doubleValue;
+    }
+
     internal static class NativeMethods
     {
         internal const int SystemProcessInformation = 5;
@@ -133,5 +140,26 @@ namespace TaskBuddyWPF.Native
         [DllImport("kernel32.dll", SetLastError = true)]
         [return: MarshalAs(UnmanagedType.Bool)]
         internal static extern bool GlobalMemoryStatusEx(ref MEMORYSTATUSEX lpBuffer);
+
+        [DllImport("kernel32.dll", SetLastError = true)]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        internal static extern bool GetSystemTimes(out System.Runtime.InteropServices.ComTypes.FILETIME lpIdleTime, out System.Runtime.InteropServices.ComTypes.FILETIME lpKernelTime, out System.Runtime.InteropServices.ComTypes.FILETIME lpUserTime);
+
+        internal const uint PDH_FMT_DOUBLE = 0x00000200;
+
+        [DllImport("pdh.dll", CharSet = CharSet.Unicode)]
+        internal static extern uint PdhOpenQuery(string? szDataSource, IntPtr dwUserData, out IntPtr phQuery);
+
+        [DllImport("pdh.dll", CharSet = CharSet.Unicode)]
+        internal static extern uint PdhAddEnglishCounter(IntPtr hQuery, string szFullCounterPath, IntPtr dwUserData, out IntPtr phCounter);
+
+        [DllImport("pdh.dll")]
+        internal static extern uint PdhCollectQueryData(IntPtr hQuery);
+
+        [DllImport("pdh.dll")]
+        internal static extern uint PdhGetFormattedCounterValue(IntPtr hCounter, uint dwFormat, IntPtr lpdwType, out PDH_FMT_COUNTERVALUE pValue);
+
+        [DllImport("pdh.dll")]
+        internal static extern uint PdhCloseQuery(IntPtr hQuery);
     }
 }
