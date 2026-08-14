@@ -29,7 +29,7 @@
                 <ui:NavigationViewItem Content="Processes" TargetPageType="{x:Type Pages:ProcessesPage}" Icon="{ui:SymbolIcon Apps24}"/>
                 <ui:NavigationViewItem Content="Performance" TargetPageType="{x:Type Pages:PerformancePage}" Icon="{ui:SymbolIcon DataTrending24}"/>
                 <ui:NavigationViewItem Content="App History" TargetPageType="{x:Type Pages:AppHistoryPage}" Icon="{ui:SymbolIcon History24}"/>
-                <ui:NavigationViewItem Content="Startup Apps" TargetPageType="{x:Type Pages:StartupPage}" Icon="{ui:SymbolIcon Rocket24}"/>
+                <ui:NavigationViewItem Content="Startup Apps" TargetPageType="{x:Type Pages:StartupAppsPage}" Icon="{ui:SymbolIcon Rocket24}"/>
                 <ui:NavigationViewItem Content="Users" TargetPageType="{x:Type Pages:UsersPage}" Icon="{ui:SymbolIcon People24}"/>
                 <ui:NavigationViewItem Content="Details" TargetPageType="{x:Type Pages:DetailsPage}" Icon="{ui:SymbolIcon List24}"/>
                 <ui:NavigationViewItem Content="Services" TargetPageType="{x:Type Pages:ServicesPage}" Icon="{ui:SymbolIcon Settings24}"/>
