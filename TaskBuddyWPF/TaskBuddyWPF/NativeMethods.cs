@@ -254,5 +254,17 @@ namespace TaskBuddyWPF.Native
         [DllImport("advapi32.dll", CharSet = CharSet.Unicode, SetLastError = true)]
         [return: MarshalAs(UnmanagedType.Bool)]
         internal static extern bool LookupAccountSid(string? lpSystemName, IntPtr Sid, System.Text.StringBuilder lpName, ref uint cchName, System.Text.StringBuilder lpReferencedDomainName, ref uint cchReferencedDomainName, out int peUse);
+
+        internal const int TokenVirtualizationEnabled = 24;
+
+        internal const ushort IMAGE_FILE_MACHINE_UNKNOWN = 0x0000;
+        internal const ushort IMAGE_FILE_MACHINE_I386 = 0x014c;
+        internal const ushort IMAGE_FILE_MACHINE_ARM = 0x01c0;
+        internal const ushort IMAGE_FILE_MACHINE_AMD64 = 0x8664;
+        internal const ushort IMAGE_FILE_MACHINE_ARM64 = 0xAA64;
+
+        [DllImport("kernel32.dll", SetLastError = true)]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        internal static extern bool IsWow64Process2(IntPtr hProcess, out ushort processMachine, out ushort nativeMachine);
     }
 }
