@@ -38,6 +38,20 @@
 
             <Button Content="Run new task" Margin="10,0,0,0" Padding="10,6" Click="RunNewTask_Click"/>
             <Button Content="End task" Margin="8,0,0,0" Padding="10,6" Click="EndTask_Click"/>
+
+            <Button x:Name="ColumnsButton" Content="Columns" Margin="8,0,0,0" Padding="10,6" Click="ColumnsButton_Click"/>
+            <Popup x:Name="ColumnsPopup" PlacementTarget="{Binding ElementName=ColumnsButton}"
+                   Placement="Bottom" StaysOpen="False">
+                <Border Background="#FF2B2B2B" BorderBrush="#33FFFFFF" BorderThickness="1" CornerRadius="4" Padding="10">
+                    <StackPanel>
+                        <CheckBox x:Name="ColPidCheck" Content="PID" IsChecked="True" Margin="0,4" Checked="ColumnCheck_Changed" Unchecked="ColumnCheck_Changed"/>
+                        <CheckBox x:Name="ColStatusCheck" Content="Status" IsChecked="True" Margin="0,4" Checked="ColumnCheck_Changed" Unchecked="ColumnCheck_Changed"/>
+                        <CheckBox x:Name="ColCpuCheck" Content="CPU %" IsChecked="True" Margin="0,4" Checked="ColumnCheck_Changed" Unchecked="ColumnCheck_Changed"/>
+                        <CheckBox x:Name="ColMemoryCheck" Content="Memory (MB)" IsChecked="True" Margin="0,4" Checked="ColumnCheck_Changed" Unchecked="ColumnCheck_Changed"/>
+                        <CheckBox x:Name="ColDiskCheck" Content="Disk (MB/s)" IsChecked="True" Margin="0,4" Checked="ColumnCheck_Changed" Unchecked="ColumnCheck_Changed"/>
+                    </StackPanel>
+                </Border>
+            </Popup>
         </StackPanel>
 
         <DataGrid x:Name="ProcessGrid"
@@ -59,23 +73,23 @@
                         </DataTemplate>
                     </DataGridTemplateColumn.CellTemplate>
                 </DataGridTemplateColumn>
-                <DataGridTextColumn Header="PID" Binding="{Binding Pid}" Width="*"/>
-                <DataGridTextColumn Header="Status" Binding="{Binding StatusText}" Width="*"/>
-                <DataGridTextColumn Header="CPU %" Binding="{Binding CpuPercent, StringFormat={}{0:F1}}" Width="*">
+                <DataGridTextColumn x:Name="PidColumn" Header="PID" Binding="{Binding Pid}" Width="*"/>
+                <DataGridTextColumn x:Name="StatusColumn" Header="Status" Binding="{Binding StatusText}" Width="*"/>
+                <DataGridTextColumn x:Name="CpuColumn" Header="CPU %" Binding="{Binding CpuPercent, StringFormat={}{0:F1}}" Width="*">
                     <DataGridTextColumn.CellStyle>
                         <Style TargetType="DataGridCell">
                             <Setter Property="Background" Value="{Binding CpuPercent, Converter={StaticResource CpuHeatBrushConverter}}"/>
                         </Style>
                     </DataGridTextColumn.CellStyle>
                 </DataGridTextColumn>
-                <DataGridTextColumn Header="Memory (MB)" Binding="{Binding WorkingSetBytes, Converter={StaticResource BytesToMbConverter}}" Width="*">
+                <DataGridTextColumn x:Name="MemoryColumn" Header="Memory (MB)" Binding="{Binding WorkingSetBytes, Converter={StaticResource BytesToMbConverter}}" Width="*">
                     <DataGridTextColumn.CellStyle>
                         <Style TargetType="DataGridCell">
                             <Setter Property="Background" Value="{Binding WorkingSetBytes, Converter={StaticResource MemoryHeatBrushConverter}}"/>
                         </Style>
                     </DataGridTextColumn.CellStyle>
                 </DataGridTextColumn>
-                <DataGridTextColumn Header="Disk (MB/s)" Binding="{Binding DiskBytesPerSec, Converter={StaticResource BytesPerSecToMBpsConverter}}" Width="*">
+                <DataGridTextColumn x:Name="DiskColumn" Header="Disk (MB/s)" Binding="{Binding DiskBytesPerSec, Converter={StaticResource BytesPerSecToMBpsConverter}}" Width="*">
                     <DataGridTextColumn.CellStyle>
                         <Style TargetType="DataGridCell">
                             <Setter Property="Background" Value="{Binding DiskBytesPerSec, Converter={StaticResource DiskHeatBrushConverter}}"/>

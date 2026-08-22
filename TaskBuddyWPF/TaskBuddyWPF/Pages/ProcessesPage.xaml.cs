@@ -22,6 +22,8 @@ namespace TaskBuddyWPF.Pages
         private readonly ObservableCollection<ProcessInfo> _processes = new();
         private readonly DispatcherTimer _timer;
         private bool _isRefreshing;
+        private bool _isApplyingLoadedLayout;
+        private bool _pageInitialized;
 
         public ProcessesPage()
         {
@@ -40,6 +42,8 @@ namespace TaskBuddyWPF.Pages
             _timer.Tick += async (s, e) => await RefreshAsync();
             _timer.Start();
 
+            LoadColumnLayout();
+            _pageInitialized = true;
             _ = RefreshAsync();
         }
 
@@ -203,6 +207,58 @@ namespace TaskBuddyWPF.Pages
         {
             SearchPlaceholder.Visibility = string.IsNullOrEmpty(SearchBox.Text) ? Visibility.Visible : Visibility.Collapsed;
             CollectionViewSource.GetDefaultView(_processes).Refresh();
+        }
+
+        // --- Column visibility (Milestone 6.1) ---
+
+        private void ColumnsButton_Click(object sender, RoutedEventArgs e)
+        {
+            ColumnsPopup.IsOpen = !ColumnsPopup.IsOpen;
+        }
+
+        private void ColumnCheck_Changed(object sender, RoutedEventArgs e)
+        {
+            if (!_pageInitialized || _isApplyingLoadedLayout) return; // guard against XAML's IsChecked="True" firing this during InitializeComponent, before named columns are assigned, and against re-saving while we're the ones setting checkbox state on load
+
+            PidColumn.Visibility = ColPidCheck.IsChecked == true ? Visibility.Visible : Visibility.Collapsed;
+            StatusColumn.Visibility = ColStatusCheck.IsChecked == true ? Visibility.Visible : Visibility.Collapsed;
+            CpuColumn.Visibility = ColCpuCheck.IsChecked == true ? Visibility.Visible : Visibility.Collapsed;
+            MemoryColumn.Visibility = ColMemoryCheck.IsChecked == true ? Visibility.Visible : Visibility.Collapsed;
+            DiskColumn.Visibility = ColDiskCheck.IsChecked == true ? Visibility.Visible : Visibility.Collapsed;
+
+            SaveColumnLayout();
+        }
+
+        private void LoadColumnLayout()
+        {
+            var saved = LayoutSettingsHelper.LoadColumnVisibility();
+            if (saved.Count == 0) return; // no saved layout yet — keep all-visible defaults
+
+            _isApplyingLoadedLayout = true;
+            try
+            {
+                if (saved.TryGetValue("PID", out var pid)) { ColPidCheck.IsChecked = pid; PidColumn.Visibility = pid ? Visibility.Visible : Visibility.Collapsed; }
+                if (saved.TryGetValue("Status", out var status)) { ColStatusCheck.IsChecked = status; StatusColumn.Visibility = status ? Visibility.Visible : Visibility.Collapsed; }
+                if (saved.TryGetValue("CPU", out var cpu)) { ColCpuCheck.IsChecked = cpu; CpuColumn.Visibility = cpu ? Visibility.Visible : Visibility.Collapsed; }
+                if (saved.TryGetValue("Memory", out var mem)) { ColMemoryCheck.IsChecked = mem; MemoryColumn.Visibility = mem ? Visibility.Visible : Visibility.Collapsed; }
+                if (saved.TryGetValue("Disk", out var disk)) { ColDiskCheck.IsChecked = disk; DiskColumn.Visibility = disk ? Visibility.Visible : Visibility.Collapsed; }
+            }
+            finally
+            {
+                _isApplyingLoadedLayout = false;
+            }
+        }
+
+        private void SaveColumnLayout()
+        {
+            LayoutSettingsHelper.SaveColumnVisibility(new Dictionary<string, bool>
+            {
+                ["PID"] = ColPidCheck.IsChecked == true,
+                ["Status"] = ColStatusCheck.IsChecked == true,
+                ["CPU"] = ColCpuCheck.IsChecked == true,
+                ["Memory"] = ColMemoryCheck.IsChecked == true,
+                ["Disk"] = ColDiskCheck.IsChecked == true
+            });
         }
 
         // WPF-UI's NavigationView wraps its Frame content in its own ScrollViewer that
