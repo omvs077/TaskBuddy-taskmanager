@@ -239,5 +239,20 @@ namespace TaskBuddyWPF.Native
 
         [DllImport("pdh.dll")]
         internal static extern uint PdhCloseQuery(IntPtr hQuery);
+
+        internal const uint TOKEN_QUERY = 0x0008;
+        internal const int TokenUser = 1;
+
+        [DllImport("advapi32.dll", SetLastError = true)]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        internal static extern bool OpenProcessToken(IntPtr ProcessHandle, uint DesiredAccess, out IntPtr TokenHandle);
+
+        [DllImport("advapi32.dll", SetLastError = true)]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        internal static extern bool GetTokenInformation(IntPtr TokenHandle, int TokenInformationClass, IntPtr TokenInformation, int TokenInformationLength, out int ReturnLength);
+
+        [DllImport("advapi32.dll", CharSet = CharSet.Unicode, SetLastError = true)]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        internal static extern bool LookupAccountSid(string? lpSystemName, IntPtr Sid, System.Text.StringBuilder lpName, ref uint cchName, System.Text.StringBuilder lpReferencedDomainName, ref uint cchReferencedDomainName, out int peUse);
     }
 }
