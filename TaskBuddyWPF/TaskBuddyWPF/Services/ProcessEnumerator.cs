@@ -20,6 +20,9 @@ namespace TaskBuddyWPF.Services
         private readonly HashSet<uint> _suspendedByUs = new();
         private readonly int _coreCount = Environment.ProcessorCount;
 
+        // Controlled by the Settings tab (default off, matches pre-existing behavior).
+        public bool IncludeIdleProcess { get; set; } = false;
+
         public List<ProcessInfo> GetSnapshot()
         {
             int bufferSize = 64 * 1024;
@@ -71,7 +74,7 @@ namespace TaskBuddyWPF.Services
                     }
                     _cpuCache[pid] = (cpuTime, now);
 
-                    if (pid == 0)
+                    if (pid == 0 && !IncludeIdleProcess)
                     {
                         if (entry.NextEntryOffset == 0) break;
                         current = IntPtr.Add(current, (int)entry.NextEntryOffset);

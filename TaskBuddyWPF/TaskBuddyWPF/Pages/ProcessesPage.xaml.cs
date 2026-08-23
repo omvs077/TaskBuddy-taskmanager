@@ -268,6 +268,7 @@ namespace TaskBuddyWPF.Pages
         // DataGrid's own internal scrolling (with fixed headers) takes over naturally.
         private void Page_Loaded(object sender, RoutedEventArgs e)
         {
+            _enumerator.IncludeIdleProcess = TaskBuddyWPF.Services.AppSettings.ShowIdleProcess;
             UpdatePinnedHeight();
         }
 
