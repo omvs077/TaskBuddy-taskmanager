@@ -53,10 +53,6 @@ namespace TaskBuddyWPF.Pages
             finally { _isRefreshing = false; }
         }
 
-        // Key is Source+Command (full path/task path) rather than Source+Name,
-        // since two entries (e.g. desktop.ini in two different Startup folders,
-        // or two differently-located apps with the same display name) can share
-        // a Name but never share a full Command path.
         private static string KeyOf(StartupAppInfo i) => i.Source + "|" + i.Command;
 
         private void ApplyDiff(List<StartupAppInfo> fresh)
@@ -107,12 +103,8 @@ namespace TaskBuddyWPF.Pages
                 switch (item.Source)
                 {
                     case StartupSource.RegistryRun:
-                        MessageBox.Show("Registry Run-key enable/disable requires writing the " +
-                            "StartupApproved binary flag format Windows itself uses. Not yet " +
-                            "implemented — flagging for a follow-up decision rather than doing " +
-                            "a partial/incorrect toggle.", "Not implemented",
-                            MessageBoxButton.OK, MessageBoxImage.Information);
-                        return;
+                        StartupApprovedHelper.SetRunEnabled(item.IsHkcu, item.Name, enabled);
+                        break;
                     case StartupSource.TaskScheduler:
                         using (var ts = new TaskService())
                         {
@@ -121,12 +113,20 @@ namespace TaskBuddyWPF.Pages
                         }
                         break;
                     case StartupSource.StartupFolder:
-                        MessageBox.Show("Startup-folder items are enabled/disabled by moving the " +
-                            "shortcut file; not yet implemented.", "Not implemented",
-                            MessageBoxButton.OK, MessageBoxImage.Information);
-                        return;
+                        // StartupApproved\StartupFolder is keyed by the shortcut's full
+                        // filename (with extension) — item.Command holds the full path.
+                        string fileName = System.IO.Path.GetFileName(item.Command);
+                        StartupApprovedHelper.SetStartupFolderEnabled(item.IsHkcu, fileName, enabled);
+                        break;
                 }
                 item.IsEnabled = enabled;
+            }
+            catch (UnauthorizedAccessException)
+            {
+                string scope = item.IsHkcu ? "current user" : "all users (HKLM)";
+                MessageBox.Show($"Access denied writing the startup state for this {scope} entry. " +
+                    (item.IsHkcu ? "" : "Machine-wide (HKLM) entries require running TaskBuddy as Administrator."),
+                    "Error", MessageBoxButton.OK, MessageBoxImage.Warning);
             }
             catch (Exception ex)
             {

@@ -15,6 +15,11 @@ namespace TaskBuddyWPF.Models
         public StartupImpact Impact { get; set; } = StartupImpact.NotMeasured;
         public ImageSource? Icon { get; set; }
 
+        // Only meaningful for Source == RegistryRun: which hive (HKCU vs HKLM) the
+        // Run-key entry lives in, needed to write the matching StartupApproved\Run
+        // key. HKLM entries typically need elevation to toggle; HKCU entries don't.
+        public bool IsHkcu { get; set; } = true;
+
         private bool _isEnabled;
         public bool IsEnabled
         {

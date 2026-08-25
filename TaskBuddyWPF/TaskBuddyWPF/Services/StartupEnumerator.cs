@@ -15,16 +15,16 @@ namespace TaskBuddyWPF.Services
         {
             var list = new List<StartupAppInfo>();
 
-            ReadRunKey(Registry.CurrentUser, list);
-            ReadRunKey(Registry.LocalMachine, list);
-            ReadStartupFolder(Environment.SpecialFolder.Startup, list);
-            ReadStartupFolder(Environment.SpecialFolder.CommonStartup, list);
+            ReadRunKey(Registry.CurrentUser, true, list);
+            ReadRunKey(Registry.LocalMachine, false, list);
+            ReadStartupFolder(Environment.SpecialFolder.Startup, true, list);
+            ReadStartupFolder(Environment.SpecialFolder.CommonStartup, false, list);
             ReadTaskScheduler(list);
 
             return list;
         }
 
-        private static void ReadRunKey(RegistryKey hive, List<StartupAppInfo> list)
+        private static void ReadRunKey(RegistryKey hive, bool isHkcu, List<StartupAppInfo> list)
         {
             using var key = hive.OpenSubKey(RunKeyPath);
             if (key == null) return;
@@ -36,14 +36,15 @@ namespace TaskBuddyWPF.Services
                     Name = name,
                     Command = cmd,
                     Source = StartupSource.RegistryRun,
-                    IsEnabled = true,
+                    IsHkcu = isHkcu,
+                    IsEnabled = StartupApprovedHelper.GetRunEnabled(isHkcu, name),
                     Impact = StartupImpact.NotMeasured,
                     Icon = IconHelper.ResolveIcon(IconHelper.ExtractExePath(cmd))
                 });
             }
         }
 
-        private static void ReadStartupFolder(Environment.SpecialFolder folder, List<StartupAppInfo> list)
+        private static void ReadStartupFolder(Environment.SpecialFolder folder, bool isHkcu, List<StartupAppInfo> list)
         {
             var path = Environment.GetFolderPath(folder);
             if (!Directory.Exists(path)) return;
@@ -59,10 +60,11 @@ namespace TaskBuddyWPF.Services
                     Name = name,
                     Command = file,
                     Source = StartupSource.StartupFolder,
-                    IsEnabled = true,
+                    IsHkcu = isHkcu,
+                    // StartupApproved\StartupFolder is keyed by the shortcut's full
+                    // filename (with extension), not the display name.
+                    IsEnabled = StartupApprovedHelper.GetStartupFolderEnabled(isHkcu, fileName),
                     Impact = StartupImpact.NotMeasured,
-                    // .lnk shortcuts: SHGetFileInfo resolves shell icons for .lnk directly
-                    // (shows the target's icon), so no shortcut-target resolution needed.
                     Icon = IconHelper.ResolveIcon(file)
                 });
             }
@@ -84,9 +86,6 @@ namespace TaskBuddyWPF.Services
                 }
                 if (!isLogonTrigger) continue;
 
-                // Task actions can reference a real exe (ExecAction.Path) — use it for an
-                // icon when available; otherwise fall back to the generic default rather
-                // than guessing from the task name.
                 string? exePath = null;
                 foreach (var action in task.Definition.Actions)
                 {
