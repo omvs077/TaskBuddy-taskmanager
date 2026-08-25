@@ -1,8 +1,37 @@
 ﻿<Page x:Class="TaskBuddyWPF.Pages.AppHistoryPage"
       xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
       xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-      Title="AppHistory">
-    <Grid>
-        <TextBlock Text="AppHistory - coming soon" FontSize="20" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+      xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+      Loaded="Page_Loaded" x:Name="RootPage">
+    <Grid x:Name="RootGrid" Margin="16">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,12">
+            <ui:TextBox x:Name="SearchBox" Width="240" PlaceholderText="Search apps"
+                        TextChanged="SearchBox_TextChanged"/>
+            <Button Content="Refresh" Margin="8,0,0,0" Padding="10,6" Click="RefreshButton_Click"/>
+            <TextBlock Text="Data from Windows' SRUM database (~30-60 days retained, updates hourly)"
+                       Margin="12,0,0,0" VerticalAlignment="Center" FontSize="11"
+                       Foreground="{DynamicResource TextFillColorSecondaryBrush}"/>
+        </StackPanel>
+
+        <Grid Grid.Row="1">
+            <DataGrid x:Name="HistoryGrid" AutoGenerateColumns="False"
+                      IsReadOnly="True" CanUserAddRows="False">
+                <DataGrid.Columns>
+                    <DataGridTextColumn Header="App" Binding="{Binding AppName}" Width="2*"/>
+                    <DataGridTextColumn Header="CPU Cycles" Binding="{Binding CpuCycles, StringFormat=N0}" Width="*"/>
+                    <DataGridTextColumn Header="Network" Binding="{Binding NetworkBytes, Converter={StaticResource BytesToMbConverter}}" Width="*"/>
+                    <DataGridTextColumn Header="Last Active" Binding="{Binding LastActive}" Width="1.5*"/>
+                    <DataGridTextColumn Header="Path" Binding="{Binding AppPath}" Width="3*"/>
+                </DataGrid.Columns>
+            </DataGrid>
+            <TextBlock x:Name="StatusText" HorizontalAlignment="Center" VerticalAlignment="Center"
+                       FontSize="14" TextWrapping="Wrap" MaxWidth="500"
+                       Foreground="{DynamicResource TextFillColorSecondaryBrush}" Visibility="Collapsed"/>
+        </Grid>
     </Grid>
 </Page>
