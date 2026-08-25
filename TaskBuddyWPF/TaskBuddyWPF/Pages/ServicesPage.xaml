@@ -48,7 +48,16 @@
                   GridLinesVisibility="None"
                   PreviewMouseRightButtonDown="ServiceGrid_PreviewMouseRightButtonDown">
             <DataGrid.Columns>
-                <DataGridTextColumn Header="Name" Binding="{Binding DisplayName}" Width="2.5*"/>
+                <DataGridTemplateColumn Header="Name" Width="2.5*">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                <Image Source="{Binding Icon}" Width="16" Height="16" Margin="0,0,8,0"/>
+                                <TextBlock Text="{Binding DisplayName}" VerticalAlignment="Center"/>
+                            </StackPanel>
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
                 <DataGridTextColumn Header="Service Name" Binding="{Binding ServiceName}" Width="1.5*"/>
                 <DataGridTextColumn Header="PID" Binding="{Binding PidText}" Width="*"/>
                 <DataGridTextColumn Header="Status" Binding="{Binding StatusText}" Width="*"/>

@@ -1,4 +1,5 @@
 ﻿using System.ComponentModel;
+using System.Windows.Media;
 
 namespace TaskBuddyWPF.Models
 {
@@ -11,6 +12,7 @@ namespace TaskBuddyWPF.Models
         public string DisplayName { get; set; } = string.Empty;
         public uint Pid { get; set; }
         public string Description { get; set; } = string.Empty;
+        public ImageSource? Icon { get; set; }
 
         private bool _isRunning;
         public bool IsRunning

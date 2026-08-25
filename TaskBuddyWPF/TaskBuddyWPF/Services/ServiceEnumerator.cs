@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
+using System.Text;
+using System.Windows.Media;
 using TaskBuddyWPF.Models;
 using TaskBuddyWPF.Native;
 
@@ -10,6 +12,12 @@ namespace TaskBuddyWPF.Services
     {
         private const uint SERVICE_RUNNING = 4;
         private readonly Dictionary<string, string> _descriptionCache = new();
+
+        // Icons cached by hosting PID — same reasoning as ProcessEnumerator's icon
+        // cache (an exe's icon never changes). Not pruned: a stopped/reused PID
+        // showing a stale icon briefly is a minor cosmetic edge case, not worth the
+        // extra bookkeeping for a cache this small (one entry per unique host process).
+        private readonly Dictionary<uint, ImageSource?> _iconCache = new();
 
         public List<ServiceInfo> GetSnapshot()
         {
@@ -55,18 +63,20 @@ namespace TaskBuddyWPF.Services
                         for (int i = 0; i < servicesReturned; i++)
                         {
                             var entry = Marshal.PtrToStructure<ENUM_SERVICE_STATUS_PROCESS>(current);
+                            uint pid = entry.ServiceStatusProcess.dwProcessId;
                             results.Add(new ServiceInfo
                             {
                                 ServiceName = entry.lpServiceName ?? string.Empty,
                                 DisplayName = entry.lpDisplayName ?? string.Empty,
-                                Pid = entry.ServiceStatusProcess.dwProcessId,
+                                Pid = pid,
                                 IsRunning = entry.ServiceStatusProcess.dwCurrentState == SERVICE_RUNNING,
-                                Description = ResolveDescription(scm, entry.lpServiceName ?? string.Empty)
+                                Description = ResolveDescription(scm, entry.lpServiceName ?? string.Empty),
+                                Icon = ResolveServiceIcon(pid)
                             });
                             current = IntPtr.Add(current, structSize);
                         }
 
-                        more = false; // resumeHandle stays 0 when the whole DB fit in one call
+                        more = false;
                     } while (more);
                 }
                 finally
@@ -82,8 +92,41 @@ namespace TaskBuddyWPF.Services
             return results;
         }
 
-        // Descriptions never change at runtime — cached forever by service name,
-        // same reasoning as ProcessEnumerator's icon cache.
+        private ImageSource? ResolveServiceIcon(uint pid)
+        {
+            if (pid == 0) return IconHelper.DefaultIcon; // stopped/no host process
+
+            if (_iconCache.TryGetValue(pid, out var cached)) return cached;
+
+            IntPtr hProcess = NativeMethods.OpenProcess(NativeMethods.PROCESS_QUERY_LIMITED_INFORMATION, false, pid);
+            if (hProcess == IntPtr.Zero)
+            {
+                var fallback = IconHelper.DefaultIcon;
+                _iconCache[pid] = fallback;
+                return fallback;
+            }
+
+            try
+            {
+                var sb = new StringBuilder(1024);
+                int size = sb.Capacity;
+                if (!NativeMethods.QueryFullProcessImageNameW(hProcess, 0, sb, ref size))
+                {
+                    var fallback = IconHelper.DefaultIcon;
+                    _iconCache[pid] = fallback;
+                    return fallback;
+                }
+
+                var icon = IconHelper.ResolveIcon(sb.ToString());
+                _iconCache[pid] = icon;
+                return icon;
+            }
+            finally
+            {
+                NativeMethods.CloseHandle(hProcess);
+            }
+        }
+
         private string ResolveDescription(IntPtr scm, string serviceName)
         {
             if (string.IsNullOrEmpty(serviceName)) return string.Empty;
