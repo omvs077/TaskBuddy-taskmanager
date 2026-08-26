@@ -31,7 +31,7 @@ namespace TaskBuddyWPF.Pages
             var view = CollectionViewSource.GetDefaultView(_services);
             view.Filter = FilterService;
 
-            _timer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(3) };
+            _timer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(TaskBuddyWPF.Services.AppSettings.RefreshIntervalSeconds * 3) };
             _timer.Tick += async (s, e) => await RefreshAsync();
             _timer.Start();
 

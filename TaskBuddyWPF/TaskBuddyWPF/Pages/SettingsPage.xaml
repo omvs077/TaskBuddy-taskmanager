@@ -18,6 +18,23 @@
 
             <Separator Margin="0,8,0,20"/>
 
+            <TextBlock Text="Performance" FontSize="16" FontWeight="SemiBold" Margin="0,0,0,8"
+                       Foreground="{DynamicResource TextFillColorPrimaryBrush}"/>
+            <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
+                <TextBlock Text="Refresh speed:" VerticalAlignment="Center" Margin="0,0,10,0"
+                           Foreground="{DynamicResource TextFillColorPrimaryBrush}"/>
+                <ComboBox x:Name="RefreshSpeedCombo" Width="140" SelectionChanged="RefreshSpeed_Changed">
+                    <ComboBoxItem Content="Fast (1s)" Tag="1"/>
+                    <ComboBoxItem Content="Normal (2s)" Tag="2"/>
+                    <ComboBoxItem Content="Slow (5s)" Tag="5"/>
+                </ComboBox>
+            </StackPanel>
+            <TextBlock Text="Takes effect the next time you open a live-updating tab. Applies to Processes, Performance, Users, Details, and Services (Services always runs 3x slower than the others)."
+                       FontSize="12" TextWrapping="Wrap" Margin="0,0,0,20"
+                       Foreground="{DynamicResource TextFillColorSecondaryBrush}"/>
+
+            <Separator Margin="0,8,0,20"/>
+
             <TextBlock Text="About" FontSize="16" FontWeight="SemiBold" Margin="0,0,0,8"
                        Foreground="{DynamicResource TextFillColorPrimaryBrush}"/>
             <TextBlock Text="TaskBuddy" FontSize="14" FontWeight="SemiBold"

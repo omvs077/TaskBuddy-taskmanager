@@ -40,7 +40,7 @@ namespace TaskBuddyWPF.Pages
             DiskMiniGraph.SetHeaderVisible(false);
             DetailGraph.SetHeaderVisible(false);
 
-            _timer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(1) };
+            _timer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(TaskBuddyWPF.Services.AppSettings.RefreshIntervalSeconds) };
             _timer.Tick += async (s, e) => await SampleAsync();
             _timer.Start();
 

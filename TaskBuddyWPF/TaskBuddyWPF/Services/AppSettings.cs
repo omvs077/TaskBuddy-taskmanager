@@ -4,8 +4,6 @@ using System.IO;
 
 namespace TaskBuddyWPF.Services
 {
-    // Global app settings, separate file from layout.ini (column visibility) to keep
-    // concerns isolated — settings.ini for behavior toggles, layout.ini for UI layout.
     public static class AppSettings
     {
         private static readonly string SettingsPath = Path.Combine(
@@ -17,6 +15,18 @@ namespace TaskBuddyWPF.Services
         {
             get => _showIdleProcess;
             set { _showIdleProcess = value; Save(); }
+        }
+
+        // Base refresh cadence in seconds for most tabs (Fast=1, Normal=2, Slow=5,
+        // matching the spirit of Task Manager's own Update Speed setting). The
+        // Services tab deliberately runs at 3x this value, unchanged behavior from
+        // before this setting existed — service enumeration is heavier than process
+        // enumeration and was intentionally throttled.
+        private static int _refreshIntervalSeconds = 1;
+        public static int RefreshIntervalSeconds
+        {
+            get => _refreshIntervalSeconds;
+            set { _refreshIntervalSeconds = value; Save(); }
         }
 
         static AppSettings()
@@ -36,10 +46,18 @@ namespace TaskBuddyWPF.Services
                     var parts = trimmed.Split('=', 2);
                     if (parts.Length != 2) continue;
 
-                    if (parts[0].Trim().Equals("ShowIdleProcess", StringComparison.OrdinalIgnoreCase)
-                        && bool.TryParse(parts[1].Trim(), out var val))
+                    var key = parts[0].Trim();
+                    var value = parts[1].Trim();
+
+                    if (key.Equals("ShowIdleProcess", StringComparison.OrdinalIgnoreCase)
+                        && bool.TryParse(value, out var showIdle))
                     {
-                        _showIdleProcess = val;
+                        _showIdleProcess = showIdle;
+                    }
+                    else if (key.Equals("RefreshIntervalSeconds", StringComparison.OrdinalIgnoreCase)
+                        && int.TryParse(value, out var interval) && interval > 0)
+                    {
+                        _refreshIntervalSeconds = interval;
                     }
                 }
             }
@@ -58,7 +76,8 @@ namespace TaskBuddyWPF.Services
                 File.WriteAllLines(SettingsPath, new List<string>
                 {
                     "# TaskBuddy application settings — auto-generated",
-                    $"ShowIdleProcess={_showIdleProcess}"
+                    $"ShowIdleProcess={_showIdleProcess}",
+                    $"RefreshIntervalSeconds={_refreshIntervalSeconds}"
                 });
             }
             catch

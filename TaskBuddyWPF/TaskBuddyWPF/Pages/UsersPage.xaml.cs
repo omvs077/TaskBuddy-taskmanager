@@ -34,7 +34,7 @@ namespace TaskBuddyWPF.Pages
             _view = CollectionViewSource.GetDefaultView(_items);
             SizeChanged += (s, e) => UpdatePinnedHeight();
 
-            _timer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(1) };
+            _timer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(TaskBuddyWPF.Services.AppSettings.RefreshIntervalSeconds) };
             _timer.Tick += async (s, e) => await RefreshAsync();
             _timer.Start();
         }
