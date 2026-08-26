@@ -16,6 +16,7 @@
             <conv:CpuHeatBrushConverter x:Key="CpuHeatBrushConverter"/>
             <conv:MemoryHeatBrushConverter x:Key="MemoryHeatBrushConverter"/>
             <conv:DiskHeatBrushConverter x:Key="DiskHeatBrushConverter"/>
+            <conv:StartupImpactBrushConverter x:Key="StartupImpactBrushConverter"/>
         </ResourceDictionary>
     </Application.Resources>
 </Application>

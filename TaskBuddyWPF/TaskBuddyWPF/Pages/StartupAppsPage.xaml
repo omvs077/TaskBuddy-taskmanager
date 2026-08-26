@@ -29,7 +29,13 @@
                     </DataGridTemplateColumn.CellTemplate>
                 </DataGridTemplateColumn>
                 <DataGridTextColumn Header="Source" Binding="{Binding Source}" Width="*"/>
-                <DataGridTextColumn Header="Impact" Binding="{Binding Impact}" Width="*"/>
+                <DataGridTextColumn Header="Impact" Binding="{Binding Impact}" Width="*">
+                    <DataGridTextColumn.CellStyle>
+                        <Style TargetType="DataGridCell">
+                            <Setter Property="Background" Value="{Binding Impact, Converter={StaticResource StartupImpactBrushConverter}}"/>
+                        </Style>
+                    </DataGridTextColumn.CellStyle>
+                </DataGridTextColumn>
                 <DataGridCheckBoxColumn Header="Enabled" Binding="{Binding IsEnabled}" Width="Auto"/>
                 <DataGridTextColumn Header="Command" Binding="{Binding Command}" Width="3*"/>
             </DataGrid.Columns>
