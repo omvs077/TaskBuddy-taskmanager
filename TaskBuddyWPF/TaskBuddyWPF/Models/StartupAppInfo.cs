@@ -3,7 +3,7 @@ using System.Windows.Media;
 
 namespace TaskBuddyWPF.Models
 {
-    public enum StartupImpact { NotMeasured, None, Low, High }
+    public enum StartupImpact { NotMeasured, None, Low, Medium, High }
     public enum StartupSource { RegistryRun, StartupFolder, TaskScheduler }
 
     public class StartupAppInfo : INotifyPropertyChanged
