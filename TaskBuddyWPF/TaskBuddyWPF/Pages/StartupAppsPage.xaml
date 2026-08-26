@@ -29,6 +29,7 @@
                     </DataGridTemplateColumn.CellTemplate>
                 </DataGridTemplateColumn>
                 <DataGridTextColumn Header="Source" Binding="{Binding Source}" Width="*"/>
+                <DataGridTextColumn Header="Publisher" Binding="{Binding Publisher}" Width="1.5*"/>
                 <DataGridTextColumn Header="Impact" Binding="{Binding Impact}" Width="*">
                     <DataGridTextColumn.CellStyle>
                         <Style TargetType="DataGridCell">

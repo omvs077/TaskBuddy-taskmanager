@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using Microsoft.Win32;
 using Microsoft.Win32.TaskScheduler;
@@ -25,9 +26,6 @@ namespace TaskBuddyWPF.Services
             return list;
         }
 
-        // Matches by bare exe filename since the boot-trace XML only records process
-        // names, not full paths. Returns NotMeasured (matching Task Manager's own
-        // fallback) if the entry hasn't been observed in the latest boot trace yet.
         private static StartupImpact LookupImpact(
             Dictionary<string, (long cpuMicroseconds, long diskBytes)> bootTrace, string? exePath)
         {
@@ -35,6 +33,24 @@ namespace TaskBuddyWPF.Services
             var fileName = Path.GetFileName(exePath);
             if (!bootTrace.TryGetValue(fileName, out var usage)) return StartupImpact.NotMeasured;
             return StartupImpactReader.ClassifyImpact(usage.cpuMicroseconds, usage.diskBytes);
+        }
+
+        // Reads CompanyName from the exe's version resource, same stdlib approach as
+        // DetailsEnumerator's Description field. Startup-folder shortcuts (.lnk) aren't
+        // PE files and won't have a version resource — returns "" for those, an honest
+        // limitation rather than resolving the shortcut target for this small addition.
+        private static string ResolvePublisher(string? path)
+        {
+            if (string.IsNullOrWhiteSpace(path)) return "";
+            try
+            {
+                var info = FileVersionInfo.GetVersionInfo(path);
+                return info.CompanyName ?? "";
+            }
+            catch
+            {
+                return "";
+            }
         }
 
         private static void ReadRunKey(RegistryKey hive, bool isHkcu, List<StartupAppInfo> list,
@@ -54,7 +70,8 @@ namespace TaskBuddyWPF.Services
                     IsHkcu = isHkcu,
                     IsEnabled = StartupApprovedHelper.GetRunEnabled(isHkcu, name),
                     Impact = LookupImpact(bootTrace, exePath),
-                    Icon = IconHelper.ResolveIcon(exePath)
+                    Icon = IconHelper.ResolveIcon(exePath),
+                    Publisher = ResolvePublisher(exePath)
                 });
             }
         }
@@ -78,11 +95,9 @@ namespace TaskBuddyWPF.Services
                     Source = StartupSource.StartupFolder,
                     IsHkcu = isHkcu,
                     IsEnabled = StartupApprovedHelper.GetStartupFolderEnabled(isHkcu, fileName),
-                    // .lnk shortcuts won't match the boot-trace by name directly (the
-                    // trace records the launched exe, not the shortcut) — this will
-                    // mostly show NotMeasured for folder items, an honest limitation.
                     Impact = LookupImpact(bootTrace, file),
-                    Icon = IconHelper.ResolveIcon(file)
+                    Icon = IconHelper.ResolveIcon(file),
+                    Publisher = ResolvePublisher(file)
                 });
             }
         }
@@ -120,7 +135,8 @@ namespace TaskBuddyWPF.Services
                     Source = StartupSource.TaskScheduler,
                     IsEnabled = task.Enabled,
                     Impact = LookupImpact(bootTrace, exePath),
-                    Icon = IconHelper.ResolveIcon(exePath)
+                    Icon = IconHelper.ResolveIcon(exePath),
+                    Publisher = ResolvePublisher(exePath)
                 });
             }
         }
