@@ -14,11 +14,13 @@ namespace TaskBuddyWPF.Pages
 
     public partial class PerformancePage : Page
     {
-        private const int MaxSamples = 60;
+        private const int MaxSamples = 120; // 60s of history at 500ms sampling
 
         private readonly SystemPerformanceMonitor _sysMonitor = new();
         private readonly DiskPerformanceMonitor _diskMonitor = new();
         private readonly DispatcherTimer _timer;
+        private int _processCountCache;
+        private DateTime _processCountLastUpdated = DateTime.MinValue;
         private bool _isSampling;
 
         private readonly Queue<double> _cpuHistory = new();
@@ -40,7 +42,7 @@ namespace TaskBuddyWPF.Pages
             DiskMiniGraph.SetHeaderVisible(false);
             DetailGraph.SetHeaderVisible(false);
 
-            _timer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(TaskBuddyWPF.Services.AppSettings.RefreshIntervalSeconds) };
+            _timer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(500) }; // dedicated rate for smooth graphs, independent of Settings refresh speed
             _timer.Tick += async (s, e) => await SampleAsync();
             _timer.Start();
 
@@ -110,7 +112,7 @@ namespace TaskBuddyWPF.Pages
                     Stat1Label.Text = "Utilization";
                     Stat1Value.Text = _cpuHistory.Count > 0 ? $"{Last(_cpuHistory):F0}%" : "0%";
                     Stat2Label.Text = "Processes";
-                    Stat2Value.Text = System.Diagnostics.Process.GetProcesses().Length.ToString();
+                    Stat2Value.Text = GetThrottledProcessCount().ToString();
                     Stat3Label.Text = "Cores";
                     Stat3Value.Text = $"{SystemInfo.PhysicalCoreCount} / {SystemInfo.LogicalCoreCount}";
                     Stat4Label.Text = "Uptime";
@@ -145,6 +147,16 @@ namespace TaskBuddyWPF.Pages
                     Stat4Label.Text = ""; Stat4Value.Text = "";
                     break;
             }
+        }
+
+        private int GetThrottledProcessCount()
+        {
+            if ((DateTime.UtcNow - _processCountLastUpdated).TotalSeconds >= 1)
+            {
+                _processCountCache = System.Diagnostics.Process.GetProcesses().Length;
+                _processCountLastUpdated = DateTime.UtcNow;
+            }
+            return _processCountCache;
         }
 
         private static double Last(Queue<double> q)
