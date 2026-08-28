@@ -37,11 +37,14 @@
         <Grid Grid.Column="1">
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto"/>
-                <RowDefinition Height="*"/>
+                <RowDefinition Height="320"/>
                 <RowDefinition Height="Auto"/>
             </Grid.RowDefinitions>
 
-            <TextBlock x:Name="DetailTitle" Grid.Row="0" Text="CPU" FontSize="20" FontWeight="SemiBold" Margin="0,0,0,10" Foreground="{DynamicResource TextFillColorPrimaryBrush}"/>
+            <StackPanel Grid.Row="0" Margin="0,0,0,10">
+                <TextBlock x:Name="DetailTitle" Text="CPU" FontSize="20" FontWeight="SemiBold" Foreground="{DynamicResource TextFillColorPrimaryBrush}"/>
+                <TextBlock x:Name="DetailSubtitle" FontSize="12" Margin="0,2,0,0" Foreground="{DynamicResource TextFillColorSecondaryBrush}"/>
+            </StackPanel>
 
             <controls:PerformanceGraph x:Name="DetailGraph" Grid.Row="1"/>
 
@@ -72,3 +75,5 @@
         </Grid>
     </Grid>
 </Page>
+
+

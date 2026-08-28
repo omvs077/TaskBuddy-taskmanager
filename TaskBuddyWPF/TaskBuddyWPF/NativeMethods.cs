@@ -129,6 +129,13 @@ namespace TaskBuddyWPF.Native
     }
 
 
+    [StructLayout(LayoutKind.Sequential)]
+    internal struct SYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX_HEADER
+    {
+        public int Relationship;
+        public int Size;
+    }
+
     [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]
     internal struct QUERY_SERVICE_CONFIGW
     {
@@ -240,6 +247,15 @@ namespace TaskBuddyWPF.Native
         [DllImport("kernel32.dll", SetLastError = true)]
         [return: MarshalAs(UnmanagedType.Bool)]
         internal static extern bool GetSystemTimes(out System.Runtime.InteropServices.ComTypes.FILETIME lpIdleTime, out System.Runtime.InteropServices.ComTypes.FILETIME lpKernelTime, out System.Runtime.InteropServices.ComTypes.FILETIME lpUserTime);
+
+        [DllImport("kernel32.dll", SetLastError = true)]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        internal static extern bool GetLogicalProcessorInformationEx(int RelationshipType, IntPtr Buffer, ref uint ReturnedLength);
+
+        [DllImport("kernel32.dll")]
+        internal static extern ulong GetTickCount64();
+
+        internal const int RelationProcessorCore = 0;
 
         internal const uint PDH_FMT_DOUBLE = 0x00000200;
 

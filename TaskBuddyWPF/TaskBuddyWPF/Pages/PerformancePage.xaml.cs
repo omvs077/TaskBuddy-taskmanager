@@ -105,17 +105,21 @@ namespace TaskBuddyWPF.Pages
             {
                 case PerformanceResource.Cpu:
                     DetailTitle.Text = "CPU";
+                    DetailSubtitle.Text = SystemInfo.ProcessorName;
                     DetailGraph.SetData(_cpuHistory.ToArray(), 100);
                     Stat1Label.Text = "Utilization";
                     Stat1Value.Text = _cpuHistory.Count > 0 ? $"{Last(_cpuHistory):F0}%" : "0%";
                     Stat2Label.Text = "Processes";
                     Stat2Value.Text = System.Diagnostics.Process.GetProcesses().Length.ToString();
-                    Stat3Label.Text = ""; Stat3Value.Text = "";
-                    Stat4Label.Text = ""; Stat4Value.Text = "";
+                    Stat3Label.Text = "Cores";
+                    Stat3Value.Text = $"{SystemInfo.PhysicalCoreCount} / {SystemInfo.LogicalCoreCount}";
+                    Stat4Label.Text = "Uptime";
+                    Stat4Value.Text = SystemInfo.UptimeString;
                     break;
 
                 case PerformanceResource.Memory:
                     DetailTitle.Text = "Memory";
+                    DetailSubtitle.Text = "";
                     DetailGraph.SetData(_memHistory.ToArray(), 100);
                     double memGb = _lastMemUsed / 1024.0 / 1024.0 / 1024.0;
                     double totalGb = _lastMemTotal / 1024.0 / 1024.0 / 1024.0;
@@ -130,6 +134,7 @@ namespace TaskBuddyWPF.Pages
 
                 case PerformanceResource.Disk:
                     DetailTitle.Text = "Disk";
+                    DetailSubtitle.Text = "";
                     DetailGraph.SetData(_diskActiveHistory.ToArray(), 100);
                     Stat1Label.Text = "Active time";
                     Stat1Value.Text = $"{_lastDiskActive:F0}%";
@@ -197,3 +202,4 @@ namespace TaskBuddyWPF.Pages
         }
     }
 }
+
