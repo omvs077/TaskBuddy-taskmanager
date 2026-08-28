@@ -41,6 +41,9 @@ namespace TaskBuddyWPF.Pages
             MemoryMiniGraph.SetHeaderVisible(false);
             DiskMiniGraph.SetHeaderVisible(false);
             DetailGraph.SetHeaderVisible(false);
+            CpuMiniGraph.AccentColor = System.Windows.Media.Color.FromRgb(90, 170, 255);   // blue
+            MemoryMiniGraph.AccentColor = System.Windows.Media.Color.FromRgb(170, 120, 255); // purple
+            DiskMiniGraph.AccentColor = System.Windows.Media.Color.FromRgb(90, 220, 140);   // green
 
             _timer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(500) }; // dedicated rate for smooth graphs, independent of Settings refresh speed
             _timer.Tick += async (s, e) => await SampleAsync();
@@ -108,6 +111,7 @@ namespace TaskBuddyWPF.Pages
                 case PerformanceResource.Cpu:
                     DetailTitle.Text = "CPU";
                     DetailSubtitle.Text = SystemInfo.ProcessorName;
+                    DetailGraph.AccentColor = System.Windows.Media.Color.FromRgb(90, 170, 255);
                     DetailGraph.SetData(_cpuHistory.ToArray(), 100);
                     Stat1Label.Text = "Utilization";
                     Stat1Value.Text = _cpuHistory.Count > 0 ? $"{Last(_cpuHistory):F0}%" : "0%";
@@ -122,6 +126,7 @@ namespace TaskBuddyWPF.Pages
                 case PerformanceResource.Memory:
                     DetailTitle.Text = "Memory";
                     DetailSubtitle.Text = "";
+                    DetailGraph.AccentColor = System.Windows.Media.Color.FromRgb(170, 120, 255);
                     DetailGraph.SetData(_memHistory.ToArray(), 100);
                     double memGb = _lastMemUsed / 1024.0 / 1024.0 / 1024.0;
                     double totalGb = _lastMemTotal / 1024.0 / 1024.0 / 1024.0;
@@ -137,6 +142,7 @@ namespace TaskBuddyWPF.Pages
                 case PerformanceResource.Disk:
                     DetailTitle.Text = "Disk";
                     DetailSubtitle.Text = "";
+                    DetailGraph.AccentColor = System.Windows.Media.Color.FromRgb(90, 220, 140);
                     DetailGraph.SetData(_diskActiveHistory.ToArray(), 100);
                     Stat1Label.Text = "Active time";
                     Stat1Value.Text = $"{_lastDiskActive:F0}%";

@@ -13,6 +13,13 @@ namespace TaskBuddyWPF.Controls
     {
         private double[] _samples = Array.Empty<double>();
         private double _maxValue = 100;
+        public static readonly Color DefaultAccentColor = Color.FromRgb(90, 170, 255);
+        private Color _accentColor = DefaultAccentColor;
+        public Color AccentColor
+        {
+            get => _accentColor;
+            set { _accentColor = value; Redraw(); }
+        }
 
         public PerformanceGraph()
         {
@@ -43,7 +50,18 @@ namespace TaskBuddyWPF.Controls
             GraphCanvas.Children.Clear();
             double w = GraphCanvas.ActualWidth;
             double h = GraphCanvas.ActualHeight;
-            if (w <= 0 || h <= 0 || _samples.Length < 2) return;
+            if (w <= 0 || h <= 0) return;
+
+            // Gridlines at 25/50/75% — faint, drawn first so the plot sits on top.
+            var gridBrush = new SolidColorBrush(Color.FromArgb(18, 255, 255, 255));
+            foreach (var frac in new[] { 0.25, 0.5, 0.75 })
+            {
+                double y = h - (frac * h);
+                var line = new Line { X1 = 0, Y1 = y, X2 = w, Y2 = y, Stroke = gridBrush, StrokeThickness = 1 };
+                GraphCanvas.Children.Add(line);
+            }
+
+            if (_samples.Length < 2) return;
 
             double stepX = w / (_samples.Length - 1);
             var points = new PointCollection();
@@ -63,12 +81,12 @@ namespace TaskBuddyWPF.Controls
             var polygon = new Polygon
             {
                 Points = fillPoints,
-                Fill = new SolidColorBrush(Color.FromArgb(60, 90, 170, 255))
+                Fill = new SolidColorBrush(Color.FromArgb(60, _accentColor.R, _accentColor.G, _accentColor.B))
             };
             var polyline = new Polyline
             {
                 Points = points,
-                Stroke = new SolidColorBrush(Color.FromRgb(90, 170, 255)),
+                Stroke = new SolidColorBrush(_accentColor),
                 StrokeThickness = 1.5
             };
 
