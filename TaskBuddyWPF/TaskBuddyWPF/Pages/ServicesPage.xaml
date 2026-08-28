@@ -62,6 +62,7 @@
                 <DataGridTextColumn Header="PID" Binding="{Binding PidText}" Width="*"/>
                 <DataGridTextColumn Header="Status" Binding="{Binding StatusText}" Width="*"/>
                 <DataGridTextColumn Header="Description" Binding="{Binding Description}" Width="3*"/>
+                <DataGridTextColumn Header="Group" Binding="{Binding Group}" Width="*"/>
             </DataGrid.Columns>
             <DataGrid.ContextMenu>
                 <ContextMenu Opened="ContextMenu_Opened">

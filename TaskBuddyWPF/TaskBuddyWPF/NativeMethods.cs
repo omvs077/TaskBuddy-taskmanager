@@ -128,6 +128,20 @@ namespace TaskBuddyWPF.Native
         [MarshalAs(UnmanagedType.LPWStr)] public string lpDescription;
     }
 
+
+    [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]
+    internal struct QUERY_SERVICE_CONFIGW
+    {
+        public uint dwServiceType;
+        public uint dwStartType;
+        public uint dwErrorControl;
+        [MarshalAs(UnmanagedType.LPWStr)] public string lpBinaryPathName;
+        [MarshalAs(UnmanagedType.LPWStr)] public string lpLoadOrderGroup;
+        public uint dwTagId;
+        [MarshalAs(UnmanagedType.LPWStr)] public string lpDependencies;
+        [MarshalAs(UnmanagedType.LPWStr)] public string lpServiceStartName;
+        [MarshalAs(UnmanagedType.LPWStr)] public string lpDisplayName;
+    }
     internal static class NativeMethods
     {
         internal const int SystemProcessInformation = 5;
@@ -211,6 +225,10 @@ namespace TaskBuddyWPF.Native
         [return: MarshalAs(UnmanagedType.Bool)]
         internal static extern bool QueryServiceConfig2(IntPtr hService, uint dwInfoLevel, IntPtr lpBuffer, uint cbBufSize, out uint pcbBytesNeeded);
 
+        [DllImport("advapi32.dll", SetLastError = true, CharSet = CharSet.Unicode)]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        internal static extern bool QueryServiceConfig(IntPtr hService, IntPtr lpServiceConfig, uint cbBufSize, out uint pcbBytesNeeded);
+
         [DllImport("advapi32.dll", SetLastError = true)]
         [return: MarshalAs(UnmanagedType.Bool)]
         internal static extern bool ControlService(IntPtr hService, uint dwControl, ref SERVICE_STATUS lpServiceStatus);
@@ -268,3 +286,5 @@ namespace TaskBuddyWPF.Native
         internal static extern bool IsWow64Process2(IntPtr hProcess, out ushort processMachine, out ushort nativeMachine);
     }
 }
+
+

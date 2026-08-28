@@ -12,6 +12,7 @@ namespace TaskBuddyWPF.Models
         public string DisplayName { get; set; } = string.Empty;
         public uint Pid { get; set; }
         public string Description { get; set; } = string.Empty;
+        public string Group { get; set; } = string.Empty;
         public ImageSource? Icon { get; set; }
 
         private bool _isRunning;
@@ -25,3 +26,4 @@ namespace TaskBuddyWPF.Models
         public string PidText => Pid > 0 ? Pid.ToString() : "";
     }
 }
+

@@ -12,6 +12,7 @@ namespace TaskBuddyWPF.Services
     {
         private const uint SERVICE_RUNNING = 4;
         private readonly Dictionary<string, string> _descriptionCache = new();
+        private readonly Dictionary<string, string> _groupCache = new();
 
         // Icons cached by hosting PID — same reasoning as ProcessEnumerator's icon
         // cache (an exe's icon never changes). Not pruned: a stopped/reused PID
@@ -71,6 +72,7 @@ namespace TaskBuddyWPF.Services
                                 Pid = pid,
                                 IsRunning = entry.ServiceStatusProcess.dwCurrentState == SERVICE_RUNNING,
                                 Description = ResolveDescription(scm, entry.lpServiceName ?? string.Empty),
+                                Group = ResolveGroup(scm, entry.lpServiceName ?? string.Empty),
                                 Icon = ResolveServiceIcon(pid)
                             });
                             current = IntPtr.Add(current, structSize);
@@ -146,6 +148,40 @@ namespace TaskBuddyWPF.Services
                         var desc = Marshal.PtrToStructure<SERVICE_DESCRIPTION>(buffer);
                         string result = desc.lpDescription ?? string.Empty;
                         _descriptionCache[serviceName] = result;
+                        return result;
+                    }
+                    return string.Empty;
+                }
+                finally
+                {
+                    Marshal.FreeHGlobal(buffer);
+                }
+            }
+            finally
+            {
+                NativeMethods.CloseServiceHandle(hService);
+            }
+        }
+
+        private string ResolveGroup(IntPtr scm, string serviceName)
+        {
+            if (string.IsNullOrEmpty(serviceName)) return string.Empty;
+            if (_groupCache.TryGetValue(serviceName, out var cached)) return cached;
+
+            IntPtr hService = NativeMethods.OpenService(scm, serviceName, NativeMethods.SERVICE_QUERY_CONFIG);
+            if (hService == IntPtr.Zero) return string.Empty;
+
+            try
+            {
+                uint bufSize = 8192;
+                IntPtr buffer = Marshal.AllocHGlobal((int)bufSize);
+                try
+                {
+                    if (NativeMethods.QueryServiceConfig(hService, buffer, bufSize, out _))
+                    {
+                        var cfg = Marshal.PtrToStructure<QUERY_SERVICE_CONFIGW>(buffer);
+                        string result = cfg.lpLoadOrderGroup ?? string.Empty;
+                        _groupCache[serviceName] = result;
                         return result;
                     }
                     return string.Empty;
