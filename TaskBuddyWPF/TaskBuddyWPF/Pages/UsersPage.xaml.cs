@@ -21,6 +21,7 @@ namespace TaskBuddyWPF.Pages
         private readonly DispatcherTimer _timer;
         private ICollectionView _view = null!;
         private bool _isRefreshing;
+        private string? _selectedUserName;
 
         // Owner lookups are relatively expensive (OpenProcessToken+LookupAccountSid per PID)
         // and an exe's owning user for a given PID never changes mid-life, so cache by PID
@@ -56,6 +57,7 @@ namespace TaskBuddyWPF.Pages
                     var snapshot = _enumerator.GetSnapshot();
                     var seenPids = new HashSet<uint>();
                     var byUser = new Dictionary<string, UserGroupInfo>(StringComparer.OrdinalIgnoreCase);
+                    var procsByUser = new Dictionary<string, List<ProcessInfo>>(StringComparer.OrdinalIgnoreCase);
 
                     foreach (var proc in snapshot)
                     {
@@ -71,16 +73,21 @@ namespace TaskBuddyWPF.Pages
                         {
                             group = new UserGroupInfo { UserName = owner };
                             byUser[owner] = group;
+                            procsByUser[owner] = new List<ProcessInfo>();
                         }
                         group.ProcessCount++;
                         group.TotalCpuPercent += proc.CpuPercent;
                         group.TotalMemoryBytes += proc.WorkingSetBytes;
+                        procsByUser[owner].Add(proc);
                     }
 
                     var stale = _ownerCache.Keys.Where(pid => !seenPids.Contains(pid)).ToList();
                     foreach (var pid in stale) _ownerCache.Remove(pid);
 
-                    return byUser.Values.OrderByDescending(u => u.TotalMemoryBytes).ToList();
+                    return byUser.Values
+                        .OrderByDescending(u => u.TotalMemoryBytes)
+                        .Select(u => (Group: u, Processes: procsByUser[u.UserName]))
+                        .ToList();
                 });
 
                 ApplyDiff(grouped);
@@ -93,24 +100,70 @@ namespace TaskBuddyWPF.Pages
             finally { _isRefreshing = false; }
         }
 
-        private void ApplyDiff(List<UserGroupInfo> fresh)
+        private void ApplyDiff(List<(UserGroupInfo Group, List<ProcessInfo> Processes)> fresh)
         {
-            var freshMap = fresh.ToDictionary(f => f.UserName, StringComparer.OrdinalIgnoreCase);
+            var freshMap = fresh.ToDictionary(f => f.Group.UserName, StringComparer.OrdinalIgnoreCase);
 
             for (int i = _items.Count - 1; i >= 0; i--)
             {
                 if (!freshMap.ContainsKey(_items[i].UserName)) _items.RemoveAt(i);
             }
-            foreach (var f in fresh)
+            foreach (var (freshGroup, freshProcs) in fresh)
             {
-                var existing = _items.FirstOrDefault(i => string.Equals(i.UserName, f.UserName, StringComparison.OrdinalIgnoreCase));
-                if (existing == null) _items.Add(f);
+                var existing = _items.FirstOrDefault(i => string.Equals(i.UserName, freshGroup.UserName, StringComparison.OrdinalIgnoreCase));
+                if (existing == null)
+                {
+                    foreach (var p in freshProcs) freshGroup.Processes.Add(p);
+                    _items.Add(freshGroup);
+                }
                 else
                 {
-                    existing.ProcessCount = f.ProcessCount;
-                    existing.TotalCpuPercent = f.TotalCpuPercent;
-                    existing.TotalMemoryBytes = f.TotalMemoryBytes;
+                    existing.ProcessCount = freshGroup.ProcessCount;
+                    existing.TotalCpuPercent = freshGroup.TotalCpuPercent;
+                    existing.TotalMemoryBytes = freshGroup.TotalMemoryBytes;
+                    ApplyProcessDiff(existing.Processes, freshProcs);
                 }
+            }
+
+            // The detail panel is bound directly to a group's live Processes collection
+            // (see UsersGrid_SelectionChanged), so diffing that collection in place above
+            // is enough to keep the panel live — no separate refresh needed here.
+        }
+
+        private static void ApplyProcessDiff(ObservableCollection<ProcessInfo> existing, List<ProcessInfo> fresh)
+        {
+            var freshMap = fresh.ToDictionary(p => p.Pid);
+
+            for (int i = existing.Count - 1; i >= 0; i--)
+            {
+                if (!freshMap.ContainsKey(existing[i].Pid)) existing.RemoveAt(i);
+            }
+            foreach (var p in fresh)
+            {
+                var match = existing.FirstOrDefault(e => e.Pid == p.Pid);
+                if (match == null) existing.Add(p);
+                else
+                {
+                    match.WorkingSetBytes = p.WorkingSetBytes;
+                    match.CpuPercent = p.CpuPercent;
+                    match.IsSuspended = p.IsSuspended;
+                }
+            }
+        }
+
+        private void UsersGrid_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (UsersGrid.SelectedItem is UserGroupInfo group)
+            {
+                _selectedUserName = group.UserName;
+                DetailHeader.Text = $"Processes — {group.UserName}";
+                ProcessesGrid.ItemsSource = group.Processes;
+            }
+            else
+            {
+                _selectedUserName = null;
+                DetailHeader.Text = "Select a user to see their processes";
+                ProcessesGrid.ItemsSource = null;
             }
         }
 

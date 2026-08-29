@@ -6,6 +6,8 @@ namespace TaskBuddyWPF.Models
     {
         public string UserName { get; set; } = "";
 
+        public System.Collections.ObjectModel.ObservableCollection<TaskBuddyWPF.Models.ProcessInfo> Processes { get; } = new();
+
         private int _processCount;
         public int ProcessCount
         {
