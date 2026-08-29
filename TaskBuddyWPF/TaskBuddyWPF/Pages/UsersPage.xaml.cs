@@ -7,6 +7,7 @@ using Task = System.Threading.Tasks.Task;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
+using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Threading;
 using TaskBuddyWPF.Models;
@@ -31,8 +32,8 @@ namespace TaskBuddyWPF.Pages
         public UsersPage()
         {
             InitializeComponent();
-            UsersGrid.ItemsSource = _items;
             _view = CollectionViewSource.GetDefaultView(_items);
+            UsersList.ItemsSource = _view;
             SizeChanged += (s, e) => UpdatePinnedHeight();
 
             _timer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(TaskBuddyWPF.Services.AppSettings.RefreshIntervalSeconds) };
@@ -151,20 +152,16 @@ namespace TaskBuddyWPF.Pages
             }
         }
 
-        private void UsersGrid_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        private void UserCard_Click(object sender, MouseButtonEventArgs e)
         {
-            if (UsersGrid.SelectedItem is UserGroupInfo group)
-            {
-                _selectedUserName = group.UserName;
-                DetailHeader.Text = $"Processes — {group.UserName}";
-                ProcessesGrid.ItemsSource = group.Processes;
-            }
-            else
-            {
-                _selectedUserName = null;
-                DetailHeader.Text = "Select a user to see their processes";
-                ProcessesGrid.ItemsSource = null;
-            }
+            if (sender is not FrameworkElement fe || fe.DataContext is not UserGroupInfo group) return;
+
+            foreach (var u in _items) u.IsSelected = false;
+            group.IsSelected = true;
+
+            _selectedUserName = group.UserName;
+            DetailHeader.Text = $"Processes — {group.UserName}";
+            ProcessesGrid.ItemsSource = group.Processes;
         }
 
         private void SearchBox_TextChanged(object sender, TextChangedEventArgs e)

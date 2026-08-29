@@ -6,6 +6,13 @@ namespace TaskBuddyWPF.Models
     {
         public string UserName { get; set; } = "";
 
+        private bool _isSelected;
+        public bool IsSelected
+        {
+            get => _isSelected;
+            set { if (_isSelected != value) { _isSelected = value; Notify(nameof(IsSelected)); } }
+        }
+
         public System.Collections.ObjectModel.ObservableCollection<TaskBuddyWPF.Models.ProcessInfo> Processes { get; } = new();
 
         private int _processCount;
