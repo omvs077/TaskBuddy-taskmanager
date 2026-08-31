@@ -21,8 +21,14 @@ namespace TaskBuddyWPF.Models
             get => _isRunning;
             set { if (_isRunning != value) { _isRunning = value; Notify(nameof(IsRunning)); Notify(nameof(StatusText)); } }
         }
+        private bool _isPaused;
+        public bool IsPaused
+        {
+            get => _isPaused;
+            set { if (_isPaused != value) { _isPaused = value; Notify(nameof(IsPaused)); Notify(nameof(StatusText)); } }
+        }
 
-        public string StatusText => IsRunning ? "Running" : "Stopped";
+        public string StatusText => IsPaused ? "Paused" : IsRunning ? "Running" : "Stopped";
         public string PidText => Pid > 0 ? Pid.ToString() : "";
     }
 }

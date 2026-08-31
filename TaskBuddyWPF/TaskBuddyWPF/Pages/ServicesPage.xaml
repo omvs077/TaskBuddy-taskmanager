@@ -67,6 +67,8 @@
             <DataGrid.ContextMenu>
                 <ContextMenu Opened="ContextMenu_Opened">
                     <MenuItem x:Name="StartStopMenuItem" Header="Start" Click="StartStop_Click"/>
+                    <MenuItem x:Name="PauseResumeMenuItem" Header="Pause" Click="PauseResume_Click"/>
+                    <MenuItem x:Name="RestartMenuItem" Header="Restart" Click="Restart_Click"/>
                 </ContextMenu>
             </DataGrid.ContextMenu>
         </DataGrid>

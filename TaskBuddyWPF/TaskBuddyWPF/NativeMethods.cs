@@ -213,6 +213,11 @@ namespace TaskBuddyWPF.Native
         internal const uint SERVICE_CONFIG_DESCRIPTION = 1;
         internal const uint SERVICE_CONTROL_STOP = 0x00000001;
         internal const uint ERROR_INSUFFICIENT_BUFFER = 122;
+        internal const uint SERVICE_PAUSE_CONTINUE = 0x0040;
+        internal const uint SERVICE_CONTROL_PAUSE = 0x00000002;
+        internal const uint SERVICE_CONTROL_CONTINUE = 0x00000003;
+        internal const uint SERVICE_STOPPED = 1;
+        internal const int SC_STATUS_PROCESS_INFO = 0;
 
         [DllImport("advapi32.dll", SetLastError = true, CharSet = CharSet.Unicode)]
         internal static extern IntPtr OpenSCManager(string? machineName, string? databaseName, uint dwDesiredAccess);
@@ -235,6 +240,10 @@ namespace TaskBuddyWPF.Native
         [DllImport("advapi32.dll", SetLastError = true, CharSet = CharSet.Unicode)]
         [return: MarshalAs(UnmanagedType.Bool)]
         internal static extern bool QueryServiceConfig(IntPtr hService, IntPtr lpServiceConfig, uint cbBufSize, out uint pcbBytesNeeded);
+
+        [DllImport("advapi32.dll", SetLastError = true)]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        internal static extern bool QueryServiceStatusEx(IntPtr hService, int infoLevel, IntPtr lpBuffer, uint cbBufSize, out uint pcbBytesNeeded);
 
         [DllImport("advapi32.dll", SetLastError = true)]
         [return: MarshalAs(UnmanagedType.Bool)]

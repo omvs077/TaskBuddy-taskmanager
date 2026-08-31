@@ -11,6 +11,7 @@ namespace TaskBuddyWPF.Services
     public class ServiceEnumerator
     {
         private const uint SERVICE_RUNNING = 4;
+        private const uint SERVICE_PAUSED = 7;
         private readonly Dictionary<string, string> _descriptionCache = new();
         private readonly Dictionary<string, string> _groupCache = new();
 
@@ -71,6 +72,7 @@ namespace TaskBuddyWPF.Services
                                 DisplayName = entry.lpDisplayName ?? string.Empty,
                                 Pid = pid,
                                 IsRunning = entry.ServiceStatusProcess.dwCurrentState == SERVICE_RUNNING,
+                                IsPaused = entry.ServiceStatusProcess.dwCurrentState == SERVICE_PAUSED,
                                 Description = ResolveDescription(scm, entry.lpServiceName ?? string.Empty),
                                 Group = ResolveGroup(scm, entry.lpServiceName ?? string.Empty),
                                 Icon = ResolveServiceIcon(pid)
@@ -236,6 +238,112 @@ namespace TaskBuddyWPF.Services
                 {
                     var status = new SERVICE_STATUS();
                     return NativeMethods.ControlService(hService, NativeMethods.SERVICE_CONTROL_STOP, ref status);
+                }
+                finally
+                {
+                    NativeMethods.CloseServiceHandle(hService);
+                }
+            }
+            finally
+            {
+                NativeMethods.CloseServiceHandle(scm);
+            }
+        }
+
+        public bool PauseServiceByName(string serviceName)
+        {
+            IntPtr scm = NativeMethods.OpenSCManager(null, null, NativeMethods.SC_MANAGER_ENUMERATE_SERVICE);
+            if (scm == IntPtr.Zero) return false;
+
+            try
+            {
+                IntPtr hService = NativeMethods.OpenService(scm, serviceName, NativeMethods.SERVICE_PAUSE_CONTINUE);
+                if (hService == IntPtr.Zero) return false;
+
+                try
+                {
+                    var status = new SERVICE_STATUS();
+                    return NativeMethods.ControlService(hService, NativeMethods.SERVICE_CONTROL_PAUSE, ref status);
+                }
+                finally
+                {
+                    NativeMethods.CloseServiceHandle(hService);
+                }
+            }
+            finally
+            {
+                NativeMethods.CloseServiceHandle(scm);
+            }
+        }
+
+        public bool ResumeServiceByName(string serviceName)
+        {
+            IntPtr scm = NativeMethods.OpenSCManager(null, null, NativeMethods.SC_MANAGER_ENUMERATE_SERVICE);
+            if (scm == IntPtr.Zero) return false;
+
+            try
+            {
+                IntPtr hService = NativeMethods.OpenService(scm, serviceName, NativeMethods.SERVICE_PAUSE_CONTINUE);
+                if (hService == IntPtr.Zero) return false;
+
+                try
+                {
+                    var status = new SERVICE_STATUS();
+                    return NativeMethods.ControlService(hService, NativeMethods.SERVICE_CONTROL_CONTINUE, ref status);
+                }
+                finally
+                {
+                    NativeMethods.CloseServiceHandle(hService);
+                }
+            }
+            finally
+            {
+                NativeMethods.CloseServiceHandle(scm);
+            }
+        }
+
+        // Stop is asynchronous — issuing StartService immediately after can race a
+        // service that has not actually stopped yet. Poll the real status (up to ~3s)
+        // rather than a blind delay, then attempt the start regardless so a slow
+        // stop does not silently swallow the restart.
+        public bool RestartServiceByName(string serviceName)
+        {
+            if (!StopServiceByName(serviceName)) return false;
+            WaitForStopped(serviceName, TimeSpan.FromSeconds(3));
+            return StartServiceByName(serviceName);
+        }
+
+        private void WaitForStopped(string serviceName, TimeSpan timeout)
+        {
+            IntPtr scm = NativeMethods.OpenSCManager(null, null, NativeMethods.SC_MANAGER_ENUMERATE_SERVICE);
+            if (scm == IntPtr.Zero) return;
+
+            try
+            {
+                IntPtr hService = NativeMethods.OpenService(scm, serviceName, NativeMethods.SERVICE_QUERY_STATUS);
+                if (hService == IntPtr.Zero) return;
+
+                try
+                {
+                    var sw = System.Diagnostics.Stopwatch.StartNew();
+                    int structSize = Marshal.SizeOf<SERVICE_STATUS_PROCESS>();
+                    IntPtr buffer = Marshal.AllocHGlobal(structSize);
+                    try
+                    {
+                        while (sw.Elapsed < timeout)
+                        {
+                            if (NativeMethods.QueryServiceStatusEx(hService, NativeMethods.SC_STATUS_PROCESS_INFO, buffer, (uint)structSize, out _))
+                            {
+                                var status = Marshal.PtrToStructure<SERVICE_STATUS_PROCESS>(buffer);
+                                if (status.dwCurrentState == NativeMethods.SERVICE_STOPPED) return;
+                            }
+                            System.Threading.Thread.Sleep(150);
+                        }
+                    }
+                    finally
+                    {
+                        Marshal.FreeHGlobal(buffer);
+                    }
                 }
                 finally
                 {

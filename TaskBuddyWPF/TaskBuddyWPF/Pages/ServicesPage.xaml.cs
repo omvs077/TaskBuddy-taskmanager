@@ -76,6 +76,7 @@ namespace TaskBuddyWPF.Pages
                 {
                     current.Pid = fresh.Pid;
                     current.IsRunning = fresh.IsRunning;
+                    current.IsPaused = fresh.IsPaused;
                 }
                 else
                 {
@@ -92,8 +93,14 @@ namespace TaskBuddyWPF.Pages
 
         private void ContextMenu_Opened(object sender, RoutedEventArgs e)
         {
-            if (ServiceGrid.SelectedItem is ServiceInfo selected)
-                StartStopMenuItem.Header = selected.IsRunning ? "Stop" : "Start";
+            if (ServiceGrid.SelectedItem is not ServiceInfo selected) return;
+
+            StartStopMenuItem.Header = (selected.IsRunning || selected.IsPaused) ? "Stop" : "Start";
+
+            bool isStopped = !selected.IsRunning && !selected.IsPaused;
+            PauseResumeMenuItem.Header = selected.IsPaused ? "Resume" : "Pause";
+            PauseResumeMenuItem.IsEnabled = !isStopped;
+            RestartMenuItem.IsEnabled = !isStopped;
         }
 
         private async void StartStop_Click(object sender, RoutedEventArgs e)
@@ -109,6 +116,41 @@ namespace TaskBuddyWPF.Pages
             {
                 string action = selected.IsRunning ? "stop" : "start";
                 MessageBox.Show($"Unable to {action} '{selected.DisplayName}'. It may require elevated permissions.",
+                    "TaskBuddy", MessageBoxButton.OK, MessageBoxImage.Warning);
+            }
+
+            await RefreshAsync();
+        }
+
+        private async void PauseResume_Click(object sender, RoutedEventArgs e)
+        {
+            if (ServiceGrid.SelectedItem is not ServiceInfo selected)
+                return;
+
+            bool success = selected.IsPaused
+                ? await Task.Run(() => _enumerator.ResumeServiceByName(selected.ServiceName))
+                : await Task.Run(() => _enumerator.PauseServiceByName(selected.ServiceName));
+
+            if (!success)
+            {
+                string action = selected.IsPaused ? "resume" : "pause";
+                MessageBox.Show($"Unable to {action} '{selected.DisplayName}'. It may require elevated permissions, or this service may not support pausing.",
+                    "TaskBuddy", MessageBoxButton.OK, MessageBoxImage.Warning);
+            }
+
+            await RefreshAsync();
+        }
+
+        private async void Restart_Click(object sender, RoutedEventArgs e)
+        {
+            if (ServiceGrid.SelectedItem is not ServiceInfo selected)
+                return;
+
+            bool success = await Task.Run(() => _enumerator.RestartServiceByName(selected.ServiceName));
+
+            if (!success)
+            {
+                MessageBox.Show($"Unable to restart '{selected.DisplayName}'. It may require elevated permissions.",
                     "TaskBuddy", MessageBoxButton.OK, MessageBoxImage.Warning);
             }
 
