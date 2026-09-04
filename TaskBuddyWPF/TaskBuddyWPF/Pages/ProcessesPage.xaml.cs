@@ -88,6 +88,7 @@ namespace TaskBuddyWPF.Pages
                     current.WorkingSetBytes = fresh.WorkingSetBytes;
                     current.ImagePath = fresh.ImagePath;
                     current.IsSuspended = fresh.IsSuspended;
+                    current.IsEfficiencyMode = fresh.IsEfficiencyMode;
                     current.DiskBytesPerSec = fresh.DiskBytesPerSec;
                     current.Icon = fresh.Icon;
                 }
@@ -107,8 +108,10 @@ namespace TaskBuddyWPF.Pages
 
         private void ContextMenu_Opened(object sender, RoutedEventArgs e)
         {
-            if (ProcessGrid.SelectedItem is ProcessInfo selected)
-                SuspendResumeMenuItem.Header = selected.IsSuspended ? "Resume" : "Suspend";
+            if (ProcessGrid.SelectedItem is not ProcessInfo selected) return;
+
+            SuspendResumeMenuItem.Header = selected.IsSuspended ? "Resume" : "Suspend";
+            EfficiencyModeMenuItem.IsChecked = selected.IsEfficiencyMode;
         }
 
         private async void SuspendResume_Click(object sender, RoutedEventArgs e)
@@ -124,6 +127,25 @@ namespace TaskBuddyWPF.Pages
             {
                 string action = selected.IsSuspended ? "resume" : "suspend";
                 MessageBox.Show($"Unable to {action} '{selected.ImageName}' (PID {selected.Pid}). It may require elevated permissions.",
+                    "TaskBuddy", MessageBoxButton.OK, MessageBoxImage.Warning);
+            }
+
+            await RefreshAsync();
+        }
+
+        private async void EfficiencyMode_Click(object sender, RoutedEventArgs e)
+        {
+            if (ProcessGrid.SelectedItem is not ProcessInfo selected)
+                return;
+
+            bool success = selected.IsEfficiencyMode
+                ? await Task.Run(() => _enumerator.DisableEfficiencyMode(selected.Pid))
+                : await Task.Run(() => _enumerator.EnableEfficiencyMode(selected.Pid));
+
+            if (!success)
+            {
+                string action = selected.IsEfficiencyMode ? "disable" : "enable";
+                MessageBox.Show($"Unable to {action} efficiency mode for '{selected.ImageName}' (PID {selected.Pid}). It may require elevated permissions.",
                     "TaskBuddy", MessageBoxButton.OK, MessageBoxImage.Warning);
             }
 

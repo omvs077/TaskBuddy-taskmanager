@@ -69,6 +69,10 @@
                             <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                                 <Image Source="{Binding Icon}" Width="16" Height="16" Margin="0,0,8,0"/>
                                 <TextBlock Text="{Binding ImageName}" VerticalAlignment="Center"/>
+                                <Path Data="M0,7 C0,3 4,0 9,0 C9,5 6.5,7 4.5,7 C6.5,7 9,9 9,13 C4,13 0,11 0,7 Z"
+                                      Fill="#4CAF50" Width="9" Height="13" Stretch="Uniform" Margin="6,0,0,0"
+                                      VerticalAlignment="Center" ToolTip="Efficiency mode"
+                                      Visibility="{Binding IsEfficiencyMode, Converter={StaticResource BoolToVisibilityConverter}}"/>
                             </StackPanel>
                         </DataTemplate>
                     </DataGridTemplateColumn.CellTemplate>
@@ -100,6 +104,7 @@
             <DataGrid.ContextMenu>
                 <ContextMenu Opened="ContextMenu_Opened">
                     <MenuItem x:Name="SuspendResumeMenuItem" Header="Suspend" Click="SuspendResume_Click"/>
+                    <MenuItem x:Name="EfficiencyModeMenuItem" Header="Efficiency mode" Click="EfficiencyMode_Click" IsCheckable="True"/>
                     <MenuItem Header="End Task" Click="EndTask_Click"/>
                     <Separator/>
                     <MenuItem Header="Open File Location" Click="OpenFileLocation_Click"/>

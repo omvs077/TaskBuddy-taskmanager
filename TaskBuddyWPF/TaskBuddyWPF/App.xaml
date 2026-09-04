@@ -17,6 +17,7 @@
             <conv:MemoryHeatBrushConverter x:Key="MemoryHeatBrushConverter"/>
             <conv:DiskHeatBrushConverter x:Key="DiskHeatBrushConverter"/>
             <conv:StartupImpactBrushConverter x:Key="StartupImpactBrushConverter"/>
+            <BooleanToVisibilityConverter x:Key="BoolToVisibilityConverter"/>
         </ResourceDictionary>
     </Application.Resources>
 </Application>

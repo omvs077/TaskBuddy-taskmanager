@@ -136,6 +136,14 @@ namespace TaskBuddyWPF.Native
         public int Size;
     }
 
+    [StructLayout(LayoutKind.Sequential)]
+    internal struct PROCESS_POWER_THROTTLING_STATE
+    {
+        public uint Version;
+        public uint ControlMask;
+        public uint StateMask;
+    }
+
     [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]
     internal struct QUERY_SERVICE_CONFIGW
     {
@@ -176,6 +184,21 @@ namespace TaskBuddyWPF.Native
         [DllImport("kernel32.dll", SetLastError = true)]
         [return: MarshalAs(UnmanagedType.Bool)]
         internal static extern bool TerminateProcess(IntPtr hProcess, uint uExitCode);
+
+        [DllImport("kernel32.dll", SetLastError = true)]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        internal static extern bool SetPriorityClass(IntPtr hProcess, uint dwPriorityClass);
+
+        [DllImport("kernel32.dll", SetLastError = true)]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        internal static extern bool SetProcessInformation(IntPtr hProcess, int ProcessInformationClass, ref PROCESS_POWER_THROTTLING_STATE ProcessInformation, uint ProcessInformationSize);
+
+        internal const uint PROCESS_SET_INFORMATION = 0x0200;
+        internal const uint IDLE_PRIORITY_CLASS = 0x00000040;
+        internal const uint NORMAL_PRIORITY_CLASS = 0x00000020;
+        internal const int ProcessPowerThrottling = 4;
+        internal const uint PROCESS_POWER_THROTTLING_CURRENT_VERSION = 1;
+        internal const uint PROCESS_POWER_THROTTLING_EXECUTION_SPEED = 0x1;
 
         [DllImport("ntdll.dll")]
         internal static extern uint NtSuspendProcess(IntPtr processHandle);

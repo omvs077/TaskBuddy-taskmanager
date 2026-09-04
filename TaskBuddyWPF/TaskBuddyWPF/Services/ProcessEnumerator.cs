@@ -18,6 +18,7 @@ namespace TaskBuddyWPF.Services
         private readonly Dictionary<uint, (ulong totalBytes, DateTime timestamp)> _ioCache = new();
         private readonly Dictionary<string, ImageSource> _iconCache = new();
         private readonly HashSet<uint> _suspendedByUs = new();
+        private readonly HashSet<uint> _efficiencyModeByUs = new();
         private readonly int _coreCount = Environment.ProcessorCount;
 
         // Controlled by the Settings tab (default off, matches pre-existing behavior).
@@ -93,6 +94,7 @@ namespace TaskBuddyWPF.Services
                         ImageName = imageName ?? string.Empty,
                         ImagePath = imagePath,
                         IsSuspended = _suspendedByUs.Contains(pid),
+                        IsEfficiencyMode = _efficiencyModeByUs.Contains(pid),
                         DiskBytesPerSec = diskBytesPerSec,
                         Icon = icon
                     });
@@ -265,6 +267,63 @@ namespace TaskBuddyWPF.Services
             finally
             {
                 NativeMethods.CloseHandle(hProcess);
+
+            }
+        }
+        // Real Windows 11 Efficiency Mode is both of these together — priority alone
+        // or EcoQoS alone does not produce the same effect (confirmed via Microsoft
+        // Q&A: a tester needed both before the green-leaf behavior actually appeared).
+        public bool EnableEfficiencyMode(uint pid)
+        {
+            IntPtr hProcess = NativeMethods.OpenProcess(NativeMethods.PROCESS_SET_INFORMATION, false, pid);
+            if (hProcess == IntPtr.Zero) return false;
+
+            try
+            {
+                bool priorityOk = NativeMethods.SetPriorityClass(hProcess, NativeMethods.IDLE_PRIORITY_CLASS);
+
+                var throttling = new PROCESS_POWER_THROTTLING_STATE
+                {
+                    Version = NativeMethods.PROCESS_POWER_THROTTLING_CURRENT_VERSION,
+                    ControlMask = NativeMethods.PROCESS_POWER_THROTTLING_EXECUTION_SPEED,
+                    StateMask = NativeMethods.PROCESS_POWER_THROTTLING_EXECUTION_SPEED
+                };
+                bool throttleOk = NativeMethods.SetProcessInformation(hProcess, NativeMethods.ProcessPowerThrottling, ref throttling, (uint)Marshal.SizeOf<PROCESS_POWER_THROTTLING_STATE>());
+
+                bool success = priorityOk && throttleOk;
+                if (success) _efficiencyModeByUs.Add(pid);
+                return success;
+            }
+            finally
+            {
+                NativeMethods.CloseHandle(hProcess);
+            }
+        }
+
+        public bool DisableEfficiencyMode(uint pid)
+        {
+            IntPtr hProcess = NativeMethods.OpenProcess(NativeMethods.PROCESS_SET_INFORMATION, false, pid);
+            if (hProcess == IntPtr.Zero) return false;
+
+            try
+            {
+                bool priorityOk = NativeMethods.SetPriorityClass(hProcess, NativeMethods.NORMAL_PRIORITY_CLASS);
+
+                var throttling = new PROCESS_POWER_THROTTLING_STATE
+                {
+                    Version = NativeMethods.PROCESS_POWER_THROTTLING_CURRENT_VERSION,
+                    ControlMask = NativeMethods.PROCESS_POWER_THROTTLING_EXECUTION_SPEED,
+                    StateMask = 0
+                };
+                bool throttleOk = NativeMethods.SetProcessInformation(hProcess, NativeMethods.ProcessPowerThrottling, ref throttling, (uint)Marshal.SizeOf<PROCESS_POWER_THROTTLING_STATE>());
+
+                bool success = priorityOk && throttleOk;
+                if (success) _efficiencyModeByUs.Remove(pid);
+                return success;
+            }
+            finally
+            {
+                NativeMethods.CloseHandle(hProcess);
             }
         }
 
@@ -274,6 +333,7 @@ namespace TaskBuddyWPF.Services
             PruneDict(_pathCache, seenPids);
             PruneDict(_ioCache, seenPids);
             _suspendedByUs.RemoveWhere(pid => !seenPids.Contains(pid));
+            _efficiencyModeByUs.RemoveWhere(pid => !seenPids.Contains(pid));
         }
 
         private static void PruneDict<T>(Dictionary<uint, T> dict, HashSet<uint> seenPids)

@@ -45,6 +45,18 @@ namespace TaskBuddyWPF.Models
 
         public string StatusText => IsSuspended ? "Suspended" : "Running";
 
+        // Reflects only what TaskBuddy itself has toggled (tracked locally in
+        // ProcessEnumerator, same pattern as IsSuspended) rather than a live OS
+        // query — GetProcessInformation for ProcessPowerThrottling is documented
+        // as unreliable on some Windows builds even right after a successful Set.
+        // Efficiency Mode enabled by real Task Manager or powercfg will not show here.
+        private bool _isEfficiencyMode;
+        public bool IsEfficiencyMode
+        {
+            get => _isEfficiencyMode;
+            set { if (_isEfficiencyMode != value) { _isEfficiencyMode = value; Notify(nameof(IsEfficiencyMode)); } }
+        }
+
         private double _diskBytesPerSec;
         public double DiskBytesPerSec
         {
