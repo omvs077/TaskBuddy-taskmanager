@@ -210,6 +210,9 @@ namespace TaskBuddyWPF.Native
         internal static extern bool SetPriorityClass(IntPtr hProcess, uint dwPriorityClass);
 
         [DllImport("kernel32.dll", SetLastError = true)]
+        internal static extern uint GetPriorityClass(IntPtr hProcess);
+
+        [DllImport("kernel32.dll", SetLastError = true)]
         [return: MarshalAs(UnmanagedType.Bool)]
         internal static extern bool SetProcessInformation(IntPtr hProcess, int ProcessInformationClass, ref PROCESS_POWER_THROTTLING_STATE ProcessInformation, uint ProcessInformationSize);
 
@@ -222,6 +225,10 @@ namespace TaskBuddyWPF.Native
         internal const uint PROCESS_SET_INFORMATION = 0x0200;
         internal const uint IDLE_PRIORITY_CLASS = 0x00000040;
         internal const uint NORMAL_PRIORITY_CLASS = 0x00000020;
+        internal const uint BELOW_NORMAL_PRIORITY_CLASS = 0x00004000;
+        internal const uint ABOVE_NORMAL_PRIORITY_CLASS = 0x00008000;
+        internal const uint HIGH_PRIORITY_CLASS = 0x00000080;
+        internal const uint REALTIME_PRIORITY_CLASS = 0x00000100;
         internal const int ProcessPowerThrottling = 4;
         internal const uint PROCESS_POWER_THROTTLING_CURRENT_VERSION = 1;
         internal const uint PROCESS_POWER_THROTTLING_EXECUTION_SPEED = 0x1;

@@ -115,6 +115,14 @@ namespace TaskBuddyWPF.Pages
             SuspendResumeMenuItem.Header = selected.IsSuspended ? "Resume" : "Suspend";
             EfficiencyModeMenuItem.IsChecked = selected.IsEfficiencyMode;
             GoToServiceMenuItem.IsEnabled = string.Equals(selected.ImageName, "svchost.exe", StringComparison.OrdinalIgnoreCase);
+
+            uint? currentPriority = _enumerator.GetProcessPriority(selected.Pid);
+            PriorityRealtimeItem.IsChecked = currentPriority == NativeMethods.REALTIME_PRIORITY_CLASS;
+            PriorityHighItem.IsChecked = currentPriority == NativeMethods.HIGH_PRIORITY_CLASS;
+            PriorityAboveNormalItem.IsChecked = currentPriority == NativeMethods.ABOVE_NORMAL_PRIORITY_CLASS;
+            PriorityNormalItem.IsChecked = currentPriority == NativeMethods.NORMAL_PRIORITY_CLASS;
+            PriorityBelowNormalItem.IsChecked = currentPriority == NativeMethods.BELOW_NORMAL_PRIORITY_CLASS;
+            PriorityIdleItem.IsChecked = currentPriority == NativeMethods.IDLE_PRIORITY_CLASS;
         }
 
         private async void SuspendResume_Click(object sender, RoutedEventArgs e)
@@ -213,6 +221,31 @@ namespace TaskBuddyWPF.Pages
                 return;
 
             Clipboard.SetText(selected.Pid.ToString());
+        }
+
+        private async void SetPriority_Click(object sender, RoutedEventArgs e)
+        {
+            if (ProcessGrid.SelectedItem is not ProcessInfo selected) return;
+            if (sender is not MenuItem { Tag: string tag }) return;
+
+            uint priorityClass = tag switch
+            {
+                "Realtime" => NativeMethods.REALTIME_PRIORITY_CLASS,
+                "High" => NativeMethods.HIGH_PRIORITY_CLASS,
+                "AboveNormal" => NativeMethods.ABOVE_NORMAL_PRIORITY_CLASS,
+                "BelowNormal" => NativeMethods.BELOW_NORMAL_PRIORITY_CLASS,
+                "Idle" => NativeMethods.IDLE_PRIORITY_CLASS,
+                _ => NativeMethods.NORMAL_PRIORITY_CLASS
+            };
+
+            bool success = await Task.Run(() => _enumerator.SetProcessPriority(selected.Pid, priorityClass));
+            if (!success)
+            {
+                MessageBox.Show($"Unable to change priority for '{selected.ImageName}' (PID {selected.Pid}). It may require elevated permissions.",
+                    "TaskBuddy", MessageBoxButton.OK, MessageBoxImage.Warning);
+            }
+
+            await RefreshAsync();
         }
 
         private void SearchOnline_Click(object sender, RoutedEventArgs e)

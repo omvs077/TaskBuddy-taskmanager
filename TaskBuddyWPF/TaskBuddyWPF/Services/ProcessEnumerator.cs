@@ -327,6 +327,39 @@ namespace TaskBuddyWPF.Services
             }
         }
 
+        public bool SetProcessPriority(uint pid, uint priorityClass)
+        {
+            IntPtr hProcess = NativeMethods.OpenProcess(NativeMethods.PROCESS_SET_INFORMATION, false, pid);
+            if (hProcess == IntPtr.Zero) return false;
+
+            try
+            {
+                return NativeMethods.SetPriorityClass(hProcess, priorityClass);
+            }
+            finally
+            {
+                NativeMethods.CloseHandle(hProcess);
+            }
+        }
+
+        // PROCESS_QUERY_LIMITED_INFORMATION is enough to read priority (no need for
+        // the heavier PROCESS_SET_INFORMATION access right used when writing it).
+        public uint? GetProcessPriority(uint pid)
+        {
+            IntPtr hProcess = NativeMethods.OpenProcess(NativeMethods.PROCESS_QUERY_LIMITED_INFORMATION, false, pid);
+            if (hProcess == IntPtr.Zero) return null;
+
+            try
+            {
+                uint result = NativeMethods.GetPriorityClass(hProcess);
+                return result == 0 ? null : result;
+            }
+            finally
+            {
+                NativeMethods.CloseHandle(hProcess);
+            }
+        }
+
         private void PruneStale(HashSet<uint> seenPids)
         {
             PruneDict(_cpuCache, seenPids);

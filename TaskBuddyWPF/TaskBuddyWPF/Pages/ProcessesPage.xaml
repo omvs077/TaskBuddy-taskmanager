@@ -105,6 +105,14 @@
                 <ContextMenu Opened="ContextMenu_Opened">
                     <MenuItem x:Name="SuspendResumeMenuItem" Header="Suspend" Click="SuspendResume_Click"/>
                     <MenuItem x:Name="EfficiencyModeMenuItem" Header="Efficiency mode" Click="EfficiencyMode_Click" IsCheckable="True"/>
+                    <MenuItem Header="Set priority">
+                        <MenuItem x:Name="PriorityRealtimeItem" Header="Realtime" Click="SetPriority_Click" Tag="Realtime" IsCheckable="True"/>
+                        <MenuItem x:Name="PriorityHighItem" Header="High" Click="SetPriority_Click" Tag="High" IsCheckable="True"/>
+                        <MenuItem x:Name="PriorityAboveNormalItem" Header="Above normal" Click="SetPriority_Click" Tag="AboveNormal" IsCheckable="True"/>
+                        <MenuItem x:Name="PriorityNormalItem" Header="Normal" Click="SetPriority_Click" Tag="Normal" IsCheckable="True"/>
+                        <MenuItem x:Name="PriorityBelowNormalItem" Header="Below normal" Click="SetPriority_Click" Tag="BelowNormal" IsCheckable="True"/>
+                        <MenuItem x:Name="PriorityIdleItem" Header="Idle" Click="SetPriority_Click" Tag="Idle" IsCheckable="True"/>
+                    </MenuItem>
                     <MenuItem Header="End Task" Click="EndTask_Click"/>
                     <Separator/>
                     <MenuItem Header="Open File Location" Click="OpenFileLocation_Click"/>
