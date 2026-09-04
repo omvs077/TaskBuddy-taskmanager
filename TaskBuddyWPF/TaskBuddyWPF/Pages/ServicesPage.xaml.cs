@@ -47,6 +47,12 @@ namespace TaskBuddyWPF.Pages
             {
                 var snapshot = await Task.Run(() => _enumerator.GetSnapshot());
                 ApplyDiff(snapshot);
+
+                if (NavigationTarget.RequestedPid.HasValue)
+                {
+                    SelectAndScrollToPid(NavigationTarget.RequestedPid.Value);
+                    NavigationTarget.RequestedPid = null;
+                }
             }
             finally
             {
@@ -188,6 +194,15 @@ namespace TaskBuddyWPF.Pages
 
         // Same NavigationView ScrollViewer quirk as ProcessesPage/PerformancePage.
         private void Page_Loaded(object sender, RoutedEventArgs e) => UpdatePinnedHeight();
+
+        private void SelectAndScrollToPid(uint pid)
+        {
+            var match = _services.FirstOrDefault(s => s.Pid == pid);
+            if (match == null) return;
+
+            ServiceGrid.SelectedItem = match;
+            ServiceGrid.ScrollIntoView(match);
+        }
 
         private void UpdatePinnedHeight()
         {

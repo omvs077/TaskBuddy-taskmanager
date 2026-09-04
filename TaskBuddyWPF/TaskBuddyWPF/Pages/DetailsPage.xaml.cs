@@ -48,6 +48,12 @@ namespace TaskBuddyWPF.Pages
             {
                 var fresh = await Task.Run(() => _enumerator.GetSnapshot());
                 ApplyDiff(fresh);
+
+                if (NavigationTarget.RequestedPid.HasValue)
+                {
+                    SelectAndScrollToPid(NavigationTarget.RequestedPid.Value);
+                    NavigationTarget.RequestedPid = null;
+                }
             }
             catch (Exception ex)
             {
@@ -103,6 +109,15 @@ namespace TaskBuddyWPF.Pages
                     "It may require elevated permissions.", "Error",
                     MessageBoxButton.OK, MessageBoxImage.Warning);
             }
+        }
+
+        private void SelectAndScrollToPid(uint pid)
+        {
+            var match = _items.FirstOrDefault(i => i.Pid == pid);
+            if (match == null) return;
+
+            DetailsGrid.SelectedItem = match;
+            DetailsGrid.ScrollIntoView(match);
         }
 
         private void UpdatePinnedHeight()

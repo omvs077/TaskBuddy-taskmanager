@@ -5,12 +5,14 @@ using System.Windows.Media;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
+using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Threading;
 using TaskBuddyWPF.Dialogs;
+using TaskBuddyWPF.Native;
 using TaskBuddyWPF.Models;
 using TaskBuddyWPF.Services;
 
@@ -112,6 +114,7 @@ namespace TaskBuddyWPF.Pages
 
             SuspendResumeMenuItem.Header = selected.IsSuspended ? "Resume" : "Suspend";
             EfficiencyModeMenuItem.IsChecked = selected.IsEfficiencyMode;
+            GoToServiceMenuItem.IsEnabled = string.Equals(selected.ImageName, "svchost.exe", StringComparison.OrdinalIgnoreCase);
         }
 
         private async void SuspendResume_Click(object sender, RoutedEventArgs e)
@@ -210,6 +213,68 @@ namespace TaskBuddyWPF.Pages
                 return;
 
             Clipboard.SetText(selected.Pid.ToString());
+        }
+
+        private void SearchOnline_Click(object sender, RoutedEventArgs e)
+        {
+            if (ProcessGrid.SelectedItem is not ProcessInfo selected) return;
+
+            try
+            {
+                string query = Uri.EscapeDataString(selected.ImageName);
+                Process.Start(new ProcessStartInfo($"https://www.bing.com/search?q={query}") { UseShellExecute = true });
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Could not open browser:\n{ex.Message}",
+                    "TaskBuddy", MessageBoxButton.OK, MessageBoxImage.Warning);
+            }
+        }
+
+        private void Properties_Click(object sender, RoutedEventArgs e)
+        {
+            if (ProcessGrid.SelectedItem is not ProcessInfo selected || string.IsNullOrEmpty(selected.ImagePath))
+            {
+                MessageBox.Show("Properties are not available for this process.",
+                    "TaskBuddy", MessageBoxButton.OK, MessageBoxImage.Information);
+                return;
+            }
+
+            // Process.Start with Verb="properties" fails for most non-.lnk files
+            // ("No application is associated with the specified file") because it
+            // does not set SEE_MASK_INVOKEIDLIST — the real property sheet needs
+            // ShellExecuteEx called directly with that flag (confirmed via a
+            // Microsoft Q&A thread reporting the exact same error).
+            var sei = new SHELLEXECUTEINFO
+            {
+                cbSize = Marshal.SizeOf<SHELLEXECUTEINFO>(),
+                lpVerb = "properties",
+                lpFile = selected.ImagePath,
+                fMask = NativeMethods.SEE_MASK_INVOKEIDLIST,
+                nShow = 1
+            };
+
+            if (!NativeMethods.ShellExecuteEx(ref sei))
+            {
+                MessageBox.Show("Could not open properties for this process.",
+                    "TaskBuddy", MessageBoxButton.OK, MessageBoxImage.Warning);
+            }
+        }
+
+        private void GoToDetails_Click(object sender, RoutedEventArgs e)
+        {
+            if (ProcessGrid.SelectedItem is not ProcessInfo selected) return;
+
+            NavigationTarget.RequestedPid = selected.Pid;
+            ((MainWindow)Application.Current.MainWindow).RootNav.Navigate(typeof(DetailsPage));
+        }
+
+        private void GoToService_Click(object sender, RoutedEventArgs e)
+        {
+            if (ProcessGrid.SelectedItem is not ProcessInfo selected) return;
+
+            NavigationTarget.RequestedPid = selected.Pid;
+            ((MainWindow)Application.Current.MainWindow).RootNav.Navigate(typeof(ServicesPage));
         }
 
         private bool FilterProcess(object obj)

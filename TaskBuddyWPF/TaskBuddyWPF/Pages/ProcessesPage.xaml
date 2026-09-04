@@ -109,6 +109,11 @@
                     <Separator/>
                     <MenuItem Header="Open File Location" Click="OpenFileLocation_Click"/>
                     <MenuItem Header="Copy PID" Click="CopyPid_Click"/>
+                    <Separator/>
+                    <MenuItem Header="Search online" Click="SearchOnline_Click"/>
+                    <MenuItem Header="Properties" Click="Properties_Click"/>
+                    <MenuItem Header="Go to details" Click="GoToDetails_Click"/>
+                    <MenuItem x:Name="GoToServiceMenuItem" Header="Go to service(s)" Click="GoToService_Click"/>
                 </ContextMenu>
             </DataGrid.ContextMenu>
         </DataGrid>
