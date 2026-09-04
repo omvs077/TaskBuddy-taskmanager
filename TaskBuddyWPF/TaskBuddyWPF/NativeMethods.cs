@@ -182,6 +182,7 @@ namespace TaskBuddyWPF.Native
         internal const int SystemProcessInformation = 5;
         internal const uint STATUS_INFO_LENGTH_MISMATCH = 0xC0000004;
         internal const uint PROCESS_QUERY_LIMITED_INFORMATION = 0x1000;
+        internal const uint PROCESS_QUERY_INFORMATION = 0x0400;
         internal const uint PROCESS_TERMINATE = 0x0001;
         internal const uint PROCESS_SUSPEND_RESUME = 0x0800;
         internal const uint SHGFI_ICON = 0x000000100;
@@ -211,6 +212,14 @@ namespace TaskBuddyWPF.Native
 
         [DllImport("kernel32.dll", SetLastError = true)]
         internal static extern uint GetPriorityClass(IntPtr hProcess);
+
+        [DllImport("kernel32.dll", SetLastError = true)]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        internal static extern bool SetProcessAffinityMask(IntPtr hProcess, UIntPtr dwProcessAffinityMask);
+
+        [DllImport("kernel32.dll", SetLastError = true)]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        internal static extern bool GetProcessAffinityMask(IntPtr hProcess, out UIntPtr lpProcessAffinityMask, out UIntPtr lpSystemAffinityMask);
 
         [DllImport("kernel32.dll", SetLastError = true)]
         [return: MarshalAs(UnmanagedType.Bool)]

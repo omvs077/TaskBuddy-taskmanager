@@ -113,6 +113,7 @@
                         <MenuItem x:Name="PriorityBelowNormalItem" Header="Below normal" Click="SetPriority_Click" Tag="BelowNormal" IsCheckable="True"/>
                         <MenuItem x:Name="PriorityIdleItem" Header="Idle" Click="SetPriority_Click" Tag="Idle" IsCheckable="True"/>
                     </MenuItem>
+                    <MenuItem Header="Set affinity" Click="SetAffinity_Click"/>
                     <MenuItem Header="End Task" Click="EndTask_Click"/>
                     <Separator/>
                     <MenuItem Header="Open File Location" Click="OpenFileLocation_Click"/>

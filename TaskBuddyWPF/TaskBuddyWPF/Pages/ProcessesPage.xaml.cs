@@ -248,6 +248,34 @@ namespace TaskBuddyWPF.Pages
             await RefreshAsync();
         }
 
+        private async void SetAffinity_Click(object sender, RoutedEventArgs e)
+        {
+            if (ProcessGrid.SelectedItem is not ProcessInfo selected) return;
+
+            ulong? currentMask = await Task.Run(() => _enumerator.GetProcessAffinity(selected.Pid));
+            if (currentMask == null)
+            {
+                MessageBox.Show($"Unable to read processor affinity for '{selected.ImageName}'. It may require elevated permissions.",
+                    "TaskBuddy", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
+
+            var dialog = new SetAffinityDialog(selected.ImageName, currentMask.Value, SystemInfo.LogicalCoreCount)
+            {
+                Owner = Window.GetWindow(this)
+            };
+
+            if (dialog.ShowDialog() == true)
+            {
+                bool success = await Task.Run(() => _enumerator.SetProcessAffinity(selected.Pid, dialog.SelectedAffinityMask));
+                if (!success)
+                {
+                    MessageBox.Show($"Unable to set processor affinity for '{selected.ImageName}'. It may require elevated permissions.",
+                        "TaskBuddy", MessageBoxButton.OK, MessageBoxImage.Warning);
+                }
+            }
+        }
+
         private void SearchOnline_Click(object sender, RoutedEventArgs e)
         {
             if (ProcessGrid.SelectedItem is not ProcessInfo selected) return;

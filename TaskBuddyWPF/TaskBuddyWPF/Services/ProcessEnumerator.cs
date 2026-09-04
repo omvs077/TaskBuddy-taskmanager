@@ -360,6 +360,40 @@ namespace TaskBuddyWPF.Services
             }
         }
 
+        public bool SetProcessAffinity(uint pid, ulong affinityMask)
+        {
+            IntPtr hProcess = NativeMethods.OpenProcess(NativeMethods.PROCESS_SET_INFORMATION, false, pid);
+            if (hProcess == IntPtr.Zero) return false;
+
+            try
+            {
+                return NativeMethods.SetProcessAffinityMask(hProcess, (UIntPtr)affinityMask);
+            }
+            finally
+            {
+                NativeMethods.CloseHandle(hProcess);
+            }
+        }
+
+        // GetProcessAffinityMask needs the full PROCESS_QUERY_INFORMATION right,
+        // not the LIMITED variant used elsewhere in this file.
+        public ulong? GetProcessAffinity(uint pid)
+        {
+            IntPtr hProcess = NativeMethods.OpenProcess(NativeMethods.PROCESS_QUERY_INFORMATION, false, pid);
+            if (hProcess == IntPtr.Zero) return null;
+
+            try
+            {
+                if (!NativeMethods.GetProcessAffinityMask(hProcess, out var processMask, out _))
+                    return null;
+                return (ulong)processMask;
+            }
+            finally
+            {
+                NativeMethods.CloseHandle(hProcess);
+            }
+        }
+
         private void PruneStale(HashSet<uint> seenPids)
         {
             PruneDict(_cpuCache, seenPids);
