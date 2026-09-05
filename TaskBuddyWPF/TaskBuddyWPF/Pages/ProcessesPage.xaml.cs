@@ -5,7 +5,6 @@ using System.Windows.Media;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
-using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
@@ -127,95 +126,32 @@ namespace TaskBuddyWPF.Pages
 
         private async void SuspendResume_Click(object sender, RoutedEventArgs e)
         {
-            if (ProcessGrid.SelectedItem is not ProcessInfo selected)
-                return;
-
-            bool success = selected.IsSuspended
-                ? await Task.Run(() => _enumerator.ResumeProcess(selected.Pid))
-                : await Task.Run(() => _enumerator.SuspendProcess(selected.Pid));
-
-            if (!success)
-            {
-                string action = selected.IsSuspended ? "resume" : "suspend";
-                MessageBox.Show($"Unable to {action} '{selected.ImageName}' (PID {selected.Pid}). It may require elevated permissions.",
-                    "TaskBuddy", MessageBoxButton.OK, MessageBoxImage.Warning);
-            }
-
-            await RefreshAsync();
+            if (ProcessGrid.SelectedItem is not ProcessInfo selected) return;
+            await ProcessActions.ToggleSuspend(_enumerator, selected.Pid, selected.ImageName, selected.IsSuspended, RefreshAsync);
         }
 
         private async void EfficiencyMode_Click(object sender, RoutedEventArgs e)
         {
-            if (ProcessGrid.SelectedItem is not ProcessInfo selected)
-                return;
-
-            bool success = selected.IsEfficiencyMode
-                ? await Task.Run(() => _enumerator.DisableEfficiencyMode(selected.Pid))
-                : await Task.Run(() => _enumerator.EnableEfficiencyMode(selected.Pid));
-
-            if (!success)
-            {
-                string action = selected.IsEfficiencyMode ? "disable" : "enable";
-                MessageBox.Show($"Unable to {action} efficiency mode for '{selected.ImageName}' (PID {selected.Pid}). It may require elevated permissions.",
-                    "TaskBuddy", MessageBoxButton.OK, MessageBoxImage.Warning);
-            }
-
-            await RefreshAsync();
+            if (ProcessGrid.SelectedItem is not ProcessInfo selected) return;
+            await ProcessActions.ToggleEfficiencyMode(_enumerator, selected.Pid, selected.ImageName, selected.IsEfficiencyMode, RefreshAsync);
         }
 
         private async void EndTask_Click(object sender, RoutedEventArgs e)
         {
-            if (ProcessGrid.SelectedItem is not ProcessInfo selected)
-                return;
-
-            bool success = await Task.Run(() => _enumerator.TerminateProcess(selected.Pid));
-            if (!success)
-            {
-                MessageBox.Show($"Unable to end task '{selected.ImageName}' (PID {selected.Pid}). It may require elevated permissions.",
-                    "TaskBuddy", MessageBoxButton.OK, MessageBoxImage.Warning);
-            }
-
-            await RefreshAsync();
+            if (ProcessGrid.SelectedItem is not ProcessInfo selected) return;
+            await ProcessActions.EndTask(_enumerator, selected.Pid, selected.ImageName, RefreshAsync);
         }
 
         private async void EndProcessTree_Click(object sender, RoutedEventArgs e)
         {
-            if (ProcessGrid.SelectedItem is not ProcessInfo selected)
-                return;
-
-            var confirm = MessageBox.Show(
-                $"This will end '{selected.ImageName}' (PID {selected.Pid}) and every process it started. Continue?",
-                "TaskBuddy", MessageBoxButton.YesNo, MessageBoxImage.Warning);
-            if (confirm != MessageBoxResult.Yes) return;
-
-            var (succeeded, failed) = await Task.Run(() => _enumerator.EndProcessTree(selected.Pid));
-            if (failed > 0)
-            {
-                MessageBox.Show($"Ended {succeeded} process(es); {failed} could not be ended (may require elevated permissions).",
-                    "TaskBuddy", MessageBoxButton.OK, MessageBoxImage.Warning);
-            }
-
-            await RefreshAsync();
+            if (ProcessGrid.SelectedItem is not ProcessInfo selected) return;
+            await ProcessActions.EndProcessTree(_enumerator, selected.Pid, selected.ImageName, RefreshAsync);
         }
 
         private async void CreateDumpFile_Click(object sender, RoutedEventArgs e)
         {
             if (ProcessGrid.SelectedItem is not ProcessInfo selected) return;
-
-            string baseName = System.IO.Path.GetFileNameWithoutExtension(selected.ImageName);
-            string filePath = System.IO.Path.Combine(System.IO.Path.GetTempPath(), $"{baseName}.DMP");
-
-            bool success = await Task.Run(() => _enumerator.CreateDumpFile(selected.Pid, filePath));
-            if (success)
-            {
-                MessageBox.Show($"The file has been successfully created.\n\nPath: {filePath}",
-                    "TaskBuddy", MessageBoxButton.OK, MessageBoxImage.Information);
-            }
-            else
-            {
-                MessageBox.Show($"Unable to create a dump file for '{selected.ImageName}'. It may require elevated permissions.",
-                    "TaskBuddy", MessageBoxButton.OK, MessageBoxImage.Warning);
-            }
+            await ProcessActions.CreateDumpFile(_enumerator, selected.Pid, selected.ImageName);
         }
 
         private void RunNewTask_Click(object sender, RoutedEventArgs e)
@@ -237,30 +173,14 @@ namespace TaskBuddyWPF.Pages
 
         private void OpenFileLocation_Click(object sender, RoutedEventArgs e)
         {
-            if (ProcessGrid.SelectedItem is not ProcessInfo selected || string.IsNullOrEmpty(selected.ImagePath))
-            {
-                MessageBox.Show("File location is not available for this process.",
-                    "TaskBuddy", MessageBoxButton.OK, MessageBoxImage.Information);
-                return;
-            }
-
-            try
-            {
-                Process.Start(new ProcessStartInfo("explorer.exe", $"/select,\"{selected.ImagePath}\"") { UseShellExecute = true });
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show($"Could not open file location:\n{ex.Message}",
-                    "TaskBuddy", MessageBoxButton.OK, MessageBoxImage.Warning);
-            }
+            if (ProcessGrid.SelectedItem is not ProcessInfo selected) return;
+            ProcessActions.OpenFileLocation(selected.ImagePath);
         }
 
         private void CopyPid_Click(object sender, RoutedEventArgs e)
         {
-            if (ProcessGrid.SelectedItem is not ProcessInfo selected)
-                return;
-
-            Clipboard.SetText(selected.Pid.ToString());
+            if (ProcessGrid.SelectedItem is not ProcessInfo selected) return;
+            ProcessActions.CopyPid(selected.Pid);
         }
 
         private async void SetPriority_Click(object sender, RoutedEventArgs e)
@@ -278,104 +198,37 @@ namespace TaskBuddyWPF.Pages
                 _ => NativeMethods.NORMAL_PRIORITY_CLASS
             };
 
-            bool success = await Task.Run(() => _enumerator.SetProcessPriority(selected.Pid, priorityClass));
-            if (!success)
-            {
-                MessageBox.Show($"Unable to change priority for '{selected.ImageName}' (PID {selected.Pid}). It may require elevated permissions.",
-                    "TaskBuddy", MessageBoxButton.OK, MessageBoxImage.Warning);
-            }
-
-            await RefreshAsync();
+            await ProcessActions.SetPriority(_enumerator, selected.Pid, selected.ImageName, priorityClass, RefreshAsync);
         }
 
         private async void SetAffinity_Click(object sender, RoutedEventArgs e)
         {
             if (ProcessGrid.SelectedItem is not ProcessInfo selected) return;
-
-            ulong? currentMask = await Task.Run(() => _enumerator.GetProcessAffinity(selected.Pid));
-            if (currentMask == null)
-            {
-                MessageBox.Show($"Unable to read processor affinity for '{selected.ImageName}'. It may require elevated permissions.",
-                    "TaskBuddy", MessageBoxButton.OK, MessageBoxImage.Warning);
-                return;
-            }
-
-            var dialog = new SetAffinityDialog(selected.ImageName, currentMask.Value, SystemInfo.LogicalCoreCount)
-            {
-                Owner = Window.GetWindow(this)
-            };
-
-            if (dialog.ShowDialog() == true)
-            {
-                bool success = await Task.Run(() => _enumerator.SetProcessAffinity(selected.Pid, dialog.SelectedAffinityMask));
-                if (!success)
-                {
-                    MessageBox.Show($"Unable to set processor affinity for '{selected.ImageName}'. It may require elevated permissions.",
-                        "TaskBuddy", MessageBoxButton.OK, MessageBoxImage.Warning);
-                }
-            }
+            await ProcessActions.SetAffinity(_enumerator, selected.Pid, selected.ImageName, Window.GetWindow(this));
         }
 
         private void SearchOnline_Click(object sender, RoutedEventArgs e)
         {
             if (ProcessGrid.SelectedItem is not ProcessInfo selected) return;
-
-            try
-            {
-                string query = Uri.EscapeDataString(selected.ImageName);
-                Process.Start(new ProcessStartInfo($"https://www.bing.com/search?q={query}") { UseShellExecute = true });
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show($"Could not open browser:\n{ex.Message}",
-                    "TaskBuddy", MessageBoxButton.OK, MessageBoxImage.Warning);
-            }
+            ProcessActions.SearchOnline(selected.ImageName);
         }
 
         private void Properties_Click(object sender, RoutedEventArgs e)
         {
-            if (ProcessGrid.SelectedItem is not ProcessInfo selected || string.IsNullOrEmpty(selected.ImagePath))
-            {
-                MessageBox.Show("Properties are not available for this process.",
-                    "TaskBuddy", MessageBoxButton.OK, MessageBoxImage.Information);
-                return;
-            }
-
-            // Process.Start with Verb="properties" fails for most non-.lnk files
-            // ("No application is associated with the specified file") because it
-            // does not set SEE_MASK_INVOKEIDLIST — the real property sheet needs
-            // ShellExecuteEx called directly with that flag (confirmed via a
-            // Microsoft Q&A thread reporting the exact same error).
-            var sei = new SHELLEXECUTEINFO
-            {
-                cbSize = Marshal.SizeOf<SHELLEXECUTEINFO>(),
-                lpVerb = "properties",
-                lpFile = selected.ImagePath,
-                fMask = NativeMethods.SEE_MASK_INVOKEIDLIST,
-                nShow = 1
-            };
-
-            if (!NativeMethods.ShellExecuteEx(ref sei))
-            {
-                MessageBox.Show("Could not open properties for this process.",
-                    "TaskBuddy", MessageBoxButton.OK, MessageBoxImage.Warning);
-            }
+            if (ProcessGrid.SelectedItem is not ProcessInfo selected) return;
+            ProcessActions.Properties(selected.ImagePath);
         }
 
         private void GoToDetails_Click(object sender, RoutedEventArgs e)
         {
             if (ProcessGrid.SelectedItem is not ProcessInfo selected) return;
-
-            NavigationTarget.RequestedPid = selected.Pid;
-            ((MainWindow)Application.Current.MainWindow).RootNav.Navigate(typeof(DetailsPage));
+            ProcessActions.GoToDetails(selected.Pid, Window.GetWindow(this));
         }
 
         private void GoToService_Click(object sender, RoutedEventArgs e)
         {
             if (ProcessGrid.SelectedItem is not ProcessInfo selected) return;
-
-            NavigationTarget.RequestedPid = selected.Pid;
-            ((MainWindow)Application.Current.MainWindow).RootNav.Navigate(typeof(ServicesPage));
+            ProcessActions.GoToService(selected.Pid, Window.GetWindow(this));
         }
 
         private bool FilterProcess(object obj)
