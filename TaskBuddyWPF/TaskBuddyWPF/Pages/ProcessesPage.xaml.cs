@@ -178,6 +178,26 @@ namespace TaskBuddyWPF.Pages
             await RefreshAsync();
         }
 
+        private async void EndProcessTree_Click(object sender, RoutedEventArgs e)
+        {
+            if (ProcessGrid.SelectedItem is not ProcessInfo selected)
+                return;
+
+            var confirm = MessageBox.Show(
+                $"This will end '{selected.ImageName}' (PID {selected.Pid}) and every process it started. Continue?",
+                "TaskBuddy", MessageBoxButton.YesNo, MessageBoxImage.Warning);
+            if (confirm != MessageBoxResult.Yes) return;
+
+            var (succeeded, failed) = await Task.Run(() => _enumerator.EndProcessTree(selected.Pid));
+            if (failed > 0)
+            {
+                MessageBox.Show($"Ended {succeeded} process(es); {failed} could not be ended (may require elevated permissions).",
+                    "TaskBuddy", MessageBoxButton.OK, MessageBoxImage.Warning);
+            }
+
+            await RefreshAsync();
+        }
+
         private void RunNewTask_Click(object sender, RoutedEventArgs e)
         {
             var dialog = new RunTaskDialog { Owner = Window.GetWindow(this) };

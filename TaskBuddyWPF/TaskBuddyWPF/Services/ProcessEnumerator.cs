@@ -226,6 +226,46 @@ namespace TaskBuddyWPF.Services
             }
         }
 
+        // Matches real Task Manager: terminates the selected process and every
+        // descendant found by walking ParentPid in a fresh snapshot. Children are
+        // terminated before their ancestors (deepest-first) -- purely for tidiness,
+        // Windows does not require any particular order and does not reparent
+        // orphans the way some other OSes do.
+        public (int succeeded, int failed) EndProcessTree(uint rootPid)
+        {
+            var snapshot = GetSnapshot();
+            var childrenByParent = new Dictionary<uint, List<uint>>();
+            foreach (var p in snapshot)
+            {
+                if (!childrenByParent.TryGetValue(p.ParentPid, out var list))
+                {
+                    list = new List<uint>();
+                    childrenByParent[p.ParentPid] = list;
+                }
+                list.Add(p.Pid);
+            }
+
+            var toKill = new List<uint>();
+            void CollectDescendants(uint pid)
+            {
+                if (childrenByParent.TryGetValue(pid, out var children))
+                {
+                    foreach (var childPid in children)
+                        CollectDescendants(childPid);
+                }
+                toKill.Add(pid);
+            }
+            CollectDescendants(rootPid);
+
+            int succeeded = 0, failed = 0;
+            foreach (var pid in toKill)
+            {
+                if (TerminateProcess(pid)) succeeded++;
+                else failed++;
+            }
+            return (succeeded, failed);
+        }
+
         public bool SuspendProcess(uint pid)
         {
             IntPtr hProcess = NativeMethods.OpenProcess(NativeMethods.PROCESS_SUSPEND_RESUME, false, pid);
