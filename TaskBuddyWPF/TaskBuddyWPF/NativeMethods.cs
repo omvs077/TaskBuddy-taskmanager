@@ -221,6 +221,20 @@ namespace TaskBuddyWPF.Native
         [return: MarshalAs(UnmanagedType.Bool)]
         internal static extern bool GetProcessAffinityMask(IntPtr hProcess, out UIntPtr lpProcessAffinityMask, out UIntPtr lpSystemAffinityMask);
 
+        [DllImport("dbghelp.dll", SetLastError = true)]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        internal static extern bool MiniDumpWriteDump(IntPtr hProcess, uint processId, Microsoft.Win32.SafeHandles.SafeFileHandle hFile, uint dumpType, IntPtr exceptionParam, IntPtr userStreamParam, IntPtr callbackParam);
+
+        internal const uint PROCESS_VM_READ = 0x0010;
+
+        // Exact flag combination confirmed from a real Task Manager-generated dump
+        // header (via .dumpdebug), not guessed -- Flags 0x1826.
+        internal const uint MiniDumpWithFullMemory = 0x00000002;
+        internal const uint MiniDumpWithHandleData = 0x00000004;
+        internal const uint MiniDumpWithUnloadedModules = 0x00000020;
+        internal const uint MiniDumpWithFullMemoryInfo = 0x00000800;
+        internal const uint MiniDumpWithThreadInfo = 0x00001000;
+
         [DllImport("kernel32.dll", SetLastError = true)]
         [return: MarshalAs(UnmanagedType.Bool)]
         internal static extern bool SetProcessInformation(IntPtr hProcess, int ProcessInformationClass, ref PROCESS_POWER_THROTTLING_STATE ProcessInformation, uint ProcessInformationSize);

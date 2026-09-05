@@ -116,6 +116,7 @@
                     <MenuItem Header="Set affinity" Click="SetAffinity_Click"/>
                     <MenuItem Header="End Task" Click="EndTask_Click"/>
                     <MenuItem Header="End process tree" Click="EndProcessTree_Click"/>
+                    <MenuItem Header="Create dump file" Click="CreateDumpFile_Click"/>
                     <Separator/>
                     <MenuItem Header="Open File Location" Click="OpenFileLocation_Click"/>
                     <MenuItem Header="Copy PID" Click="CopyPid_Click"/>

@@ -198,6 +198,26 @@ namespace TaskBuddyWPF.Pages
             await RefreshAsync();
         }
 
+        private async void CreateDumpFile_Click(object sender, RoutedEventArgs e)
+        {
+            if (ProcessGrid.SelectedItem is not ProcessInfo selected) return;
+
+            string baseName = System.IO.Path.GetFileNameWithoutExtension(selected.ImageName);
+            string filePath = System.IO.Path.Combine(System.IO.Path.GetTempPath(), $"{baseName}.DMP");
+
+            bool success = await Task.Run(() => _enumerator.CreateDumpFile(selected.Pid, filePath));
+            if (success)
+            {
+                MessageBox.Show($"The file has been successfully created.\n\nPath: {filePath}",
+                    "TaskBuddy", MessageBoxButton.OK, MessageBoxImage.Information);
+            }
+            else
+            {
+                MessageBox.Show($"Unable to create a dump file for '{selected.ImageName}'. It may require elevated permissions.",
+                    "TaskBuddy", MessageBoxButton.OK, MessageBoxImage.Warning);
+            }
+        }
+
         private void RunNewTask_Click(object sender, RoutedEventArgs e)
         {
             var dialog = new RunTaskDialog { Owner = Window.GetWindow(this) };

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Runtime.InteropServices;
 using System.Text;
 using System.Windows;
@@ -264,6 +265,36 @@ namespace TaskBuddyWPF.Services
                 else failed++;
             }
             return (succeeded, failed);
+        }
+
+        // Matches real Task Manager exactly (flags confirmed from a real TM-generated
+        // dump header, not guessed): full memory + handle data + unloaded modules +
+        // full memory info + thread info. This can produce a large file, roughly
+        // proportional to the memory the process has committed.
+        public bool CreateDumpFile(uint pid, string filePath)
+        {
+            IntPtr hProcess = NativeMethods.OpenProcess(NativeMethods.PROCESS_QUERY_INFORMATION | NativeMethods.PROCESS_VM_READ, false, pid);
+            if (hProcess == IntPtr.Zero) return false;
+
+            try
+            {
+                using var fs = new FileStream(filePath, FileMode.Create, FileAccess.Write);
+                uint dumpType = NativeMethods.MiniDumpWithFullMemory
+                    | NativeMethods.MiniDumpWithHandleData
+                    | NativeMethods.MiniDumpWithUnloadedModules
+                    | NativeMethods.MiniDumpWithFullMemoryInfo
+                    | NativeMethods.MiniDumpWithThreadInfo;
+
+                return NativeMethods.MiniDumpWriteDump(hProcess, pid, fs.SafeFileHandle, dumpType, IntPtr.Zero, IntPtr.Zero, IntPtr.Zero);
+            }
+            catch
+            {
+                return false;
+            }
+            finally
+            {
+                NativeMethods.CloseHandle(hProcess);
+            }
         }
 
         public bool SuspendProcess(uint pid)
