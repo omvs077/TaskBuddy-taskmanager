@@ -186,5 +186,100 @@ namespace TaskBuddyWPF.Pages
             while (parent != null && parent is not ScrollViewer) parent = VisualTreeHelper.GetParent(parent);
             return parent as ScrollViewer;
         }
+        private void UsersContextMenu_Opened(object sender, RoutedEventArgs e)
+        {
+            if (ProcessesGrid.SelectedItem is not ProcessInfo selected) return;
+            U_SuspendResumeMenuItem.Header = selected.IsSuspended ? "Resume" : "Suspend";
+            U_EfficiencyModeMenuItem.IsChecked = selected.IsEfficiencyMode;
+        }
+
+        private async void U_SuspendResume_Click(object sender, RoutedEventArgs e)
+        {
+            if (ProcessesGrid.SelectedItem is not ProcessInfo selected) return;
+            await ProcessActions.ToggleSuspend(_enumerator, selected.Pid, selected.ImageName, selected.IsSuspended, RefreshAsync);
+        }
+
+        private async void U_EfficiencyMode_Click(object sender, RoutedEventArgs e)
+        {
+            if (ProcessesGrid.SelectedItem is not ProcessInfo selected) return;
+            await ProcessActions.ToggleEfficiencyMode(_enumerator, selected.Pid, selected.ImageName, selected.IsEfficiencyMode, RefreshAsync);
+        }
+
+        private async void U_EndTask_Click(object sender, RoutedEventArgs e)
+        {
+            if (ProcessesGrid.SelectedItem is not ProcessInfo selected) return;
+            await ProcessActions.EndTask(_enumerator, selected.Pid, selected.ImageName, RefreshAsync);
+        }
+
+        private async void U_EndProcessTree_Click(object sender, RoutedEventArgs e)
+        {
+            if (ProcessesGrid.SelectedItem is not ProcessInfo selected) return;
+            await ProcessActions.EndProcessTree(_enumerator, selected.Pid, selected.ImageName, RefreshAsync);
+        }
+
+        private async void U_CreateDumpFile_Click(object sender, RoutedEventArgs e)
+        {
+            if (ProcessesGrid.SelectedItem is not ProcessInfo selected) return;
+            await ProcessActions.CreateDumpFile(_enumerator, selected.Pid, selected.ImageName);
+        }
+
+        private void U_OpenFileLocation_Click(object sender, RoutedEventArgs e)
+        {
+            if (ProcessesGrid.SelectedItem is not ProcessInfo selected) return;
+            ProcessActions.OpenFileLocation(selected.ImagePath);
+        }
+
+        private void U_CopyPid_Click(object sender, RoutedEventArgs e)
+        {
+            if (ProcessesGrid.SelectedItem is not ProcessInfo selected) return;
+            ProcessActions.CopyPid(selected.Pid);
+        }
+
+        private async void U_SetPriority_Click(object sender, RoutedEventArgs e)
+        {
+            if (ProcessesGrid.SelectedItem is not ProcessInfo selected) return;
+            if (sender is not MenuItem { Tag: string tag }) return;
+            uint priorityClass = tag switch
+            {
+                "Realtime" => 0x00000100u,
+                "High" => 0x00000080u,
+                "AboveNormal" => 0x00008000u,
+                "Normal" => 0x00000020u,
+                "BelowNormal" => 0x00004000u,
+                "Idle" => 0x00000040u,
+                _ => 0x00000020u
+            };
+            await ProcessActions.SetPriority(_enumerator, selected.Pid, selected.ImageName, priorityClass, RefreshAsync);
+        }
+
+        private async void U_SetAffinity_Click(object sender, RoutedEventArgs e)
+        {
+            if (ProcessesGrid.SelectedItem is not ProcessInfo selected) return;
+            await ProcessActions.SetAffinity(_enumerator, selected.Pid, selected.ImageName, Window.GetWindow(this));
+        }
+
+        private void U_SearchOnline_Click(object sender, RoutedEventArgs e)
+        {
+            if (ProcessesGrid.SelectedItem is not ProcessInfo selected) return;
+            ProcessActions.SearchOnline(selected.ImageName);
+        }
+
+        private void U_Properties_Click(object sender, RoutedEventArgs e)
+        {
+            if (ProcessesGrid.SelectedItem is not ProcessInfo selected) return;
+            ProcessActions.Properties(selected.ImagePath);
+        }
+
+        private void U_GoToDetails_Click(object sender, RoutedEventArgs e)
+        {
+            if (ProcessesGrid.SelectedItem is not ProcessInfo selected) return;
+            ProcessActions.GoToDetails(selected.Pid, Window.GetWindow(this));
+        }
+
+        private void U_GoToService_Click(object sender, RoutedEventArgs e)
+        {
+            if (ProcessesGrid.SelectedItem is not ProcessInfo selected) return;
+            ProcessActions.GoToService(selected.Pid, Window.GetWindow(this));
+        }
     }
 }

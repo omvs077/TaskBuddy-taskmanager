@@ -94,8 +94,35 @@
                         <DataGridTextColumn Header="CPU %" Binding="{Binding CpuPercent, StringFormat={}{0:F1}}" Width="*"/>
                         <DataGridTextColumn Header="Memory (MB)" Binding="{Binding WorkingSetBytes, Converter={StaticResource BytesToMbConverter}}" Width="*"/>
                     </DataGrid.Columns>
+                    <DataGrid.ContextMenu>
+                        <ContextMenu Opened="UsersContextMenu_Opened">
+                            <MenuItem x:Name="U_SuspendResumeMenuItem" Header="Suspend" Click="U_SuspendResume_Click"/>
+                            <MenuItem x:Name="U_EfficiencyModeMenuItem" Header="Efficiency mode" Click="U_EfficiencyMode_Click" IsCheckable="True"/>
+                            <MenuItem Header="Set priority">
+                                <MenuItem Header="Realtime" Click="U_SetPriority_Click" Tag="Realtime" IsCheckable="True"/>
+                                <MenuItem Header="High" Click="U_SetPriority_Click" Tag="High" IsCheckable="True"/>
+                                <MenuItem Header="Above normal" Click="U_SetPriority_Click" Tag="AboveNormal" IsCheckable="True"/>
+                                <MenuItem Header="Normal" Click="U_SetPriority_Click" Tag="Normal" IsCheckable="True"/>
+                                <MenuItem Header="Below normal" Click="U_SetPriority_Click" Tag="BelowNormal" IsCheckable="True"/>
+                                <MenuItem Header="Idle" Click="U_SetPriority_Click" Tag="Idle" IsCheckable="True"/>
+                            </MenuItem>
+                            <MenuItem Header="Set affinity" Click="U_SetAffinity_Click"/>
+                            <MenuItem Header="End Task" Click="U_EndTask_Click"/>
+                            <MenuItem Header="End process tree" Click="U_EndProcessTree_Click"/>
+                            <MenuItem Header="Create dump file" Click="U_CreateDumpFile_Click"/>
+                            <Separator/>
+                            <MenuItem Header="Open File Location" Click="U_OpenFileLocation_Click"/>
+                            <MenuItem Header="Copy PID" Click="U_CopyPid_Click"/>
+                            <Separator/>
+                            <MenuItem Header="Search online" Click="U_SearchOnline_Click"/>
+                            <MenuItem Header="Properties" Click="U_Properties_Click"/>
+                            <MenuItem Header="Go to details" Click="U_GoToDetails_Click"/>
+                            <MenuItem Header="Go to service(s)" Click="U_GoToService_Click"/>
+                        </ContextMenu>
+                    </DataGrid.ContextMenu>
                 </DataGrid>
             </Grid>
         </Grid>
     </Grid>
 </Page>
+
