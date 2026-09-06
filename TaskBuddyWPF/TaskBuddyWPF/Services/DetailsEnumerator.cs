@@ -2,8 +2,10 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Threading.Tasks;
 using TaskBuddyWPF.Models;
 using TaskBuddyWPF.Native;
+using System.Windows;
 
 namespace TaskBuddyWPF.Services
 {
@@ -57,7 +59,10 @@ namespace TaskBuddyWPF.Services
                     Description = description,
                     Status = proc.StatusText,
                     CpuPercent = proc.CpuPercent,
-                    MemoryBytes = proc.WorkingSetBytes
+                    MemoryBytes = proc.WorkingSetBytes,
+                    ImagePath = proc.ImagePath,
+                    IsSuspended = proc.IsSuspended,
+                    IsEfficiencyMode = proc.IsEfficiencyMode
                 });
             }
 
@@ -156,5 +161,29 @@ namespace TaskBuddyWPF.Services
         }
 
         public bool TerminateProcess(uint pid) => _processEnumerator.TerminateProcess(pid);
+
+        public Task ToggleSuspend(uint pid, string imageName, bool isSuspended, Func<Task> refresh) =>
+            ProcessActions.ToggleSuspend(_processEnumerator, pid, imageName, isSuspended, refresh);
+
+        public Task ToggleEfficiencyMode(uint pid, string imageName, bool isEfficiencyMode, Func<Task> refresh) =>
+            ProcessActions.ToggleEfficiencyMode(_processEnumerator, pid, imageName, isEfficiencyMode, refresh);
+
+        public Task EndTask(uint pid, string imageName, Func<Task> refresh) =>
+            ProcessActions.EndTask(_processEnumerator, pid, imageName, refresh);
+
+        public Task EndProcessTree(uint pid, string imageName, Func<Task> refresh) =>
+            ProcessActions.EndProcessTree(_processEnumerator, pid, imageName, refresh);
+
+        public Task CreateDumpFile(uint pid, string imageName) =>
+            ProcessActions.CreateDumpFile(_processEnumerator, pid, imageName);
+
+        public Task SetPriority(uint pid, string imageName, uint priorityClass, Func<Task> refresh) =>
+            ProcessActions.SetPriority(_processEnumerator, pid, imageName, priorityClass, refresh);
+
+        public Task SetAffinity(uint pid, string imageName, Window owner) =>
+            ProcessActions.SetAffinity(_processEnumerator, pid, imageName, owner);
     }
 }
+
+
+

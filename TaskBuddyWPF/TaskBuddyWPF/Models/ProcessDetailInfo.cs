@@ -12,6 +12,9 @@ namespace TaskBuddyWPF.Models
         public string Architecture { get; set; } = "";
         public bool IsVirtualized { get; set; }
         public string Description { get; set; } = "";
+        public string ImagePath { get; set; } = "";
+        public bool IsSuspended { get; set; }
+        public bool IsEfficiencyMode { get; set; }
 
         private string _status = "Running";
         public string Status
@@ -38,3 +41,4 @@ namespace TaskBuddyWPF.Models
         private void Notify(string name) => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
     }
 }
+
