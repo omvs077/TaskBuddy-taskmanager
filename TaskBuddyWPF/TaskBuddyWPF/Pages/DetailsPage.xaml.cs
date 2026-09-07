@@ -99,17 +99,6 @@ namespace TaskBuddyWPF.Pages
             if (dep is DataGridRow row) row.IsSelected = true;
         }
 
-        private async void EndTask_Click(object sender, RoutedEventArgs e)
-        {
-            if (DetailsGrid.SelectedItem is not ProcessDetailInfo selected) return;
-            bool success = await Task.Run(() => _enumerator.TerminateProcess(selected.Pid));
-            if (!success)
-            {
-                MessageBox.Show($"Failed to terminate process {selected.Name} (PID {selected.Pid}). " +
-                    "It may require elevated permissions.", "Error",
-                    MessageBoxButton.OK, MessageBoxImage.Warning);
-            }
-        }
 
         private void SelectAndScrollToPid(uint pid)
         {
@@ -133,6 +122,95 @@ namespace TaskBuddyWPF.Pages
             var parent = VisualTreeHelper.GetParent(d);
             while (parent != null && parent is not ScrollViewer) parent = VisualTreeHelper.GetParent(parent);
             return parent as ScrollViewer;
+        }
+        private void DetailsContextMenu_Opened(object sender, RoutedEventArgs e)
+        {
+            if (DetailsGrid.SelectedItem is not ProcessDetailInfo selected) return;
+            D_SuspendResumeMenuItem.Header = selected.IsSuspended ? "Resume" : "Suspend";
+            D_EfficiencyModeMenuItem.IsChecked = selected.IsEfficiencyMode;
+        }
+
+        private async void D_SuspendResume_Click(object sender, RoutedEventArgs e)
+        {
+            if (DetailsGrid.SelectedItem is not ProcessDetailInfo selected) return;
+            await _enumerator.ToggleSuspend(selected.Pid, selected.Name, selected.IsSuspended, RefreshAsync);
+        }
+
+        private async void D_EfficiencyMode_Click(object sender, RoutedEventArgs e)
+        {
+            if (DetailsGrid.SelectedItem is not ProcessDetailInfo selected) return;
+            await _enumerator.ToggleEfficiencyMode(selected.Pid, selected.Name, selected.IsEfficiencyMode, RefreshAsync);
+        }
+
+        private async void D_EndTask_Click(object sender, RoutedEventArgs e)
+        {
+            if (DetailsGrid.SelectedItem is not ProcessDetailInfo selected) return;
+            await _enumerator.EndTask(selected.Pid, selected.Name, RefreshAsync);
+        }
+
+        private async void D_EndProcessTree_Click(object sender, RoutedEventArgs e)
+        {
+            if (DetailsGrid.SelectedItem is not ProcessDetailInfo selected) return;
+            await _enumerator.EndProcessTree(selected.Pid, selected.Name, RefreshAsync);
+        }
+
+        private async void D_CreateDumpFile_Click(object sender, RoutedEventArgs e)
+        {
+            if (DetailsGrid.SelectedItem is not ProcessDetailInfo selected) return;
+            await _enumerator.CreateDumpFile(selected.Pid, selected.Name);
+        }
+
+        private void D_OpenFileLocation_Click(object sender, RoutedEventArgs e)
+        {
+            if (DetailsGrid.SelectedItem is not ProcessDetailInfo selected) return;
+            ProcessActions.OpenFileLocation(selected.ImagePath);
+        }
+
+        private void D_CopyPid_Click(object sender, RoutedEventArgs e)
+        {
+            if (DetailsGrid.SelectedItem is not ProcessDetailInfo selected) return;
+            ProcessActions.CopyPid(selected.Pid);
+        }
+
+        private async void D_SetPriority_Click(object sender, RoutedEventArgs e)
+        {
+            if (DetailsGrid.SelectedItem is not ProcessDetailInfo selected) return;
+            if (sender is not MenuItem { Tag: string tag }) return;
+            uint priorityClass = tag switch
+            {
+                "Realtime" => 0x00000100u,
+                "High" => 0x00000080u,
+                "AboveNormal" => 0x00008000u,
+                "Normal" => 0x00000020u,
+                "BelowNormal" => 0x00004000u,
+                "Idle" => 0x00000040u,
+                _ => 0x00000020u
+            };
+            await _enumerator.SetPriority(selected.Pid, selected.Name, priorityClass, RefreshAsync);
+        }
+
+        private async void D_SetAffinity_Click(object sender, RoutedEventArgs e)
+        {
+            if (DetailsGrid.SelectedItem is not ProcessDetailInfo selected) return;
+            await _enumerator.SetAffinity(selected.Pid, selected.Name, Window.GetWindow(this));
+        }
+
+        private void D_SearchOnline_Click(object sender, RoutedEventArgs e)
+        {
+            if (DetailsGrid.SelectedItem is not ProcessDetailInfo selected) return;
+            ProcessActions.SearchOnline(selected.Name);
+        }
+
+        private void D_Properties_Click(object sender, RoutedEventArgs e)
+        {
+            if (DetailsGrid.SelectedItem is not ProcessDetailInfo selected) return;
+            ProcessActions.Properties(selected.ImagePath);
+        }
+
+        private void D_GoToService_Click(object sender, RoutedEventArgs e)
+        {
+            if (DetailsGrid.SelectedItem is not ProcessDetailInfo selected) return;
+            ProcessActions.GoToService(selected.Pid, Window.GetWindow(this));
         }
     }
 }

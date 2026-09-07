@@ -38,8 +38,28 @@
                 <DataGridTextColumn Header="Description" Binding="{Binding Description}" Width="2*"/>
             </DataGrid.Columns>
             <DataGrid.ContextMenu>
-                <ContextMenu>
-                    <MenuItem Header="End Task" Click="EndTask_Click"/>
+                <ContextMenu Opened="DetailsContextMenu_Opened">
+                    <MenuItem x:Name="D_SuspendResumeMenuItem" Header="Suspend" Click="D_SuspendResume_Click"/>
+                    <MenuItem x:Name="D_EfficiencyModeMenuItem" Header="Efficiency mode" Click="D_EfficiencyMode_Click" IsCheckable="True"/>
+                    <MenuItem Header="Set priority">
+                        <MenuItem Header="Realtime" Click="D_SetPriority_Click" Tag="Realtime" IsCheckable="True"/>
+                        <MenuItem Header="High" Click="D_SetPriority_Click" Tag="High" IsCheckable="True"/>
+                        <MenuItem Header="Above normal" Click="D_SetPriority_Click" Tag="AboveNormal" IsCheckable="True"/>
+                        <MenuItem Header="Normal" Click="D_SetPriority_Click" Tag="Normal" IsCheckable="True"/>
+                        <MenuItem Header="Below normal" Click="D_SetPriority_Click" Tag="BelowNormal" IsCheckable="True"/>
+                        <MenuItem Header="Idle" Click="D_SetPriority_Click" Tag="Idle" IsCheckable="True"/>
+                    </MenuItem>
+                    <MenuItem Header="Set affinity" Click="D_SetAffinity_Click"/>
+                    <MenuItem Header="End Task" Click="D_EndTask_Click"/>
+                    <MenuItem Header="End process tree" Click="D_EndProcessTree_Click"/>
+                    <MenuItem Header="Create dump file" Click="D_CreateDumpFile_Click"/>
+                    <Separator/>
+                    <MenuItem Header="Open File Location" Click="D_OpenFileLocation_Click"/>
+                    <MenuItem Header="Copy PID" Click="D_CopyPid_Click"/>
+                    <Separator/>
+                    <MenuItem Header="Search online" Click="D_SearchOnline_Click"/>
+                    <MenuItem Header="Properties" Click="D_Properties_Click"/>
+                    <MenuItem Header="Go to service(s)" Click="D_GoToService_Click"/>
                 </ContextMenu>
             </DataGrid.ContextMenu>
         </DataGrid>
