@@ -13,6 +13,9 @@ namespace TaskBuddyWPF.Models
         public uint ParentPid { get; set; }
         public string ImageName { get; set; } = string.Empty;
         public string ImagePath { get; set; } = string.Empty;
+        public string Publisher { get; set; } = string.Empty;
+        public string ProcessName { get; set; } = string.Empty;
+        public string CommandLine { get; set; } = string.Empty;
         public ImageSource? Icon { get; set; }
 
         private ulong _workingSetBytes;
@@ -65,3 +68,4 @@ namespace TaskBuddyWPF.Models
         }
     }
 }
+

@@ -20,6 +20,9 @@ namespace TaskBuddyWPF.Services
         private readonly Dictionary<string, ImageSource> _iconCache = new();
         private readonly HashSet<uint> _suspendedByUs = new();
         private readonly HashSet<uint> _efficiencyModeByUs = new();
+        private readonly Dictionary<uint, string> _publisherCache = new();
+        private readonly Dictionary<uint, string> _processNameCache = new();
+        private readonly Dictionary<uint, string> _commandLineCache = new();
         private readonly int _coreCount = Environment.ProcessorCount;
 
         // Controlled by the Settings tab (default off, matches pre-existing behavior).
@@ -85,6 +88,22 @@ namespace TaskBuddyWPF.Services
 
                     var (imagePath, diskBytesPerSec, icon) = ResolveProcessDetails(pid, now);
 
+                    if (!_publisherCache.TryGetValue(pid, out var publisher))
+                    {
+                        publisher = ResolvePublisher(imagePath);
+                        _publisherCache[pid] = publisher;
+                    }
+                    if (!_processNameCache.TryGetValue(pid, out var processName))
+                    {
+                        processName = ResolveProcessName(imagePath);
+                        _processNameCache[pid] = processName;
+                    }
+                    if (!_commandLineCache.TryGetValue(pid, out var commandLine))
+                    {
+                        commandLine = ResolveCommandLine(pid);
+                        _commandLineCache[pid] = commandLine;
+                    }
+
                     results.Add(new ProcessInfo
                     {
                         Pid = pid,
@@ -94,11 +113,15 @@ namespace TaskBuddyWPF.Services
                         CpuPercent = Math.Max(0, cpuPercent),
                         ImageName = imageName ?? string.Empty,
                         ImagePath = imagePath,
+                        Publisher = publisher,
+                        ProcessName = processName,
+                        CommandLine = commandLine,
                         IsSuspended = _suspendedByUs.Contains(pid),
                         IsEfficiencyMode = _efficiencyModeByUs.Contains(pid),
                         DiskBytesPerSec = diskBytesPerSec,
                         Icon = icon
                     });
+
 
                     if (entry.NextEntryOffset == 0) break;
                     current = IntPtr.Add(current, (int)entry.NextEntryOffset);
@@ -470,6 +493,9 @@ namespace TaskBuddyWPF.Services
             PruneDict(_cpuCache, seenPids);
             PruneDict(_pathCache, seenPids);
             PruneDict(_ioCache, seenPids);
+            PruneDict(_publisherCache, seenPids);
+            PruneDict(_processNameCache, seenPids);
+            PruneDict(_commandLineCache, seenPids);
             _suspendedByUs.RemoveWhere(pid => !seenPids.Contains(pid));
             _efficiencyModeByUs.RemoveWhere(pid => !seenPids.Contains(pid));
         }
@@ -486,5 +512,95 @@ namespace TaskBuddyWPF.Services
                 foreach (var key in stale)
                     dict.Remove(key);
         }
+
+        // Reads CompanyName from the exe's version resource, same stdlib approach as
+        // StartupEnumerator's Publisher column.
+        private static string ResolvePublisher(string path)
+        {
+            if (string.IsNullOrWhiteSpace(path)) return "";
+            try
+            {
+                var info = System.Diagnostics.FileVersionInfo.GetVersionInfo(path);
+                return info.CompanyName ?? "";
+            }
+            catch
+            {
+                return "";
+            }
+        }
+
+        // Friendly "Process name" column (e.g. "Windows Explorer") distinct from the
+        // raw image name, sourced from FileDescription in the version resource.
+        private static string ResolveProcessName(string path)
+        {
+            if (string.IsNullOrWhiteSpace(path)) return "";
+            try
+            {
+                var info = System.Diagnostics.FileVersionInfo.GetVersionInfo(path);
+                return info.FileDescription ?? "";
+            }
+            catch
+            {
+                return "";
+            }
+        }
+
+        // Reads the process's command line via NtQueryInformationProcess -> PEB ->
+        // RTL_USER_PROCESS_PARAMETERS.CommandLine. Offsets (PEB.ProcessParameters=0x20,
+        // CommandLine=0x70) are the well-documented x64 layout used across published
+        // Windows-internals tooling; confirmed via research before implementation
+        // per project convention (same caution level as the Efficiency-Mode/dump-file
+        // API confirmations this session).
+        private static string ResolveCommandLine(uint pid)
+        {
+            IntPtr hProcess = NativeMethods.OpenProcess(
+                NativeMethods.PROCESS_QUERY_INFORMATION | NativeMethods.PROCESS_VM_READ, false, pid);
+            if (hProcess == IntPtr.Zero) return "";
+
+            try
+            {
+                var pbi = new NativeMethods.PROCESS_BASIC_INFORMATION();
+                uint status = NativeMethods.NtQueryInformationProcess(
+                    hProcess, 0, ref pbi, System.Runtime.InteropServices.Marshal.SizeOf(pbi), out _);
+                if (status != 0 || pbi.PebBaseAddress == IntPtr.Zero) return "";
+
+                // PEB.ProcessParameters is at offset 0x20 on x64.
+                IntPtr ppAddress = ReadPointer(hProcess, IntPtr.Add(pbi.PebBaseAddress, 0x20));
+                if (ppAddress == IntPtr.Zero) return "";
+
+                // RTL_USER_PROCESS_PARAMETERS.CommandLine (UNICODE_STRING) is at offset 0x70 on x64.
+                IntPtr commandLineAddr = IntPtr.Add(ppAddress, 0x70);
+                byte[] unicodeStringBytes = new byte[16];
+                if (!NativeMethods.ReadProcessMemory(hProcess, commandLineAddr, unicodeStringBytes, unicodeStringBytes.Length, out _))
+                    return "";
+
+                ushort length = BitConverter.ToUInt16(unicodeStringBytes, 0);
+                IntPtr bufferAddr = new IntPtr(BitConverter.ToInt64(unicodeStringBytes, 8));
+                if (length == 0 || bufferAddr == IntPtr.Zero) return "";
+
+                byte[] strBytes = new byte[length];
+                if (!NativeMethods.ReadProcessMemory(hProcess, bufferAddr, strBytes, length, out _))
+                    return "";
+
+                return System.Text.Encoding.Unicode.GetString(strBytes);
+            }
+            catch
+            {
+                return ""; // access denied, protected process, or layout mismatch — non-fatal
+            }
+            finally
+            {
+                NativeMethods.CloseHandle(hProcess);
+            }
+        }
+
+        private static IntPtr ReadPointer(IntPtr hProcess, IntPtr address)
+        {
+            byte[] buffer = new byte[8];
+            if (!NativeMethods.ReadProcessMemory(hProcess, address, buffer, buffer.Length, out _))
+                return IntPtr.Zero;
+            return new IntPtr(BitConverter.ToInt64(buffer, 0));
+        }
     }
 }
+

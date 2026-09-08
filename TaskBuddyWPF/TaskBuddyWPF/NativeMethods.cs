@@ -210,6 +210,33 @@ namespace TaskBuddyWPF.Native
         [return: MarshalAs(UnmanagedType.Bool)]
         internal static extern bool SetPriorityClass(IntPtr hProcess, uint dwPriorityClass);
 
+        internal struct PROCESS_BASIC_INFORMATION
+        {
+            public IntPtr ExitStatus;
+            public IntPtr PebBaseAddress;
+            public IntPtr AffinityMask;
+            public IntPtr BasePriority;
+            public IntPtr UniqueProcessId;
+            public IntPtr InheritedFromUniqueProcessId;
+        }
+
+        [DllImport("ntdll.dll")]
+        internal static extern uint NtQueryInformationProcess(
+            IntPtr ProcessHandle,
+            int ProcessInformationClass,
+            ref PROCESS_BASIC_INFORMATION ProcessInformation,
+            int ProcessInformationLength,
+            out int ReturnLength);
+
+        [DllImport("kernel32.dll", SetLastError = true)]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        internal static extern bool ReadProcessMemory(
+            IntPtr hProcess,
+            IntPtr lpBaseAddress,
+            byte[] lpBuffer,
+            int dwSize,
+            out int lpNumberOfBytesRead);
+
         [DllImport("kernel32.dll", SetLastError = true)]
         internal static extern uint GetPriorityClass(IntPtr hProcess);
 
