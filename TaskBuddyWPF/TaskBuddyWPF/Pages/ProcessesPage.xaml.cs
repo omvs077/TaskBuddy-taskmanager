@@ -266,6 +266,9 @@ namespace TaskBuddyWPF.Pages
             CpuColumn.Visibility = ColCpuCheck.IsChecked == true ? Visibility.Visible : Visibility.Collapsed;
             MemoryColumn.Visibility = ColMemoryCheck.IsChecked == true ? Visibility.Visible : Visibility.Collapsed;
             DiskColumn.Visibility = ColDiskCheck.IsChecked == true ? Visibility.Visible : Visibility.Collapsed;
+            PublisherColumn.Visibility = ColPublisherCheck.IsChecked == true ? Visibility.Visible : Visibility.Collapsed;
+            ProcessNameColumn.Visibility = ColProcessNameCheck.IsChecked == true ? Visibility.Visible : Visibility.Collapsed;
+            CommandLineColumn.Visibility = ColCommandLineCheck.IsChecked == true ? Visibility.Visible : Visibility.Collapsed;
 
             SaveColumnLayout();
         }
@@ -283,6 +286,9 @@ namespace TaskBuddyWPF.Pages
                 if (saved.TryGetValue("CPU", out var cpu)) { ColCpuCheck.IsChecked = cpu; CpuColumn.Visibility = cpu ? Visibility.Visible : Visibility.Collapsed; }
                 if (saved.TryGetValue("Memory", out var mem)) { ColMemoryCheck.IsChecked = mem; MemoryColumn.Visibility = mem ? Visibility.Visible : Visibility.Collapsed; }
                 if (saved.TryGetValue("Disk", out var disk)) { ColDiskCheck.IsChecked = disk; DiskColumn.Visibility = disk ? Visibility.Visible : Visibility.Collapsed; }
+                if (saved.TryGetValue("Publisher", out var pub)) { ColPublisherCheck.IsChecked = pub; PublisherColumn.Visibility = pub ? Visibility.Visible : Visibility.Collapsed; }
+                if (saved.TryGetValue("ProcessName", out var pname)) { ColProcessNameCheck.IsChecked = pname; ProcessNameColumn.Visibility = pname ? Visibility.Visible : Visibility.Collapsed; }
+                if (saved.TryGetValue("CommandLine", out var cmdline)) { ColCommandLineCheck.IsChecked = cmdline; CommandLineColumn.Visibility = cmdline ? Visibility.Visible : Visibility.Collapsed; }
             }
             finally
             {
@@ -298,7 +304,10 @@ namespace TaskBuddyWPF.Pages
                 ["Status"] = ColStatusCheck.IsChecked == true,
                 ["CPU"] = ColCpuCheck.IsChecked == true,
                 ["Memory"] = ColMemoryCheck.IsChecked == true,
-                ["Disk"] = ColDiskCheck.IsChecked == true
+                ["Disk"] = ColDiskCheck.IsChecked == true,
+                ["Publisher"] = ColPublisherCheck.IsChecked == true,
+                ["ProcessName"] = ColProcessNameCheck.IsChecked == true,
+                ["CommandLine"] = ColCommandLineCheck.IsChecked == true
             });
         }
 
@@ -341,3 +350,6 @@ namespace TaskBuddyWPF.Pages
         }
     }
 }
+
+
+

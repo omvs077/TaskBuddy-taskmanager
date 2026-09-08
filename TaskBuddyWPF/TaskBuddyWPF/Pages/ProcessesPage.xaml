@@ -49,6 +49,9 @@
                         <CheckBox x:Name="ColCpuCheck" Content="CPU %" IsChecked="True" Margin="0,4" Checked="ColumnCheck_Changed" Unchecked="ColumnCheck_Changed"/>
                         <CheckBox x:Name="ColMemoryCheck" Content="Memory (MB)" IsChecked="True" Margin="0,4" Checked="ColumnCheck_Changed" Unchecked="ColumnCheck_Changed"/>
                         <CheckBox x:Name="ColDiskCheck" Content="Disk (MB/s)" IsChecked="True" Margin="0,4" Checked="ColumnCheck_Changed" Unchecked="ColumnCheck_Changed"/>
+                        <CheckBox x:Name="ColPublisherCheck" Content="Publisher" IsChecked="False" Margin="0,4" Checked="ColumnCheck_Changed" Unchecked="ColumnCheck_Changed"/>
+                        <CheckBox x:Name="ColProcessNameCheck" Content="Process name" IsChecked="False" Margin="0,4" Checked="ColumnCheck_Changed" Unchecked="ColumnCheck_Changed"/>
+                        <CheckBox x:Name="ColCommandLineCheck" Content="Command line" IsChecked="False" Margin="0,4" Checked="ColumnCheck_Changed" Unchecked="ColumnCheck_Changed"/>
                     </StackPanel>
                 </Border>
             </Popup>
@@ -100,6 +103,9 @@
                         </Style>
                     </DataGridTextColumn.CellStyle>
                 </DataGridTextColumn>
+                <DataGridTextColumn x:Name="PublisherColumn" Header="Publisher" Binding="{Binding Publisher}" Width="1.5*" Visibility="Collapsed"/>
+                <DataGridTextColumn x:Name="ProcessNameColumn" Header="Process name" Binding="{Binding ProcessName}" Width="1.5*" Visibility="Collapsed"/>
+                <DataGridTextColumn x:Name="CommandLineColumn" Header="Command line" Binding="{Binding CommandLine}" Width="2.5*" Visibility="Collapsed"/>
             </DataGrid.Columns>
             <DataGrid.ContextMenu>
                 <ContextMenu Opened="ContextMenu_Opened">
