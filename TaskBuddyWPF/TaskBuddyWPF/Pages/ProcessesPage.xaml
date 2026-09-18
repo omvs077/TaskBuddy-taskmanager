@@ -70,7 +70,7 @@
                 <DataGridTemplateColumn Header="Name" Width="2*" SortMemberPath="ImageName">
                     <DataGridTemplateColumn.CellTemplate>
                         <DataTemplate>
-                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="{Binding IndentLevel, Converter={StaticResource IndentLevelToMarginConverter}}">
                                 <Image Source="{Binding Icon}" Width="16" Height="16" Margin="0,0,8,0"/>
                                 <TextBlock Text="{Binding ImageName}" VerticalAlignment="Center"/>
                                 <Path Data="M0,7 C0,3 4,0 9,0 C9,5 6.5,7 4.5,7 C6.5,7 9,9 9,13 C4,13 0,11 0,7 Z"
@@ -108,6 +108,27 @@
                 <DataGridTextColumn x:Name="ProcessNameColumn" Header="Process name" Binding="{Binding ProcessName}" Width="1.5*" Visibility="Collapsed"/>
                 <DataGridTextColumn x:Name="CommandLineColumn" Header="Command line" Binding="{Binding CommandLine}" Width="2.5*" Visibility="Collapsed"/>
             </DataGrid.Columns>
+            <DataGrid.GroupStyle>
+                <GroupStyle>
+                    <GroupStyle.ContainerStyle>
+                        <Style TargetType="{x:Type GroupItem}">
+                            <Setter Property="Template">
+                                <Setter.Value>
+                                    <ControlTemplate TargetType="{x:Type GroupItem}">
+                                        <Expander IsExpanded="True" Background="#14FFFFFF">
+                                            <Expander.Header>
+                                                <TextBlock Text="{Binding Name}" FontWeight="SemiBold"
+                                                           Foreground="{DynamicResource TextFillColorPrimaryBrush}" Margin="4,2"/>
+                                            </Expander.Header>
+                                            <ItemsPresenter/>
+                                        </Expander>
+                                    </ControlTemplate>
+                                </Setter.Value>
+                            </Setter>
+                        </Style>
+                    </GroupStyle.ContainerStyle>
+                </GroupStyle>
+            </DataGrid.GroupStyle>
             <DataGrid.ContextMenu>
                 <ContextMenu Opened="ContextMenu_Opened">
                     <MenuItem x:Name="SuspendResumeMenuItem" Header="Suspend" Click="SuspendResume_Click"/>
@@ -137,6 +158,7 @@
         </DataGrid>
     </Grid>
 </Page>
+
 
 
 
