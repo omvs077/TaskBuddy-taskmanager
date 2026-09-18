@@ -3,6 +3,7 @@ using System.ComponentModel;
 using System.Windows.Data;
 using System.Windows.Media;
 using System.Collections.Generic;
+using System.Linq;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.Threading.Tasks;
@@ -25,6 +26,8 @@ namespace TaskBuddyWPF.Pages
         private bool _isRefreshing;
         private bool _isApplyingLoadedLayout;
         private bool _pageInitialized;
+        private string _sortProperty = nameof(ProcessInfo.WorkingSetBytes);
+        private ListSortDirection _sortDirection = ListSortDirection.Descending;
 
         public ProcessesPage()
         {
@@ -34,7 +37,8 @@ namespace TaskBuddyWPF.Pages
 
             var view = (ListCollectionView)CollectionViewSource.GetDefaultView(_processes);
             view.Filter = FilterProcess;
-            view.SortDescriptions.Add(new SortDescription(nameof(ProcessInfo.WorkingSetBytes), ListSortDirection.Descending));
+            view.GroupDescriptions.Add(new PropertyGroupDescription(nameof(ProcessInfo.Category)));
+            view.CustomSort = new ClusterComparer(_processes, _sortProperty, _sortDirection);
             view.IsLiveSorting = true;
             view.LiveSortingProperties.Add(nameof(ProcessInfo.WorkingSetBytes));
             view.LiveSortingProperties.Add(nameof(ProcessInfo.CpuPercent));
@@ -92,12 +96,17 @@ namespace TaskBuddyWPF.Pages
                     current.IsEfficiencyMode = fresh.IsEfficiencyMode;
                     current.DiskBytesPerSec = fresh.DiskBytesPerSec;
                     current.Icon = fresh.Icon;
+                    current.Category = fresh.Category;
+                    current.GroupPid = fresh.GroupPid;
+                    current.IndentLevel = fresh.IndentLevel;
+                    current.HasVisibleWindow = fresh.HasVisibleWindow;
                 }
                 else
                 {
                     _processes.Add(fresh);
                 }
             }
+            CollectionViewSource.GetDefaultView(_processes).Refresh();
         }
 
         private void ProcessGrid_PreviewMouseRightButtonDown(object sender, MouseButtonEventArgs e)
@@ -348,8 +357,93 @@ namespace TaskBuddyWPF.Pages
             }
             return null;
         }
+
+        private void ProcessGrid_Sorting(object sender, DataGridSortingEventArgs e)
+        {
+            e.Handled = true;
+            string property = e.Column.SortMemberPath;
+            if (string.IsNullOrEmpty(property)) return;
+
+            _sortDirection = (_sortProperty == property && _sortDirection == ListSortDirection.Ascending)
+                ? ListSortDirection.Descending
+                : (_sortProperty == property ? ListSortDirection.Ascending : ListSortDirection.Descending);
+            _sortProperty = property;
+
+            foreach (var col in ProcessGrid.Columns) col.SortDirection = null;
+            e.Column.SortDirection = _sortDirection;
+
+            var view = (ListCollectionView)CollectionViewSource.GetDefaultView(_processes);
+            view.CustomSort = new ClusterComparer(_processes, _sortProperty, _sortDirection);
+        }
+
+        // Sorts by Category (App/Background/Windows process) first, then keeps each
+        // app's clustered children adjacent to it (ordered by the cluster's own
+        // resource usage under the current sort column), then parent-before-children,
+        // then the chosen column within each cluster. Needed because ListCollectionView
+        // ignores SortDescriptions once CustomSort is set, so this comparer must also
+        // reproduce the plain column-sort behavior for ungrouped/uncustered rows.
+        private class ClusterComparer : System.Collections.IComparer
+        {
+            private readonly Dictionary<uint, ProcessInfo> _byPid;
+            private readonly string _property;
+            private readonly ListSortDirection _direction;
+
+            public ClusterComparer(IEnumerable<ProcessInfo> all, string property, ListSortDirection direction)
+            {
+                _byPid = all.ToDictionary(p => p.Pid, p => p);
+                _property = property;
+                _direction = direction;
+            }
+
+            private static int CategoryOrder(string category) => category switch
+            {
+                "App" => 0,
+                "Background process" => 1,
+                "Windows process" => 2,
+                _ => 3
+            };
+
+            private IComparable? GetValue(ProcessInfo p)
+            {
+                var prop = typeof(ProcessInfo).GetProperty(_property);
+                return prop?.GetValue(p) as IComparable;
+            }
+
+            public int Compare(object? ox, object? oy)
+            {
+                if (ox is not ProcessInfo a || oy is not ProcessInfo b) return 0;
+
+                int catCompare = CategoryOrder(a.Category).CompareTo(CategoryOrder(b.Category));
+                if (catCompare != 0) return catCompare;
+
+                var leaderA = _byPid.TryGetValue(a.GroupPid, out var la) ? la : a;
+                var leaderB = _byPid.TryGetValue(b.GroupPid, out var lb) ? lb : b;
+
+                if (leaderA.Pid != leaderB.Pid)
+                {
+                    var va = GetValue(leaderA);
+                    var vb = GetValue(leaderB);
+                    int result = va != null && vb != null ? va.CompareTo(vb) : 0;
+                    return _direction == ListSortDirection.Descending ? -result : result;
+                }
+
+                if (a.IndentLevel != b.IndentLevel)
+                    return a.IndentLevel.CompareTo(b.IndentLevel);
+
+                var vx = GetValue(a);
+                var vy = GetValue(b);
+                int r = vx != null && vy != null ? vx.CompareTo(vy) : 0;
+                return _direction == ListSortDirection.Descending ? -r : r;
+            }
+        }
     }
 }
+
+
+
+
+
+
 
 
 

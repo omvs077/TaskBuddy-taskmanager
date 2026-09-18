@@ -64,9 +64,10 @@
                   CanUserAddRows="False"
                   CanUserDeleteRows="False"
                   GridLinesVisibility="None"
-                  PreviewMouseRightButtonDown="ProcessGrid_PreviewMouseRightButtonDown">
+                  PreviewMouseRightButtonDown="ProcessGrid_PreviewMouseRightButtonDown"
+                  Sorting="ProcessGrid_Sorting">
             <DataGrid.Columns>
-                <DataGridTemplateColumn Header="Name" Width="2*">
+                <DataGridTemplateColumn Header="Name" Width="2*" SortMemberPath="ImageName">
                     <DataGridTemplateColumn.CellTemplate>
                         <DataTemplate>
                             <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
@@ -136,3 +137,6 @@
         </DataGrid>
     </Grid>
 </Page>
+
+
+
