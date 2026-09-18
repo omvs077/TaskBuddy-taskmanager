@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
 using System.Windows;
@@ -23,6 +24,7 @@ namespace TaskBuddyWPF.Services
         private readonly Dictionary<uint, string> _publisherCache = new();
         private readonly Dictionary<uint, string> _processNameCache = new();
         private readonly Dictionary<uint, string> _commandLineCache = new();
+        private readonly Dictionary<uint, bool> _criticalCache = new();
         private readonly int _coreCount = Environment.ProcessorCount;
 
         // Controlled by the Settings tab (default off, matches pre-existing behavior).
@@ -34,6 +36,7 @@ namespace TaskBuddyWPF.Services
             IntPtr buffer = IntPtr.Zero;
             var results = new List<ProcessInfo>();
             var seenPids = new HashSet<uint>();
+            var windowedPids = GetWindowedProcessIds();
 
             try
             {
@@ -104,6 +107,13 @@ namespace TaskBuddyWPF.Services
                         _commandLineCache[pid] = commandLine;
                     }
 
+                    if (!_criticalCache.TryGetValue(pid, out var isCritical))
+                    {
+                        isCritical = ResolveIsCritical(pid);
+                        _criticalCache[pid] = isCritical;
+                    }
+                    bool hasVisibleWindow = windowedPids.Contains(pid);
+
                     results.Add(new ProcessInfo
                     {
                         Pid = pid,
@@ -118,6 +128,8 @@ namespace TaskBuddyWPF.Services
                         CommandLine = commandLine,
                         IsSuspended = _suspendedByUs.Contains(pid),
                         IsEfficiencyMode = _efficiencyModeByUs.Contains(pid),
+                        IsCritical = isCritical,
+                        HasVisibleWindow = hasVisibleWindow,
                         DiskBytesPerSec = diskBytesPerSec,
                         Icon = icon
                     });
@@ -133,6 +145,8 @@ namespace TaskBuddyWPF.Services
             }
 
             PruneStale(seenPids);
+
+            ClassifyAndCluster(results);
             return results;
         }
 
@@ -496,6 +510,7 @@ namespace TaskBuddyWPF.Services
             PruneDict(_publisherCache, seenPids);
             PruneDict(_processNameCache, seenPids);
             PruneDict(_commandLineCache, seenPids);
+            PruneDict(_criticalCache, seenPids);
             _suspendedByUs.RemoveWhere(pid => !seenPids.Contains(pid));
             _efficiencyModeByUs.RemoveWhere(pid => !seenPids.Contains(pid));
         }
@@ -601,6 +616,86 @@ namespace TaskBuddyWPF.Services
                 return IntPtr.Zero;
             return new IntPtr(BitConverter.ToInt64(buffer, 0));
         }
+
+        // "Alt-tab" style visible-window enumeration: visible, unowned (not a
+        // popup owned by another window), not a tool window, and has a title.
+        // Standard technique used by many benign process/window utilities.
+        private static HashSet<uint> GetWindowedProcessIds()
+        {
+            var pids = new HashSet<uint>();
+            NativeMethods.EnumWindows((hWnd, _) =>
+            {
+                if (!NativeMethods.IsWindowVisible(hWnd)) return true;
+                if (NativeMethods.GetWindow(hWnd, NativeMethods.GW_OWNER) != IntPtr.Zero) return true;
+                if ((NativeMethods.GetWindowLong(hWnd, NativeMethods.GWL_EXSTYLE) & NativeMethods.WS_EX_TOOLWINDOW) != 0) return true;
+                if (NativeMethods.GetWindowTextLength(hWnd) == 0) return true;
+
+                NativeMethods.GetWindowThreadProcessId(hWnd, out uint pid);
+                if (pid != 0) pids.Add(pid);
+                return true;
+            }, IntPtr.Zero);
+            return pids;
+        }
+
+        // Per Microsoft's own documented rule (Raymond Chen, "The Old New Thing"):
+        // visible window -> App; IsProcessCritical -> Windows process; else Background.
+        private static bool ResolveIsCritical(uint pid)
+        {
+            IntPtr hProcess = NativeMethods.OpenProcess(NativeMethods.PROCESS_QUERY_LIMITED_INFORMATION, false, pid);
+            if (hProcess == IntPtr.Zero) return false;
+            try
+            {
+                return NativeMethods.IsProcessCritical(hProcess, out bool critical) && critical;
+            }
+            catch
+            {
+                return false;
+            }
+            finally
+            {
+                NativeMethods.CloseHandle(hProcess);
+            }
+        }
+
+        // Assigns Category per the documented TM rule, then clusters child
+        // processes under the nearest ParentPid ancestor that has a visible
+        // window (the only generally-applicable clustering approach: real TM's
+        // exact Chrome/WebView2 grouping relies on app-specific IPC attribution
+        // that isn't exposed to other processes — confirmed via research).
+        private static void ClassifyAndCluster(List<ProcessInfo> results)
+        {
+            var byPid = results.ToDictionary(p => p.Pid, p => p);
+
+            foreach (var p in results)
+            {
+                p.Category = p.HasVisibleWindow ? "App" : (p.IsCritical ? "Windows process" : "Background process");
+                p.GroupPid = p.Pid;
+                p.IndentLevel = 0;
+            }
+
+            foreach (var p in results)
+            {
+                if (p.HasVisibleWindow) continue;
+
+                uint currentPid = p.ParentPid;
+                var visited = new HashSet<uint> { p.Pid };
+                while (byPid.TryGetValue(currentPid, out var ancestor) && visited.Add(currentPid))
+                {
+                    if (ancestor.HasVisibleWindow)
+                    {
+                        p.GroupPid = ancestor.Pid;
+                        p.IndentLevel = 1;
+                        p.Category = "App";
+                        break;
+                    }
+                    currentPid = ancestor.ParentPid;
+                }
+            }
+        }
     }
 }
+
+
+
+
 

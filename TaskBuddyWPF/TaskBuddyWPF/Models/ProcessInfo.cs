@@ -16,6 +16,11 @@ namespace TaskBuddyWPF.Models
         public string Publisher { get; set; } = string.Empty;
         public string ProcessName { get; set; } = string.Empty;
         public string CommandLine { get; set; } = string.Empty;
+        public bool HasVisibleWindow { get; set; }
+        public bool IsCritical { get; set; }
+        public string Category { get; set; } = "Background process";
+        public uint GroupPid { get; set; }
+        public int IndentLevel { get; set; }
         public ImageSource? Icon { get; set; }
 
         private ulong _workingSetBytes;
@@ -68,4 +73,5 @@ namespace TaskBuddyWPF.Models
         }
     }
 }
+
 
