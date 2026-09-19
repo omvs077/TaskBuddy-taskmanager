@@ -458,6 +458,71 @@ namespace TaskBuddyWPF.Native
         internal const uint GA_ROOTOWNER = 3;
         internal const int DWMWA_CLOAKED = 14;
         internal const int WS_EX_APPWINDOW = 0x00040000;
+
+        // --- WLAN API (Wi-Fi tab): SSID and signal quality aren't exposed by
+        // System.Net.NetworkInformation, so these specific fields use the native
+        // Native Wi-Fi API. Adapter name, connection type, IP addresses, and
+        // throughput are read via NetworkInterface (.NET stdlib) instead — see
+        // WifiEnumerator.cs. Struct layouts confirmed via Microsoft documentation
+        // before implementation.
+        internal const int WLAN_INTF_OPCODE_CURRENT_CONNECTION = 7;
+        internal const uint WLAN_INTERFACE_STATE_CONNECTED = 1;
+
+        [StructLayout(LayoutKind.Sequential)]
+        internal struct WLAN_INTERFACE_INFO
+        {
+            public Guid InterfaceGuid;
+            [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 256)]
+            public string strInterfaceDescription;
+            public uint isState;
+        }
+
+        [StructLayout(LayoutKind.Sequential)]
+        internal struct DOT11_SSID
+        {
+            public uint uSSIDLength;
+            [MarshalAs(UnmanagedType.ByValArray, SizeConst = 32)]
+            public byte[] ucSSID;
+        }
+
+        [StructLayout(LayoutKind.Sequential)]
+        internal struct WLAN_ASSOCIATION_ATTRIBUTES
+        {
+            public DOT11_SSID dot11Ssid;
+            public uint dot11BssType;
+            [MarshalAs(UnmanagedType.ByValArray, SizeConst = 6)]
+            public byte[] dot11Bssid;
+            public uint dot11PhyType;
+            public uint uDot11PhyIndex;
+            public uint wlanSignalQuality;
+            public uint ulRxRate;
+            public uint ulTxRate;
+        }
+
+        [StructLayout(LayoutKind.Sequential)]
+        internal struct WLAN_CONNECTION_ATTRIBUTES
+        {
+            public uint isState;
+            public uint wlanConnectionMode;
+            [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 256)]
+            public string strProfileName;
+            public WLAN_ASSOCIATION_ATTRIBUTES wlanAssociationAttributes;
+        }
+
+        [DllImport("wlanapi.dll")]
+        internal static extern int WlanOpenHandle(uint dwClientVersion, IntPtr pReserved, out uint pdwNegotiatedVersion, out IntPtr phClientHandle);
+
+        [DllImport("wlanapi.dll")]
+        internal static extern int WlanCloseHandle(IntPtr hClientHandle, IntPtr pReserved);
+
+        [DllImport("wlanapi.dll")]
+        internal static extern int WlanEnumInterfaces(IntPtr hClientHandle, IntPtr pReserved, out IntPtr ppInterfaceList);
+
+        [DllImport("wlanapi.dll")]
+        internal static extern int WlanQueryInterface(IntPtr hClientHandle, ref Guid pInterfaceGuid, int OpCode, IntPtr pReserved, out int pdwDataSize, out IntPtr ppData, IntPtr pWlanOpcodeValueType);
+
+        [DllImport("wlanapi.dll")]
+        internal static extern void WlanFreeMemory(IntPtr pMemory);
     }
 }
 
