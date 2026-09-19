@@ -16,12 +16,46 @@ namespace TaskBuddyWPF.Models
         public string Publisher { get; set; } = string.Empty;
         public string ProcessName { get; set; } = string.Empty;
         public string CommandLine { get; set; } = string.Empty;
-        public bool HasVisibleWindow { get; set; }
-        public bool IsCritical { get; set; }
-        public string Category { get; set; } = "Background process";
-        public uint GroupPid { get; set; }
-        public int IndentLevel { get; set; }
         public ImageSource? Icon { get; set; }
+
+        private bool _hasVisibleWindow;
+        public bool HasVisibleWindow
+        {
+            get => _hasVisibleWindow;
+            set { if (_hasVisibleWindow != value) { _hasVisibleWindow = value; Notify(nameof(HasVisibleWindow)); } }
+        }
+
+        private bool _isCritical;
+        public bool IsCritical
+        {
+            get => _isCritical;
+            set { if (_isCritical != value) { _isCritical = value; Notify(nameof(IsCritical)); } }
+        }
+
+        // Must raise PropertyChanged for WPF's live-grouping (IsLiveGrouping) to
+        // re-bucket this item into a different CollectionViewGroup incrementally,
+        // instead of requiring a full CollectionView.Refresh() that destroys and
+        // recreates GroupItem containers (and resets any Expander's collapsed state).
+        private string _category = "Background process";
+        public string Category
+        {
+            get => _category;
+            set { if (_category != value) { _category = value; Notify(nameof(Category)); } }
+        }
+
+        private uint _groupPid;
+        public uint GroupPid
+        {
+            get => _groupPid;
+            set { if (_groupPid != value) { _groupPid = value; Notify(nameof(GroupPid)); } }
+        }
+
+        private int _indentLevel;
+        public int IndentLevel
+        {
+            get => _indentLevel;
+            set { if (_indentLevel != value) { _indentLevel = value; Notify(nameof(IndentLevel)); } }
+        }
 
         private ulong _workingSetBytes;
         public ulong WorkingSetBytes
@@ -73,5 +107,3 @@ namespace TaskBuddyWPF.Models
         }
     }
 }
-
-

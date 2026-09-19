@@ -22,6 +22,7 @@ namespace TaskBuddyWPF.Pages
     {
         private readonly ProcessEnumerator _enumerator = new();
         private readonly ObservableCollection<ProcessInfo> _processes = new();
+        private readonly Dictionary<uint, ProcessInfo> _byPidLookup = new();
         private readonly DispatcherTimer _timer;
         private bool _isRefreshing;
         private bool _isApplyingLoadedLayout;
@@ -38,10 +39,15 @@ namespace TaskBuddyWPF.Pages
             var view = (ListCollectionView)CollectionViewSource.GetDefaultView(_processes);
             view.Filter = FilterProcess;
             view.GroupDescriptions.Add(new PropertyGroupDescription(nameof(ProcessInfo.Category)));
-            view.CustomSort = new ClusterComparer(_processes, _sortProperty, _sortDirection);
+            view.CustomSort = new ClusterComparer(_byPidLookup, _sortProperty, _sortDirection);
             view.IsLiveSorting = true;
             view.LiveSortingProperties.Add(nameof(ProcessInfo.WorkingSetBytes));
             view.LiveSortingProperties.Add(nameof(ProcessInfo.CpuPercent));
+            view.LiveSortingProperties.Add(nameof(ProcessInfo.GroupPid));
+            view.LiveSortingProperties.Add(nameof(ProcessInfo.IndentLevel));
+            view.LiveSortingProperties.Add(nameof(ProcessInfo.Category));
+            view.IsLiveGrouping = true;
+            view.LiveGroupingProperties.Add(nameof(ProcessInfo.Category));
 
             _timer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(TaskBuddyWPF.Services.AppSettings.RefreshIntervalSeconds) };
             _timer.Tick += async (s, e) => await RefreshAsync();
@@ -77,7 +83,10 @@ namespace TaskBuddyWPF.Pages
             for (int i = _processes.Count - 1; i >= 0; i--)
             {
                 if (!incoming.ContainsKey(_processes[i].Pid))
+                {
+                    _byPidLookup.Remove(_processes[i].Pid);
                     _processes.RemoveAt(i);
+                }
             }
 
             var existing = new Dictionary<uint, ProcessInfo>();
@@ -104,9 +113,9 @@ namespace TaskBuddyWPF.Pages
                 else
                 {
                     _processes.Add(fresh);
+                    _byPidLookup[fresh.Pid] = fresh;
                 }
             }
-            CollectionViewSource.GetDefaultView(_processes).Refresh();
         }
 
         private void ProcessGrid_PreviewMouseRightButtonDown(object sender, MouseButtonEventArgs e)
@@ -373,7 +382,7 @@ namespace TaskBuddyWPF.Pages
             e.Column.SortDirection = _sortDirection;
 
             var view = (ListCollectionView)CollectionViewSource.GetDefaultView(_processes);
-            view.CustomSort = new ClusterComparer(_processes, _sortProperty, _sortDirection);
+            view.CustomSort = new ClusterComparer(_byPidLookup, _sortProperty, _sortDirection);
         }
 
         // Sorts by Category (App/Background/Windows process) first, then keeps each
@@ -382,15 +391,18 @@ namespace TaskBuddyWPF.Pages
         // then the chosen column within each cluster. Needed because ListCollectionView
         // ignores SortDescriptions once CustomSort is set, so this comparer must also
         // reproduce the plain column-sort behavior for ungrouped/uncustered rows.
+        // Takes the page's PID lookup by reference (not a snapshot copy) so it
+        // always sees current membership as ApplyDiff adds/removes processes,
+        // without needing to be reconstructed every refresh tick.
         private class ClusterComparer : System.Collections.IComparer
         {
             private readonly Dictionary<uint, ProcessInfo> _byPid;
             private readonly string _property;
             private readonly ListSortDirection _direction;
 
-            public ClusterComparer(IEnumerable<ProcessInfo> all, string property, ListSortDirection direction)
+            public ClusterComparer(Dictionary<uint, ProcessInfo> byPid, string property, ListSortDirection direction)
             {
-                _byPid = all.ToDictionary(p => p.Pid, p => p);
+                _byPid = byPid;
                 _property = property;
                 _direction = direction;
             }
@@ -403,11 +415,19 @@ namespace TaskBuddyWPF.Pages
                 _ => 3
             };
 
-            private IComparable? GetValue(ProcessInfo p)
+            // Plain switch instead of reflection: this runs O(n log n) times per
+            // sort, and reflection's PropertyInfo lookup/Invoke cost compounds
+            // noticeably at that call volume.
+            private IComparable? GetValue(ProcessInfo p) => _property switch
             {
-                var prop = typeof(ProcessInfo).GetProperty(_property);
-                return prop?.GetValue(p) as IComparable;
-            }
+                nameof(ProcessInfo.Pid) => p.Pid,
+                nameof(ProcessInfo.ImageName) => p.ImageName,
+                nameof(ProcessInfo.CpuPercent) => p.CpuPercent,
+                nameof(ProcessInfo.WorkingSetBytes) => p.WorkingSetBytes,
+                nameof(ProcessInfo.DiskBytesPerSec) => p.DiskBytesPerSec,
+                nameof(ProcessInfo.StatusText) => p.StatusText,
+                _ => null
+            };
 
             public int Compare(object? ox, object? oy)
             {
@@ -438,6 +458,13 @@ namespace TaskBuddyWPF.Pages
         }
     }
 }
+
+
+
+
+
+
+
 
 
 
