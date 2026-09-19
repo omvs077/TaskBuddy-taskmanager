@@ -18,7 +18,7 @@
                   IsReadOnly="True" CanUserAddRows="False"
                   PreviewMouseRightButtonDown="StartupGrid_PreviewMouseRightButtonDown">
             <DataGrid.Columns>
-                <DataGridTemplateColumn Header="Name" Width="2*">
+                <DataGridTemplateColumn Header="Name" Width="2*" MinWidth="180">
                     <DataGridTemplateColumn.CellTemplate>
                         <DataTemplate>
                             <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
@@ -28,9 +28,9 @@
                         </DataTemplate>
                     </DataGridTemplateColumn.CellTemplate>
                 </DataGridTemplateColumn>
-                <DataGridTextColumn Header="Source" Binding="{Binding Source}" Width="*"/>
-                <DataGridTextColumn Header="Publisher" Binding="{Binding Publisher}" Width="1.5*"/>
-                <DataGridTextColumn Header="Impact" Binding="{Binding Impact}" Width="*">
+                <DataGridTextColumn Header="Source" Binding="{Binding Source}" Width="*" MinWidth="100"/>
+                <DataGridTextColumn Header="Publisher" Binding="{Binding Publisher}" Width="1.5*" MinWidth="140"/>
+                <DataGridTextColumn Header="Impact" Binding="{Binding Impact}" Width="*" MinWidth="90">
                     <DataGridTextColumn.CellStyle>
                         <Style TargetType="DataGridCell">
                             <Setter Property="Background" Value="{Binding Impact, Converter={StaticResource StartupImpactBrushConverter}}"/>
@@ -38,7 +38,7 @@
                     </DataGridTextColumn.CellStyle>
                 </DataGridTextColumn>
                 <DataGridCheckBoxColumn Header="Enabled" Binding="{Binding IsEnabled}" Width="Auto"/>
-                <DataGridTextColumn Header="Command" Binding="{Binding Command}" Width="3*"/>
+                <DataGridTextColumn Header="Command" Binding="{Binding Command}" Width="3*" MinWidth="220"/>
             </DataGrid.Columns>
             <DataGrid.ContextMenu>
                 <ContextMenu>
@@ -49,3 +49,4 @@
         </DataGrid>
     </Grid>
 </Page>
+

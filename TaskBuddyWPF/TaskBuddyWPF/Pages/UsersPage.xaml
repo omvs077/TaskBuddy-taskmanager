@@ -80,7 +80,7 @@
                 <DataGrid x:Name="ProcessesGrid" Grid.Row="1" AutoGenerateColumns="False"
                           IsReadOnly="True" CanUserAddRows="False" GridLinesVisibility="None">
                     <DataGrid.Columns>
-                        <DataGridTemplateColumn Header="Name" Width="2.5*">
+                        <DataGridTemplateColumn Header="Name" Width="2.5*" MinWidth="180">
                             <DataGridTemplateColumn.CellTemplate>
                                 <DataTemplate>
                                     <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
@@ -90,9 +90,9 @@
                                 </DataTemplate>
                             </DataGridTemplateColumn.CellTemplate>
                         </DataGridTemplateColumn>
-                        <DataGridTextColumn Header="PID" Binding="{Binding Pid}" Width="*"/>
-                        <DataGridTextColumn Header="CPU %" Binding="{Binding CpuPercent, StringFormat={}{0:F1}}" Width="*"/>
-                        <DataGridTextColumn Header="Memory (MB)" Binding="{Binding WorkingSetBytes, Converter={StaticResource BytesToMbConverter}}" Width="*"/>
+                        <DataGridTextColumn Header="PID" Binding="{Binding Pid}" Width="*" MinWidth="60"/>
+                        <DataGridTextColumn Header="CPU %" Binding="{Binding CpuPercent, StringFormat={}{0:F1}}" Width="*" MinWidth="70"/>
+                        <DataGridTextColumn Header="Memory (MB)" Binding="{Binding WorkingSetBytes, Converter={StaticResource BytesToMbConverter}}" Width="*" MinWidth="100"/>
                     </DataGrid.Columns>
                     <DataGrid.ContextMenu>
                         <ContextMenu Opened="UsersContextMenu_Opened">
@@ -125,4 +125,5 @@
         </Grid>
     </Grid>
 </Page>
+
 

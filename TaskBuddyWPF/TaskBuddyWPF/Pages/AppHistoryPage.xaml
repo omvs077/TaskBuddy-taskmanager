@@ -22,11 +22,11 @@
             <DataGrid x:Name="HistoryGrid" AutoGenerateColumns="False"
                       IsReadOnly="True" CanUserAddRows="False">
                 <DataGrid.Columns>
-                    <DataGridTextColumn Header="App" Binding="{Binding AppName}" Width="2*"/>
-                    <DataGridTextColumn Header="CPU Cycles" Binding="{Binding CpuCycles, StringFormat=N0}" Width="*"/>
-                    <DataGridTextColumn Header="Network" Binding="{Binding NetworkBytes, Converter={StaticResource BytesToMbConverter}}" Width="*"/>
-                    <DataGridTextColumn Header="Last Active" Binding="{Binding LastActive}" Width="1.5*"/>
-                    <DataGridTextColumn Header="Path" Binding="{Binding AppPath}" Width="3*"/>
+                    <DataGridTextColumn Header="App" Binding="{Binding AppName}" Width="2*" MinWidth="180"/>
+                    <DataGridTextColumn Header="CPU Cycles" Binding="{Binding CpuCycles, StringFormat=N0}" Width="*" MinWidth="100"/>
+                    <DataGridTextColumn Header="Network" Binding="{Binding NetworkBytes, Converter={StaticResource BytesToMbConverter}}" Width="*" MinWidth="100"/>
+                    <DataGridTextColumn Header="Last Active" Binding="{Binding LastActive}" Width="1.5*" MinWidth="130"/>
+                    <DataGridTextColumn Header="Path" Binding="{Binding AppPath}" Width="3*" MinWidth="220"/>
                 </DataGrid.Columns>
             </DataGrid>
             <TextBlock x:Name="StatusText" HorizontalAlignment="Center" VerticalAlignment="Center"
@@ -35,3 +35,4 @@
         </Grid>
     </Grid>
 </Page>
+

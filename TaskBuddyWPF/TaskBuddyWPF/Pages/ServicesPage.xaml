@@ -48,7 +48,7 @@
                   GridLinesVisibility="None"
                   PreviewMouseRightButtonDown="ServiceGrid_PreviewMouseRightButtonDown">
             <DataGrid.Columns>
-                <DataGridTemplateColumn Header="Name" Width="2.5*">
+                <DataGridTemplateColumn Header="Name" Width="2.5*" MinWidth="180">
                     <DataGridTemplateColumn.CellTemplate>
                         <DataTemplate>
                             <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
@@ -58,11 +58,11 @@
                         </DataTemplate>
                     </DataGridTemplateColumn.CellTemplate>
                 </DataGridTemplateColumn>
-                <DataGridTextColumn Header="Service Name" Binding="{Binding ServiceName}" Width="1.5*"/>
-                <DataGridTextColumn Header="PID" Binding="{Binding PidText}" Width="*"/>
-                <DataGridTextColumn Header="Status" Binding="{Binding StatusText}" Width="*"/>
-                <DataGridTextColumn Header="Description" Binding="{Binding Description}" Width="3*"/>
-                <DataGridTextColumn Header="Group" Binding="{Binding Group}" Width="*"/>
+                <DataGridTextColumn Header="Service Name" Binding="{Binding ServiceName}" Width="1.5*" MinWidth="140"/>
+                <DataGridTextColumn Header="PID" Binding="{Binding PidText}" Width="*" MinWidth="60"/>
+                <DataGridTextColumn Header="Status" Binding="{Binding StatusText}" Width="*" MinWidth="80"/>
+                <DataGridTextColumn Header="Description" Binding="{Binding Description}" Width="3*" MinWidth="220"/>
+                <DataGridTextColumn Header="Group" Binding="{Binding Group}" Width="*" MinWidth="100"/>
             </DataGrid.Columns>
             <DataGrid.ContextMenu>
                 <ContextMenu Opened="ContextMenu_Opened">
@@ -74,3 +74,4 @@
         </DataGrid>
     </Grid>
 </Page>
+

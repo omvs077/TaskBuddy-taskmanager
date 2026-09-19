@@ -18,7 +18,7 @@
                   IsReadOnly="True" CanUserAddRows="False"
                   PreviewMouseRightButtonDown="DetailsGrid_PreviewMouseRightButtonDown">
             <DataGrid.Columns>
-                <DataGridTemplateColumn Header="Name" Width="2*">
+                <DataGridTemplateColumn Header="Name" Width="2*" MinWidth="180">
                     <DataGridTemplateColumn.CellTemplate>
                         <DataTemplate>
                             <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
@@ -28,14 +28,14 @@
                         </DataTemplate>
                     </DataGridTemplateColumn.CellTemplate>
                 </DataGridTemplateColumn>
-                <DataGridTextColumn Header="PID" Binding="{Binding Pid}" Width="*"/>
-                <DataGridTextColumn Header="Status" Binding="{Binding Status}" Width="*"/>
-                <DataGridTextColumn Header="User" Binding="{Binding UserName}" Width="1.5*"/>
-                <DataGridTextColumn Header="CPU %" Binding="{Binding CpuPercent, StringFormat={}{0:F1}}" Width="*"/>
-                <DataGridTextColumn Header="Memory (MB)" Binding="{Binding MemoryBytes, Converter={StaticResource BytesToMbConverter}}" Width="*"/>
-                <DataGridTextColumn Header="Architecture" Binding="{Binding Architecture}" Width="*"/>
+                <DataGridTextColumn Header="PID" Binding="{Binding Pid}" Width="*" MinWidth="60"/>
+                <DataGridTextColumn Header="Status" Binding="{Binding Status}" Width="*" MinWidth="80"/>
+                <DataGridTextColumn Header="User" Binding="{Binding UserName}" Width="1.5*" MinWidth="140"/>
+                <DataGridTextColumn Header="CPU %" Binding="{Binding CpuPercent, StringFormat={}{0:F1}}" Width="*" MinWidth="70"/>
+                <DataGridTextColumn Header="Memory (MB)" Binding="{Binding MemoryBytes, Converter={StaticResource BytesToMbConverter}}" Width="*" MinWidth="100"/>
+                <DataGridTextColumn Header="Architecture" Binding="{Binding Architecture}" Width="*" MinWidth="90"/>
                 <DataGridCheckBoxColumn Header="UAC Virtualization" Binding="{Binding IsVirtualized}" Width="Auto"/>
-                <DataGridTextColumn Header="Description" Binding="{Binding Description}" Width="2*"/>
+                <DataGridTextColumn Header="Description" Binding="{Binding Description}" Width="2*" MinWidth="180"/>
             </DataGrid.Columns>
             <DataGrid.ContextMenu>
                 <ContextMenu Opened="DetailsContextMenu_Opened">
@@ -65,3 +65,4 @@
         </DataGrid>
     </Grid>
 </Page>
+

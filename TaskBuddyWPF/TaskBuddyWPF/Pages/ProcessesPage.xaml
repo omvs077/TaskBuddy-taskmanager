@@ -67,7 +67,7 @@
                   PreviewMouseRightButtonDown="ProcessGrid_PreviewMouseRightButtonDown"
                   Sorting="ProcessGrid_Sorting">
             <DataGrid.Columns>
-                <DataGridTemplateColumn Header="Name" Width="2*" SortMemberPath="ImageName">
+                <DataGridTemplateColumn Header="Name" Width="2*" MinWidth="180" SortMemberPath="ImageName">
                     <DataGridTemplateColumn.CellTemplate>
                         <DataTemplate>
                             <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="{Binding IndentLevel, Converter={StaticResource IndentLevelToMarginConverter}}">
@@ -81,32 +81,32 @@
                         </DataTemplate>
                     </DataGridTemplateColumn.CellTemplate>
                 </DataGridTemplateColumn>
-                <DataGridTextColumn x:Name="PidColumn" Header="PID" Binding="{Binding Pid}" Width="*"/>
-                <DataGridTextColumn x:Name="StatusColumn" Header="Status" Binding="{Binding StatusText}" Width="*"/>
-                <DataGridTextColumn x:Name="CpuColumn" Header="CPU %" Binding="{Binding CpuPercent, StringFormat={}{0:F1}}" Width="*">
+                <DataGridTextColumn x:Name="PidColumn" Header="PID" Binding="{Binding Pid}" Width="*" MinWidth="60"/>
+                <DataGridTextColumn x:Name="StatusColumn" Header="Status" Binding="{Binding StatusText}" Width="*" MinWidth="80"/>
+                <DataGridTextColumn x:Name="CpuColumn" Header="CPU %" Binding="{Binding CpuPercent, StringFormat={}{0:F1}}" Width="*" MinWidth="70">
                     <DataGridTextColumn.CellStyle>
                         <Style TargetType="DataGridCell">
                             <Setter Property="Background" Value="{Binding CpuPercent, Converter={StaticResource CpuHeatBrushConverter}}"/>
                         </Style>
                     </DataGridTextColumn.CellStyle>
                 </DataGridTextColumn>
-                <DataGridTextColumn x:Name="MemoryColumn" Header="Memory (MB)" Binding="{Binding WorkingSetBytes, Converter={StaticResource BytesToMbConverter}}" Width="*">
+                <DataGridTextColumn x:Name="MemoryColumn" Header="Memory (MB)" Binding="{Binding WorkingSetBytes, Converter={StaticResource BytesToMbConverter}}" Width="*" MinWidth="100">
                     <DataGridTextColumn.CellStyle>
                         <Style TargetType="DataGridCell">
                             <Setter Property="Background" Value="{Binding WorkingSetBytes, Converter={StaticResource MemoryHeatBrushConverter}}"/>
                         </Style>
                     </DataGridTextColumn.CellStyle>
                 </DataGridTextColumn>
-                <DataGridTextColumn x:Name="DiskColumn" Header="Disk (MB/s)" Binding="{Binding DiskBytesPerSec, Converter={StaticResource BytesPerSecToMBpsConverter}}" Width="*">
+                <DataGridTextColumn x:Name="DiskColumn" Header="Disk (MB/s)" Binding="{Binding DiskBytesPerSec, Converter={StaticResource BytesPerSecToMBpsConverter}}" Width="*" MinWidth="90">
                     <DataGridTextColumn.CellStyle>
                         <Style TargetType="DataGridCell">
                             <Setter Property="Background" Value="{Binding DiskBytesPerSec, Converter={StaticResource DiskHeatBrushConverter}}"/>
                         </Style>
                     </DataGridTextColumn.CellStyle>
                 </DataGridTextColumn>
-                <DataGridTextColumn x:Name="PublisherColumn" Header="Publisher" Binding="{Binding Publisher}" Width="1.5*" Visibility="Collapsed"/>
-                <DataGridTextColumn x:Name="ProcessNameColumn" Header="Process name" Binding="{Binding ProcessName}" Width="1.5*" Visibility="Collapsed"/>
-                <DataGridTextColumn x:Name="CommandLineColumn" Header="Command line" Binding="{Binding CommandLine}" Width="2.5*" Visibility="Collapsed"/>
+                <DataGridTextColumn x:Name="PublisherColumn" Header="Publisher" Binding="{Binding Publisher}" Width="1.5*" MinWidth="140" Visibility="Collapsed"/>
+                <DataGridTextColumn x:Name="ProcessNameColumn" Header="Process name" Binding="{Binding ProcessName}" Width="1.5*" MinWidth="140" Visibility="Collapsed"/>
+                <DataGridTextColumn x:Name="CommandLineColumn" Header="Command line" Binding="{Binding CommandLine}" Width="2.5*" MinWidth="220" Visibility="Collapsed"/>
             </DataGrid.Columns>
             <DataGrid.GroupStyle>
                 <GroupStyle>
@@ -179,6 +179,7 @@
         </DataGrid>
     </Grid>
 </Page>
+
 
 
 
