@@ -445,6 +445,19 @@ namespace TaskBuddyWPF.Native
         internal const uint GW_OWNER = 4;
         internal const int GWL_EXSTYLE = -20;
         internal const int WS_EX_TOOLWINDOW = 0x00000080;
+
+        [DllImport("user32.dll")]
+        internal static extern IntPtr GetAncestor(IntPtr hwnd, uint gaFlags);
+
+        [DllImport("user32.dll")]
+        internal static extern IntPtr GetLastActivePopup(IntPtr hWnd);
+
+        [DllImport("dwmapi.dll")]
+        internal static extern int DwmGetWindowAttribute(IntPtr hwnd, int dwAttribute, out int pvAttribute, int cbAttribute);
+
+        internal const uint GA_ROOTOWNER = 3;
+        internal const int DWMWA_CLOAKED = 14;
+        internal const int WS_EX_APPWINDOW = 0x00040000;
     }
 }
 

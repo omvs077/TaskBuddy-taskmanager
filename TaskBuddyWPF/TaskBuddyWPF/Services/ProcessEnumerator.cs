@@ -620,18 +620,49 @@ namespace TaskBuddyWPF.Services
         // "Alt-tab" style visible-window enumeration: visible, unowned (not a
         // popup owned by another window), not a tool window, and has a title.
         // Standard technique used by many benign process/window utilities.
+        // Canonical "alt-tab window" test, per Raymond Chen's published algorithm
+        // (Microsoft, "The Old New Thing") — confirmed via research and replicated
+        // across many independent tools. Walking each window's owner/popup chain to
+        // find one canonical representative (rather than counting every unowned
+        // popup separately) is what fixes helper/utility windows from browsers and
+        // IDEs being miscounted as their own separate "App" entries.
+        private static bool IsAltTabWindow(IntPtr hWnd)
+        {
+            if (!NativeMethods.IsWindowVisible(hWnd)) return false;
+
+            // Exclude DWM-cloaked windows (e.g. suspended UWP apps, some hidden
+            // Chromium/Electron helper windows that are technically "visible" but
+            // never actually drawn).
+            if (NativeMethods.DwmGetWindowAttribute(hWnd, NativeMethods.DWMWA_CLOAKED, out int cloaked, sizeof(int)) == 0 && cloaked != 0)
+                return false;
+
+            int exStyle = NativeMethods.GetWindowLong(hWnd, NativeMethods.GWL_EXSTYLE);
+            if ((exStyle & NativeMethods.WS_EX_TOOLWINDOW) != 0 && (exStyle & NativeMethods.WS_EX_APPWINDOW) == 0)
+                return false;
+
+            if (NativeMethods.GetWindowTextLength(hWnd) == 0) return false;
+
+            IntPtr hwndWalk = NativeMethods.GetAncestor(hWnd, NativeMethods.GA_ROOTOWNER);
+            IntPtr hwndTry;
+            while ((hwndTry = NativeMethods.GetLastActivePopup(hwndWalk)) != hwndTry || true)
+            {
+                if (NativeMethods.IsWindowVisible(hwndTry)) break;
+                if (hwndTry == hwndWalk) break;
+                hwndWalk = hwndTry;
+            }
+            return hwndWalk == hWnd;
+        }
+
         private static HashSet<uint> GetWindowedProcessIds()
         {
             var pids = new HashSet<uint>();
             NativeMethods.EnumWindows((hWnd, _) =>
             {
-                if (!NativeMethods.IsWindowVisible(hWnd)) return true;
-                if (NativeMethods.GetWindow(hWnd, NativeMethods.GW_OWNER) != IntPtr.Zero) return true;
-                if ((NativeMethods.GetWindowLong(hWnd, NativeMethods.GWL_EXSTYLE) & NativeMethods.WS_EX_TOOLWINDOW) != 0) return true;
-                if (NativeMethods.GetWindowTextLength(hWnd) == 0) return true;
-
-                NativeMethods.GetWindowThreadProcessId(hWnd, out uint pid);
-                if (pid != 0) pids.Add(pid);
+                if (IsAltTabWindow(hWnd))
+                {
+                    NativeMethods.GetWindowThreadProcessId(hWnd, out uint pid);
+                    if (pid != 0) pids.Add(pid);
+                }
                 return true;
             }, IntPtr.Zero);
             return pids;
@@ -694,6 +725,8 @@ namespace TaskBuddyWPF.Services
         }
     }
 }
+
+
 
 
 
