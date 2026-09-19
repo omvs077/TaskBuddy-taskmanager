@@ -118,7 +118,7 @@
                                         <StackPanel>
                                             <ToggleButton x:Name="GroupToggle" IsChecked="True" Cursor="Hand"
                                                           Background="Transparent" BorderThickness="0"
-                                                          Padding="2,4" HorizontalContentAlignment="Left"
+                                                          Padding="4,10" HorizontalContentAlignment="Left"
                                                           HorizontalAlignment="Stretch">
                                                 <ToggleButton.Template>
                                                     <ControlTemplate TargetType="ToggleButton">
@@ -126,12 +126,12 @@
                                                     </ControlTemplate>
                                                 </ToggleButton.Template>
                                                 <StackPanel Orientation="Horizontal">
-                                                    <TextBlock x:Name="Arrow" Text="&#9662;" FontSize="9" Width="14"
-                                                               Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                                                    <TextBlock x:Name="Arrow" Text="&#9662;" FontSize="11" Width="16"
+                                                               Foreground="#5AAAFF"
                                                                VerticalAlignment="Center"/>
-                                                    <TextBlock Text="{Binding Name}" FontWeight="SemiBold" FontSize="12"
-                                                               Foreground="{DynamicResource TextFillColorPrimaryBrush}"/>
-                                                    <TextBlock Text="{Binding ItemCount, StringFormat=' ({0})'}" FontSize="12"
+                                                    <TextBlock Text="{Binding Name}" FontWeight="Bold" FontSize="14"
+                                                               Foreground="#5AAAFF"/>
+                                                    <TextBlock Text="{Binding ItemCount, StringFormat=' ({0})'}" FontSize="13"
                                                                Foreground="{DynamicResource TextFillColorSecondaryBrush}"/>
                                                 </StackPanel>
                                             </ToggleButton>
@@ -179,6 +179,7 @@
         </DataGrid>
     </Grid>
 </Page>
+
 
 
 
