@@ -468,7 +468,7 @@ namespace TaskBuddyWPF.Native
         internal const int WLAN_INTF_OPCODE_CURRENT_CONNECTION = 7;
         internal const uint WLAN_INTERFACE_STATE_CONNECTED = 1;
 
-        [StructLayout(LayoutKind.Sequential)]
+        [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]
         internal struct WLAN_INTERFACE_INFO
         {
             public Guid InterfaceGuid;
@@ -499,7 +499,7 @@ namespace TaskBuddyWPF.Native
             public uint ulTxRate;
         }
 
-        [StructLayout(LayoutKind.Sequential)]
+        [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]
         internal struct WLAN_CONNECTION_ATTRIBUTES
         {
             public uint isState;
@@ -525,5 +525,6 @@ namespace TaskBuddyWPF.Native
         internal static extern void WlanFreeMemory(IntPtr pMemory);
     }
 }
+
 
 
