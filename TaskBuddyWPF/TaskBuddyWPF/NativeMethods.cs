@@ -523,8 +523,29 @@ namespace TaskBuddyWPF.Native
 
         [DllImport("wlanapi.dll")]
         internal static extern void WlanFreeMemory(IntPtr pMemory);
+
+        // --- PDH additions for GPU tab: Task Manager itself reads GPU
+        // utilization/memory via these same raw PDH counters (confirmed via
+        // research). The alternative WMI class,
+        // Win32_PerfFormattedData_GPUPerformanceCounters_GPUEngine, is
+        // independently reported to read as always-0 on many systems and was
+        // deliberately avoided. Reuses the existing PdhOpenQuery,
+        // PdhAddEnglishCounter, PdhCollectQueryData, PdhCloseQuery, and
+        // PDH_FMT_COUNTERVALUE declared above for the CPU/Disk sampling.
+        internal const uint PDH_MORE_DATA = 0x800007D2;
+
+        [StructLayout(LayoutKind.Sequential)]
+        internal struct PDH_FMT_COUNTERVALUE_ITEM_W
+        {
+            public IntPtr szName;
+            public PDH_FMT_COUNTERVALUE FmtValue;
+        }
+
+        [DllImport("pdh.dll")]
+        internal static extern uint PdhGetFormattedCounterArrayW(IntPtr hCounter, uint dwFormat, ref int lpdwBufferSize, out int lpdwItemCount, IntPtr itemBuffer);
     }
 }
+
 
 
 
