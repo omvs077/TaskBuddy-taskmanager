@@ -33,6 +33,7 @@
                 <ui:NavigationViewItem Content="Users" TargetPageType="{x:Type Pages:UsersPage}" Icon="{ui:SymbolIcon People24}"/>
                 <ui:NavigationViewItem Content="Details" TargetPageType="{x:Type Pages:DetailsPage}" Icon="{ui:SymbolIcon List24}"/>
                 <ui:NavigationViewItem Content="Services" TargetPageType="{x:Type Pages:ServicesPage}" Icon="{ui:SymbolIcon Settings24}"/>
+                <ui:NavigationViewItem Content="Wi-Fi" TargetPageType="{x:Type Pages:WifiPage}" Icon="{ui:SymbolIcon Wifi124}"/>
             </ui:NavigationView.MenuItems>
             <ui:NavigationView.FooterMenuItems>
                 <ui:NavigationViewItem Content="Settings" TargetPageType="{x:Type Pages:SettingsPage}" Icon="{ui:SymbolIcon Settings24}"/>
@@ -40,3 +41,4 @@
         </ui:NavigationView>
     </Grid>
 </ui:FluentWindow>
+
