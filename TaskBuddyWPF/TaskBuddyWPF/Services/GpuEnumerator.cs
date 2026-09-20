@@ -103,10 +103,15 @@ namespace TaskBuddyWPF.Services
             }
 
             var adapterNames = GetAdapterNames();
-            var allPhysIndices = utilizationByPhys.Keys
-                .Union(dedicatedByPhys.Keys)
-                .Union(sharedByPhys.Keys)
-                .OrderBy(p => p);
+
+            // Always report one entry per WMI-known adapter, not just ones with
+            // live PDH counter instances right now — a currently-idle adapter
+            // (no active engine workload) has no live instances at all and would
+            // otherwise silently disappear, unlike real Task Manager which always
+            // shows every detected GPU slot with a 0% default.
+            var allPhysIndices = Enumerable.Range(0, Math.Max(adapterNames.Count,
+                    utilizationByPhys.Keys.Union(dedicatedByPhys.Keys).Union(sharedByPhys.Keys).DefaultIfEmpty(-1).Max() + 1))
+                .ToList();
 
             var result = new List<GpuInfo>();
             foreach (int phys in allPhysIndices)
@@ -179,3 +184,4 @@ namespace TaskBuddyWPF.Services
         }
     }
 }
+
