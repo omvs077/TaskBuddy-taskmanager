@@ -21,6 +21,19 @@ namespace TaskBuddyWPF.Controls
             set { _accentColor = value; Redraw(); }
         }
 
+        // Optional second series: dashed, unfilled overlay line sharing the
+        // primary series' scale. Existing single-series callers (Performance
+        // tab's CPU/Memory/Disk) are unaffected since this defaults to null.
+        private double[]? _secondSamples;
+        private Color _secondColor = Colors.Orange;
+
+        public void SetSecondSeries(double[]? samples, Color color)
+        {
+            _secondSamples = samples;
+            _secondColor = color;
+            Redraw();
+        }
+
         public PerformanceGraph()
         {
             InitializeComponent();
@@ -92,6 +105,30 @@ namespace TaskBuddyWPF.Controls
 
             GraphCanvas.Children.Add(polygon);
             GraphCanvas.Children.Add(polyline);
+
+            if (_secondSamples != null && _secondSamples.Length >= 2)
+            {
+                double stepX2 = w / (_secondSamples.Length - 1);
+                var points2 = new PointCollection();
+                for (int i = 0; i < _secondSamples.Length; i++)
+                {
+                    double x = i * stepX2;
+                    double normalized = Math.Clamp(_secondSamples[i] / _maxValue, 0, 1);
+                    double y = h - (normalized * h);
+                    points2.Add(new Point(x, y));
+                }
+
+                var dashedLine = new Polyline
+                {
+                    Points = points2,
+                    Stroke = new SolidColorBrush(_secondColor),
+                    StrokeThickness = 1.5,
+                    StrokeDashArray = new DoubleCollection { 4, 2 }
+                };
+                GraphCanvas.Children.Add(dashedLine);
+            }
         }
     }
 }
+
+
