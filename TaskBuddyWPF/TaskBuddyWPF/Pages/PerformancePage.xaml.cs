@@ -141,6 +141,13 @@ namespace TaskBuddyWPF.Pages
 
         private void RefreshDetail()
         {
+            // DetailGraph is one shared instance across every sidebar category —
+            // clear any leftover dashed second series (e.g. from Wi-Fi's Send
+            // line) before each switch, so it doesn't bleed into Disk/Memory/GPU
+            // views that never set one themselves. Only the Wi-Fi case below
+            // re-populates it.
+            DetailGraph.SetSecondSeries(null, Colors.Transparent);
+
             switch (_selected)
             {
                 case PerformanceResource.Cpu:
@@ -311,6 +318,7 @@ namespace TaskBuddyWPF.Pages
         }
     }
 }
+
 
 
 
