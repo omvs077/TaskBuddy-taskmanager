@@ -10,7 +10,7 @@ using TaskBuddyWPF.Services;
 
 namespace TaskBuddyWPF.Pages
 {
-    public enum PerformanceResource { Cpu, Memory, Disk }
+    public enum PerformanceResource { Cpu, Memory, Disk, Wifi, Gpu0, Gpu1 }
 
     public partial class PerformancePage : Page
     {
@@ -18,6 +18,8 @@ namespace TaskBuddyWPF.Pages
 
         private readonly SystemPerformanceMonitor _sysMonitor = new();
         private readonly DiskPerformanceMonitor _diskMonitor = new();
+        private readonly WifiEnumerator _wifiEnumerator = new();
+        private readonly GpuEnumerator _gpuEnumerator = new();
         private readonly DispatcherTimer _timer;
         private int _processCountCache;
         private DateTime _processCountLastUpdated = DateTime.MinValue;
@@ -26,9 +28,16 @@ namespace TaskBuddyWPF.Pages
         private readonly Queue<double> _cpuHistory = new();
         private readonly Queue<double> _memHistory = new();
         private readonly Queue<double> _diskActiveHistory = new();
+        private readonly Queue<double> _wifiReceiveHistory = new();
+        private readonly Queue<double> _wifiSendHistory = new();
+        private readonly Queue<double> _gpu0History = new();
+        private readonly Queue<double> _gpu1History = new();
 
         private ulong _lastMemUsed, _lastMemTotal;
         private double _lastDiskActive, _lastDiskRead, _lastDiskWrite;
+        private TaskBuddyWPF.Models.WifiInfo? _lastWifi;
+        private TaskBuddyWPF.Models.GpuInfo? _lastGpu0;
+        private TaskBuddyWPF.Models.GpuInfo? _lastGpu1;
 
         private PerformanceResource _selected = PerformanceResource.Cpu;
 
@@ -40,10 +49,16 @@ namespace TaskBuddyWPF.Pages
             CpuMiniGraph.SetHeaderVisible(false);
             MemoryMiniGraph.SetHeaderVisible(false);
             DiskMiniGraph.SetHeaderVisible(false);
+            WifiMiniGraph.SetHeaderVisible(false);
+            Gpu0MiniGraph.SetHeaderVisible(false);
+            Gpu1MiniGraph.SetHeaderVisible(false);
             DetailGraph.SetHeaderVisible(false);
             CpuMiniGraph.AccentColor = System.Windows.Media.Color.FromRgb(90, 170, 255);   // blue
             MemoryMiniGraph.AccentColor = System.Windows.Media.Color.FromRgb(170, 120, 255); // purple
             DiskMiniGraph.AccentColor = System.Windows.Media.Color.FromRgb(90, 220, 140);   // green
+            WifiMiniGraph.AccentColor = System.Windows.Media.Color.FromRgb(90, 170, 255);  // blue (Receive)
+            Gpu0MiniGraph.AccentColor = System.Windows.Media.Color.FromRgb(255, 165, 0);   // orange
+            Gpu1MiniGraph.AccentColor = System.Windows.Media.Color.FromRgb(90, 220, 140);  // green
 
             _timer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(500) }; // dedicated rate for smooth graphs, independent of Settings refresh speed
             _timer.Tick += async (s, e) => await SampleAsync();
@@ -60,12 +75,14 @@ namespace TaskBuddyWPF.Pages
 
             try
             {
-                var (cpu, memUsed, memTotal, diskActive, diskRead, diskWrite) = await Task.Run(() =>
+                var (cpu, memUsed, memTotal, diskActive, diskRead, diskWrite, wifi, gpus) = await Task.Run(() =>
                 {
                     double c = _sysMonitor.GetCpuPercent();
                     var (used, total) = _sysMonitor.GetMemoryUsage();
                     var (active, read, write) = _diskMonitor.Sample();
-                    return (c, used, total, active, read, write);
+                    var w = _wifiEnumerator.GetSnapshot();
+                    var g = _gpuEnumerator.GetSnapshot();
+                    return (c, used, total, active, read, write, w, g);
                 });
 
                 _lastMemUsed = memUsed;
@@ -73,10 +90,17 @@ namespace TaskBuddyWPF.Pages
                 _lastDiskActive = diskActive;
                 _lastDiskRead = diskRead;
                 _lastDiskWrite = diskWrite;
+                _lastWifi = wifi;
+                _lastGpu0 = gpus.Count > 0 ? gpus[0] : null;
+                _lastGpu1 = gpus.Count > 1 ? gpus[1] : null;
 
                 Enqueue(_cpuHistory, cpu);
                 Enqueue(_memHistory, memTotal > 0 ? memUsed / (double)memTotal * 100.0 : 0);
                 Enqueue(_diskActiveHistory, diskActive);
+                Enqueue(_wifiReceiveHistory, wifi.ReceiveKbps);
+                Enqueue(_wifiSendHistory, wifi.SendKbps);
+                if (_lastGpu0 != null) Enqueue(_gpu0History, _lastGpu0.UtilizationPercent);
+                if (_lastGpu1 != null) Enqueue(_gpu1History, _lastGpu1.UtilizationPercent);
 
                 double memGb = memUsed / 1024.0 / 1024.0 / 1024.0;
                 double totalGb = memTotal / 1024.0 / 1024.0 / 1024.0;
@@ -89,6 +113,17 @@ namespace TaskBuddyWPF.Pages
 
                 DiskMiniGraph.SetData(_diskActiveHistory.ToArray(), 100);
                 DiskMiniValue.Text = $"{diskActive:F0}%";
+
+                double wifiMaxScale = Math.Max(100, Math.Max(Max(_wifiReceiveHistory), Max(_wifiSendHistory)) * 1.2);
+                WifiMiniGraph.SetData(_wifiReceiveHistory.ToArray(), wifiMaxScale);
+                WifiMiniGraph.SetSecondSeries(_wifiSendHistory.ToArray(), Colors.Orange);
+                WifiMiniValue.Text = wifi.IsConnected ? $"{wifi.ReceiveKbps:F0} Kbps" : "Not connected";
+
+                Gpu0MiniGraph.SetData(_gpu0History.ToArray(), 100);
+                Gpu0MiniValue.Text = _lastGpu0 != null ? $"{_lastGpu0.UtilizationPercent:F0}%" : "—";
+
+                Gpu1MiniGraph.SetData(_gpu1History.ToArray(), 100);
+                Gpu1MiniValue.Text = _lastGpu1 != null ? $"{_lastGpu1.UtilizationPercent:F0}%" : "—";
 
                 RefreshDetail();
             }
@@ -152,7 +187,57 @@ namespace TaskBuddyWPF.Pages
                     Stat3Value.Text = FormatBytesPerSec(_lastDiskWrite);
                     Stat4Label.Text = ""; Stat4Value.Text = "";
                     break;
+
+                case PerformanceResource.Wifi:
+                    var wifi = _lastWifi;
+                    DetailTitle.Text = "Wi-Fi";
+                    DetailSubtitle.Text = wifi != null && wifi.IsConnected
+                        ? $"{wifi.AdapterName} — {wifi.SSID}"
+                        : "Not connected";
+                    DetailGraph.AccentColor = System.Windows.Media.Color.FromRgb(90, 170, 255);
+                    double wifiScale = Math.Max(100, Math.Max(Max(_wifiReceiveHistory), Max(_wifiSendHistory)) * 1.2);
+                    DetailGraph.SetData(_wifiReceiveHistory.ToArray(), wifiScale);
+                    DetailGraph.SetSecondSeries(_wifiSendHistory.ToArray(), Colors.Orange);
+                    Stat1Label.Text = "Connection type";
+                    Stat1Value.Text = wifi?.ConnectionType ?? "—";
+                    Stat2Label.Text = "IPv4 address";
+                    Stat2Value.Text = string.IsNullOrEmpty(wifi?.IPv4Address) ? "—" : wifi!.IPv4Address;
+                    Stat3Label.Text = "IPv6 address";
+                    Stat3Value.Text = string.IsNullOrEmpty(wifi?.IPv6Address) ? "—" : wifi!.IPv6Address;
+                    Stat4Label.Text = "Signal strength";
+                    Stat4Value.Text = wifi != null && wifi.IsConnected ? $"{wifi.SignalQuality}%" : "—";
+                    break;
+
+                case PerformanceResource.Gpu0:
+                    RefreshGpuDetail(_lastGpu0, _gpu0History, System.Windows.Media.Color.FromRgb(255, 165, 0));
+                    break;
+
+                case PerformanceResource.Gpu1:
+                    RefreshGpuDetail(_lastGpu1, _gpu1History, System.Windows.Media.Color.FromRgb(90, 220, 140));
+                    break;
             }
+        }
+
+        private void RefreshGpuDetail(TaskBuddyWPF.Models.GpuInfo? gpu, Queue<double> history, System.Windows.Media.Color accent)
+        {
+            DetailTitle.Text = gpu != null ? $"GPU {gpu.GpuIndex}" : "GPU";
+            DetailSubtitle.Text = gpu?.AdapterName ?? "Not detected";
+            DetailGraph.AccentColor = accent;
+            DetailGraph.SetData(history.ToArray(), 100);
+            Stat1Label.Text = "Utilization";
+            Stat1Value.Text = gpu != null ? $"{gpu.UtilizationPercent:F0}%" : "0%";
+            Stat2Label.Text = "Dedicated GPU memory";
+            Stat2Value.Text = gpu != null ? $"{gpu.DedicatedUsedBytes / 1024.0 / 1024.0:F0} MB" : "—";
+            Stat3Label.Text = "Shared GPU memory";
+            Stat3Value.Text = gpu != null ? $"{gpu.SharedUsedBytes / 1024.0 / 1024.0:F0} MB" : "—";
+            Stat4Label.Text = ""; Stat4Value.Text = "";
+        }
+
+        private static double Max(Queue<double> q)
+        {
+            double max = 0;
+            foreach (var v in q) if (v > max) max = v;
+            return max;
         }
 
         private int GetThrottledProcessCount()
@@ -184,6 +269,9 @@ namespace TaskBuddyWPF.Pages
         private void CpuCard_Click(object sender, MouseButtonEventArgs e) { _selected = PerformanceResource.Cpu; HighlightSelected(); RefreshDetail(); }
         private void MemoryCard_Click(object sender, MouseButtonEventArgs e) { _selected = PerformanceResource.Memory; HighlightSelected(); RefreshDetail(); }
         private void DiskCard_Click(object sender, MouseButtonEventArgs e) { _selected = PerformanceResource.Disk; HighlightSelected(); RefreshDetail(); }
+        private void WifiCard_Click(object sender, MouseButtonEventArgs e) { _selected = PerformanceResource.Wifi; HighlightSelected(); RefreshDetail(); }
+        private void Gpu0Card_Click(object sender, MouseButtonEventArgs e) { _selected = PerformanceResource.Gpu0; HighlightSelected(); RefreshDetail(); }
+        private void Gpu1Card_Click(object sender, MouseButtonEventArgs e) { _selected = PerformanceResource.Gpu1; HighlightSelected(); RefreshDetail(); }
 
         private void HighlightSelected()
         {
@@ -192,6 +280,9 @@ namespace TaskBuddyWPF.Pages
             CpuCard.Background = _selected == PerformanceResource.Cpu ? selectedBrush : normalBrush;
             MemoryCard.Background = _selected == PerformanceResource.Memory ? selectedBrush : normalBrush;
             DiskCard.Background = _selected == PerformanceResource.Disk ? selectedBrush : normalBrush;
+            WifiCard.Background = _selected == PerformanceResource.Wifi ? selectedBrush : normalBrush;
+            Gpu0Card.Background = _selected == PerformanceResource.Gpu0 ? selectedBrush : normalBrush;
+            Gpu1Card.Background = _selected == PerformanceResource.Gpu1 ? selectedBrush : normalBrush;
         }
 
         // Same NavigationView ScrollViewer quirk as ProcessesPage — see that file's
@@ -220,4 +311,10 @@ namespace TaskBuddyWPF.Pages
         }
     }
 }
+
+
+
+
+
+
 

@@ -10,7 +10,8 @@
             <ColumnDefinition Width="*"/>
         </Grid.ColumnDefinitions>
 
-        <StackPanel x:Name="SidebarPanel" Grid.Column="0" Margin="0,0,12,0">
+        <ScrollViewer Grid.Column="0" VerticalScrollBarVisibility="Auto" Margin="0,0,12,0">
+        <StackPanel x:Name="SidebarPanel">
             <Border x:Name="CpuCard" Background="#14FFFFFF" CornerRadius="4" Margin="0,0,0,8" Padding="10" Cursor="Hand" MouseLeftButtonUp="CpuCard_Click">
                 <StackPanel>
                     <TextBlock Text="CPU" FontWeight="SemiBold" FontSize="12" Margin="0,0,0,4" Foreground="{DynamicResource TextFillColorPrimaryBrush}"/>
@@ -32,7 +33,29 @@
                     <TextBlock x:Name="DiskMiniValue" FontSize="11" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Margin="0,4,0,0"/>
                 </StackPanel>
             </Border>
+            <Border x:Name="WifiCard" Background="#14FFFFFF" CornerRadius="4" Margin="0,0,0,8" Padding="10" Cursor="Hand" MouseLeftButtonUp="WifiCard_Click">
+                <StackPanel>
+                    <TextBlock Text="Wi-Fi" FontWeight="SemiBold" FontSize="12" Margin="0,0,0,4" Foreground="{DynamicResource TextFillColorPrimaryBrush}"/>
+                    <controls:PerformanceGraph x:Name="WifiMiniGraph" Height="40"/>
+                    <TextBlock x:Name="WifiMiniValue" FontSize="11" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Margin="0,4,0,0"/>
+                </StackPanel>
+            </Border>
+            <Border x:Name="Gpu0Card" Background="#14FFFFFF" CornerRadius="4" Margin="0,0,0,8" Padding="10" Cursor="Hand" MouseLeftButtonUp="Gpu0Card_Click">
+                <StackPanel>
+                    <TextBlock Text="GPU 0" FontWeight="SemiBold" FontSize="12" Margin="0,0,0,4" Foreground="{DynamicResource TextFillColorPrimaryBrush}"/>
+                    <controls:PerformanceGraph x:Name="Gpu0MiniGraph" Height="40"/>
+                    <TextBlock x:Name="Gpu0MiniValue" FontSize="11" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Margin="0,4,0,0"/>
+                </StackPanel>
+            </Border>
+            <Border x:Name="Gpu1Card" Background="#14FFFFFF" CornerRadius="4" Margin="0,0,0,8" Padding="10" Cursor="Hand" MouseLeftButtonUp="Gpu1Card_Click">
+                <StackPanel>
+                    <TextBlock Text="GPU 1" FontWeight="SemiBold" FontSize="12" Margin="0,0,0,4" Foreground="{DynamicResource TextFillColorPrimaryBrush}"/>
+                    <controls:PerformanceGraph x:Name="Gpu1MiniGraph" Height="40"/>
+                    <TextBlock x:Name="Gpu1MiniValue" FontSize="11" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Margin="0,4,0,0"/>
+                </StackPanel>
+            </Border>
         </StackPanel>
+        </ScrollViewer>
 
         <Grid Grid.Column="1">
             <Grid.RowDefinitions>
@@ -75,5 +98,7 @@
         </Grid>
     </Grid>
 </Page>
+
+
 
 
