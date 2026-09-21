@@ -136,6 +136,20 @@ namespace TaskBuddyWPF.Native
         public int Size;
     }
 
+    // First 8 bytes of the native CACHE_RELATIONSHIP struct (Level, Associativity,
+    // LineSize, CacheSize) — read at offset 8 within a RelationCache entry, right
+    // after the 8-byte header above (same union-overlay technique already used
+    // for RelationProcessorCore). The full native struct has more fields
+    // (Type/Reserved/GroupCount/GroupMask) that aren't needed here.
+    [StructLayout(LayoutKind.Sequential)]
+    internal struct CACHE_RELATIONSHIP_MINIMAL
+    {
+        public byte Level;
+        public byte Associativity;
+        public ushort LineSize;
+        public uint CacheSize;
+    }
+
     [StructLayout(LayoutKind.Sequential)]
     internal struct PROCESS_POWER_THROTTLING_STATE
     {
@@ -371,6 +385,8 @@ namespace TaskBuddyWPF.Native
         internal static extern ulong GetTickCount64();
 
         internal const int RelationProcessorCore = 0;
+        internal const int RelationCache = 2;
+        internal const int RelationProcessorPackage = 3;
 
         internal const uint PDH_FMT_DOUBLE = 0x00000200;
 
@@ -545,6 +561,8 @@ namespace TaskBuddyWPF.Native
         internal static extern uint PdhGetFormattedCounterArrayW(IntPtr hCounter, uint dwFormat, ref int lpdwBufferSize, out int lpdwItemCount, IntPtr itemBuffer);
     }
 }
+
+
 
 
 
