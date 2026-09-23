@@ -8,6 +8,7 @@
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="220"/>
             <ColumnDefinition Width="*"/>
+            <ColumnDefinition Width="Auto"/>
         </Grid.ColumnDefinitions>
 
         <ScrollViewer Grid.Column="0" VerticalScrollBarVisibility="Auto" Margin="0,0,12,0">
@@ -96,8 +97,43 @@
                 </StackPanel>
             </Grid>
         </Grid>
+        <StackPanel x:Name="CpuInfoPanel" Grid.Column="2" Margin="16,0,0,0" Width="180" Visibility="Collapsed">
+            <StackPanel Margin="0,0,0,10">
+                <TextBlock Text="Base speed" FontSize="11" Foreground="{DynamicResource TextFillColorSecondaryBrush}"/>
+                <TextBlock x:Name="CpuBaseSpeedValue" FontSize="14" FontWeight="SemiBold" Margin="0,2,0,0" Foreground="{DynamicResource TextFillColorPrimaryBrush}"/>
+            </StackPanel>
+            <StackPanel Margin="0,0,0,10">
+                <TextBlock Text="Sockets" FontSize="11" Foreground="{DynamicResource TextFillColorSecondaryBrush}"/>
+                <TextBlock x:Name="CpuSocketsValue" FontSize="14" FontWeight="SemiBold" Margin="0,2,0,0" Foreground="{DynamicResource TextFillColorPrimaryBrush}"/>
+            </StackPanel>
+            <StackPanel Margin="0,0,0,10">
+                <TextBlock Text="Cores" FontSize="11" Foreground="{DynamicResource TextFillColorSecondaryBrush}"/>
+                <TextBlock x:Name="CpuCoresValue" FontSize="14" FontWeight="SemiBold" Margin="0,2,0,0" Foreground="{DynamicResource TextFillColorPrimaryBrush}"/>
+            </StackPanel>
+            <StackPanel Margin="0,0,0,10">
+                <TextBlock Text="Logical processors" FontSize="11" Foreground="{DynamicResource TextFillColorSecondaryBrush}"/>
+                <TextBlock x:Name="CpuLogicalValue" FontSize="14" FontWeight="SemiBold" Margin="0,2,0,0" Foreground="{DynamicResource TextFillColorPrimaryBrush}"/>
+            </StackPanel>
+            <StackPanel Margin="0,0,0,10">
+                <TextBlock Text="Virtualization" FontSize="11" Foreground="{DynamicResource TextFillColorSecondaryBrush}"/>
+                <TextBlock x:Name="CpuVirtualizationValue" FontSize="14" FontWeight="SemiBold" Margin="0,2,0,0" Foreground="{DynamicResource TextFillColorPrimaryBrush}"/>
+            </StackPanel>
+            <StackPanel Margin="0,0,0,10">
+                <TextBlock Text="L1 cache" FontSize="11" Foreground="{DynamicResource TextFillColorSecondaryBrush}"/>
+                <TextBlock x:Name="CpuL1Value" FontSize="14" FontWeight="SemiBold" Margin="0,2,0,0" Foreground="{DynamicResource TextFillColorPrimaryBrush}"/>
+            </StackPanel>
+            <StackPanel Margin="0,0,0,10">
+                <TextBlock Text="L2 cache" FontSize="11" Foreground="{DynamicResource TextFillColorSecondaryBrush}"/>
+                <TextBlock x:Name="CpuL2Value" FontSize="14" FontWeight="SemiBold" Margin="0,2,0,0" Foreground="{DynamicResource TextFillColorPrimaryBrush}"/>
+            </StackPanel>
+            <StackPanel>
+                <TextBlock Text="L3 cache" FontSize="11" Foreground="{DynamicResource TextFillColorSecondaryBrush}"/>
+                <TextBlock x:Name="CpuL3Value" FontSize="14" FontWeight="SemiBold" Margin="0,2,0,0" Foreground="{DynamicResource TextFillColorPrimaryBrush}"/>
+            </StackPanel>
+        </StackPanel>
     </Grid>
 </Page>
+
 
 
 

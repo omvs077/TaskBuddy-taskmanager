@@ -147,6 +147,7 @@ namespace TaskBuddyWPF.Pages
             // views that never set one themselves. Only the Wi-Fi case below
             // re-populates it.
             DetailGraph.SetSecondSeries(null, Colors.Transparent);
+            CpuInfoPanel.Visibility = Visibility.Collapsed;
 
             switch (_selected)
             {
@@ -163,6 +164,17 @@ namespace TaskBuddyWPF.Pages
                     Stat3Value.Text = $"{SystemInfo.PhysicalCoreCount} / {SystemInfo.LogicalCoreCount}";
                     Stat4Label.Text = "Uptime";
                     Stat4Value.Text = SystemInfo.UptimeString;
+
+                    CpuInfoPanel.Visibility = Visibility.Visible;
+                    CpuBaseSpeedValue.Text = $"{SystemInfo.BaseSpeedGhz:F2} GHz";
+                    CpuSocketsValue.Text = SystemInfo.SocketCount.ToString();
+                    CpuCoresValue.Text = SystemInfo.PhysicalCoreCount.ToString();
+                    CpuLogicalValue.Text = SystemInfo.LogicalCoreCount.ToString();
+                    CpuVirtualizationValue.Text = SystemInfo.VirtualizationEnabled ? "Enabled" : "Disabled";
+                    var cacheSizes = SystemInfo.CacheSizes;
+                    CpuL1Value.Text = FormatCacheSize(cacheSizes.L1Bytes);
+                    CpuL2Value.Text = FormatCacheSize(cacheSizes.L2Bytes);
+                    CpuL3Value.Text = FormatCacheSize(cacheSizes.L3Bytes);
                     break;
 
                 case PerformanceResource.Memory:
@@ -264,6 +276,14 @@ namespace TaskBuddyWPF.Pages
             return last;
         }
 
+        private static string FormatCacheSize(ulong bytes)
+        {
+            if (bytes == 0) return "—";
+            if (bytes >= 1024 * 1024)
+                return $"{bytes / 1024.0 / 1024.0:F1} MB";
+            return $"{bytes / 1024.0:F0} KB";
+        }
+
         private static string FormatBytesPerSec(double bytesPerSec)
         {
             if (bytesPerSec >= 1024 * 1024)
@@ -318,6 +338,9 @@ namespace TaskBuddyWPF.Pages
         }
     }
 }
+
+
+
 
 
 
