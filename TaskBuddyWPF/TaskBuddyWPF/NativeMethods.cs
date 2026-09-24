@@ -559,6 +559,33 @@ namespace TaskBuddyWPF.Native
 
         [DllImport("pdh.dll")]
         internal static extern uint PdhGetFormattedCounterArrayW(IntPtr hCounter, uint dwFormat, ref int lpdwBufferSize, out int lpdwItemCount, IntPtr itemBuffer);
+
+        // GetPerformanceInfo: documented psapi.dll API giving paged/non-paged pool,
+        // system cache, and commit stats — used for the Memory detail panel instead
+        // of NtQuerySystemInformation(SystemMemoryListInformation) which has an
+        // undocumented struct layout that varies between Windows versions.
+        [StructLayout(LayoutKind.Sequential)]
+        internal struct PERFORMANCE_INFORMATION
+        {
+            public uint cb;
+            public UIntPtr CommitTotal;
+            public UIntPtr CommitLimit;
+            public UIntPtr CommitPeak;
+            public UIntPtr PhysicalTotal;
+            public UIntPtr PhysicalAvailable;
+            public UIntPtr SystemCache;
+            public UIntPtr KernelTotal;
+            public UIntPtr KernelPaged;
+            public UIntPtr KernelNonPaged;
+            public UIntPtr PageSize;
+            public uint HandleCount;
+            public uint ProcessCount;
+            public uint ThreadCount;
+        }
+
+        [DllImport("psapi.dll", SetLastError = true)]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        internal static extern bool GetPerformanceInfo(out PERFORMANCE_INFORMATION pPerformanceInformation, uint cb);
     }
 }
 

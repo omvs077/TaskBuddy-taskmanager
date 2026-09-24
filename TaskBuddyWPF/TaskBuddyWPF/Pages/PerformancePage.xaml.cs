@@ -20,6 +20,7 @@ namespace TaskBuddyWPF.Pages
         private readonly DiskPerformanceMonitor _diskMonitor = new();
         private readonly WifiEnumerator _wifiEnumerator = new();
         private readonly GpuEnumerator _gpuEnumerator = new();
+        private readonly TaskBuddyWPF.Services.MemoryDetailMonitor _memDetailMonitor = new();
         private readonly DispatcherTimer _timer;
         private int _processCountCache;
         private DateTime _processCountLastUpdated = DateTime.MinValue;
@@ -38,6 +39,7 @@ namespace TaskBuddyWPF.Pages
         private TaskBuddyWPF.Models.WifiInfo? _lastWifi;
         private TaskBuddyWPF.Models.GpuInfo? _lastGpu0;
         private TaskBuddyWPF.Models.GpuInfo? _lastGpu1;
+        private TaskBuddyWPF.Models.MemoryDetailInfo? _lastMemDetail;
 
         private PerformanceResource _selected = PerformanceResource.Cpu;
 
@@ -93,6 +95,7 @@ namespace TaskBuddyWPF.Pages
                 _lastWifi = wifi;
                 _lastGpu0 = gpus.Count > 0 ? gpus[0] : null;
                 _lastGpu1 = gpus.Count > 1 ? gpus[1] : null;
+                _lastMemDetail = _memDetailMonitor.GetSnapshot(memUsed, memTotal);
 
                 Enqueue(_cpuHistory, cpu);
                 Enqueue(_memHistory, memTotal > 0 ? memUsed / (double)memTotal * 100.0 : 0);
@@ -148,6 +151,7 @@ namespace TaskBuddyWPF.Pages
             // re-populates it.
             DetailGraph.SetSecondSeries(null, Colors.Transparent);
             CpuInfoPanel.Visibility = Visibility.Collapsed;
+            MemInfoPanel.Visibility = Visibility.Collapsed;
 
             switch (_selected)
             {
@@ -191,6 +195,24 @@ namespace TaskBuddyWPF.Pages
                     Stat2Value.Text = $"{totalGb:F1} GB";
                     Stat3Label.Text = ""; Stat3Value.Text = "";
                     Stat4Label.Text = ""; Stat4Value.Text = "";
+
+                    if (_lastMemDetail != null)
+                    {
+                        MemInfoPanel.Visibility = Visibility.Visible;
+                        double compressedGb = _lastMemDetail.CompressedBytes / 1024.0 / 1024.0 / 1024.0;
+                        MemInUseValue.Text = compressedGb > 0.01
+                            ? $"{memGb:F1} GB ({compressedGb:F1} GB compressed)"
+                            : $"{memGb:F1} GB";
+                        MemAvailableValue.Text = $"{_lastMemDetail.AvailableBytes / 1024.0 / 1024.0 / 1024.0:F1} GB";
+                        MemCommittedValue.Text = $"{_lastMemDetail.CommittedBytes / 1024.0 / 1024.0 / 1024.0:F1} GB";
+                        MemCachedValue.Text = $"{_lastMemDetail.CachedBytes / 1024.0 / 1024.0 / 1024.0:F1} GB";
+                        MemPagedPoolValue.Text = FormatCacheSize(_lastMemDetail.PagedPoolBytes);
+                        MemNonPagedPoolValue.Text = FormatCacheSize(_lastMemDetail.NonPagedPoolBytes);
+                        MemSpeedValue.Text = _lastMemDetail.SpeedMhz > 0 ? $"{_lastMemDetail.SpeedMhz} MHz" : "—";
+                        MemSlotsValue.Text = _lastMemDetail.SlotsUsed > 0 ? _lastMemDetail.SlotsUsed.ToString() : "—";
+                        MemFormFactorValue.Text = _lastMemDetail.FormFactor;
+                        MemHardwareReservedValue.Text = FormatCacheSize(_lastMemDetail.HardwareReservedBytes);
+                    }
                     break;
 
                 case PerformanceResource.Disk:
@@ -338,6 +360,11 @@ namespace TaskBuddyWPF.Pages
         }
     }
 }
+
+
+
+
+
 
 
 
