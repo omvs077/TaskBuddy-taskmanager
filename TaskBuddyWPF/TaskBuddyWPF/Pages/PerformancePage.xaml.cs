@@ -35,7 +35,7 @@ namespace TaskBuddyWPF.Pages
         private readonly Queue<double> _gpu1History = new();
 
         private ulong _lastMemUsed, _lastMemTotal;
-        private double _lastDiskActive, _lastDiskRead, _lastDiskWrite;
+        private double _lastDiskActive, _lastDiskRead, _lastDiskWrite, _lastDiskResponse;
         private TaskBuddyWPF.Models.WifiInfo? _lastWifi;
         private TaskBuddyWPF.Models.GpuInfo? _lastGpu0;
         private TaskBuddyWPF.Models.GpuInfo? _lastGpu1;
@@ -77,14 +77,14 @@ namespace TaskBuddyWPF.Pages
 
             try
             {
-                var (cpu, memUsed, memTotal, diskActive, diskRead, diskWrite, wifi, gpus) = await Task.Run(() =>
+                var (cpu, memUsed, memTotal, diskActive, diskRead, diskWrite, diskResponse, wifi, gpus) = await Task.Run(() =>
                 {
                     double c = _sysMonitor.GetCpuPercent();
                     var (used, total) = _sysMonitor.GetMemoryUsage();
-                    var (active, read, write) = _diskMonitor.Sample();
+                    var (active, read, write, response) = _diskMonitor.Sample();
                     var w = _wifiEnumerator.GetSnapshot();
                     var g = _gpuEnumerator.GetSnapshot();
-                    return (c, used, total, active, read, write, w, g);
+                    return (c, used, total, active, read, write, response, w, g);
                 });
 
                 _lastMemUsed = memUsed;
@@ -92,6 +92,7 @@ namespace TaskBuddyWPF.Pages
                 _lastDiskActive = diskActive;
                 _lastDiskRead = diskRead;
                 _lastDiskWrite = diskWrite;
+                _lastDiskResponse = diskResponse;
                 _lastWifi = wifi;
                 _lastGpu0 = gpus.Count > 0 ? gpus[0] : null;
                 _lastGpu1 = gpus.Count > 1 ? gpus[1] : null;
@@ -360,6 +361,8 @@ namespace TaskBuddyWPF.Pages
         }
     }
 }
+
+
 
 
 

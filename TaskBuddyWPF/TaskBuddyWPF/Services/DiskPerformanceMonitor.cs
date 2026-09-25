@@ -7,6 +7,7 @@ namespace TaskBuddyWPF.Services
     {
         private IntPtr _query = IntPtr.Zero;
         private IntPtr _idleCounter = IntPtr.Zero;
+        private IntPtr _responseCounter = IntPtr.Zero;
         private IntPtr _readCounter = IntPtr.Zero;
         private IntPtr _writeCounter = IntPtr.Zero;
         private bool _initialized;
@@ -22,6 +23,7 @@ namespace TaskBuddyWPF.Services
             NativeMethods.PdhAddEnglishCounter(_query, @"\PhysicalDisk(_Total)\% Idle Time", IntPtr.Zero, out _idleCounter);
             NativeMethods.PdhAddEnglishCounter(_query, @"\PhysicalDisk(_Total)\Disk Read Bytes/sec", IntPtr.Zero, out _readCounter);
             NativeMethods.PdhAddEnglishCounter(_query, @"\PhysicalDisk(_Total)\Disk Write Bytes/sec", IntPtr.Zero, out _writeCounter);
+            NativeMethods.PdhAddEnglishCounter(_query, @"\PhysicalDisk(_Total)\Avg. Disk sec/Transfer", IntPtr.Zero, out _responseCounter);
             _initialized = true;
         }
 
@@ -29,20 +31,21 @@ namespace TaskBuddyWPF.Services
         // PdhCollectQueryData call before a formatted value is valid — the first
         // Sample() after startup will report zeros (CStatus != 0), same pattern
         // as SystemPerformanceMonitor's first-call CPU% behavior.
-        public (double activeTimePercent, double readBytesPerSec, double writeBytesPerSec) Sample()
+        public (double activeTimePercent, double readBytesPerSec, double writeBytesPerSec, double avgResponseMs) Sample()
         {
             EnsureInitialized();
-            if (!_initialized) return (0, 0, 0);
+            if (!_initialized) return (0, 0, 0, 0);
 
             if (NativeMethods.PdhCollectQueryData(_query) != 0)
-                return (0, 0, 0);
+                return (0, 0, 0, 0);
 
             double idle = ReadValue(_idleCounter);
             double read = ReadValue(_readCounter);
             double write = ReadValue(_writeCounter);
 
             double activeTime = Math.Clamp(100.0 - idle, 0, 100);
-            return (activeTime, read, write);
+            double respSec = ReadValue(_responseCounter);
+            return (activeTime, read, write, respSec * 1000.0);
         }
 
         private double ReadValue(IntPtr counter)
@@ -64,3 +67,5 @@ namespace TaskBuddyWPF.Services
         }
     }
 }
+
+
