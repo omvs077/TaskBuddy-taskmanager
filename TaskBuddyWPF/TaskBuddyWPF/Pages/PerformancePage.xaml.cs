@@ -153,6 +153,7 @@ namespace TaskBuddyWPF.Pages
             DetailGraph.SetSecondSeries(null, Colors.Transparent);
             CpuInfoPanel.Visibility = Visibility.Collapsed;
             MemInfoPanel.Visibility = Visibility.Collapsed;
+            DiskInfoPanel.Visibility = Visibility.Collapsed;
 
             switch (_selected)
             {
@@ -228,6 +229,13 @@ namespace TaskBuddyWPF.Pages
                     Stat3Label.Text = "Write speed";
                     Stat3Value.Text = FormatBytesPerSec(_lastDiskWrite);
                     Stat4Label.Text = "Response time"; Stat4Value.Text = $"{_lastDiskResponse:F1} ms";
+
+                    DiskInfoPanel.Visibility = Visibility.Visible;
+                    DiskCapacityValue.Text = $"{DiskStaticInfo.CapacityBytes / 1024.0 / 1024.0 / 1024.0:F1} GB";
+                    DiskFormattedValue.Text = $"{DiskStaticInfo.FormattedBytes / 1024.0 / 1024.0 / 1024.0:F1} GB";
+                    DiskSystemValue.Text = DiskStaticInfo.IsSystemDisk ? "Yes" : "No";
+                    DiskPageFileValue.Text = DiskStaticInfo.HasPageFile ? "Yes" : "No";
+                    DiskTypeValue.Text = DiskStaticInfo.DiskType;
                     break;
 
                 case PerformanceResource.Wifi:
@@ -361,6 +369,7 @@ namespace TaskBuddyWPF.Pages
         }
     }
 }
+
 
 
 
