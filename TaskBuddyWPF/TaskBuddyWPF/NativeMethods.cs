@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Runtime.InteropServices;
+using Microsoft.Win32.SafeHandles;
 
 namespace TaskBuddyWPF.Native
 {
@@ -586,8 +587,42 @@ namespace TaskBuddyWPF.Native
         [DllImport("psapi.dll", SetLastError = true)]
         [return: MarshalAs(UnmanagedType.Bool)]
         internal static extern bool GetPerformanceInfo(out PERFORMANCE_INFORMATION pPerformanceInformation, uint cb);
+
+        internal const uint GENERIC_READ = 0x80000000;
+        internal const uint FILE_SHARE_READ = 0x1;
+        internal const uint FILE_SHARE_WRITE = 0x2;
+        internal const uint OPEN_EXISTING = 3;
+        internal const uint StorageDeviceSeekPenaltyProperty = 7;
+        internal const uint PropertyStandardQuery = 0;
+        internal const uint IOCTL_STORAGE_QUERY_PROPERTY = 0x2D1400;
+
+        [StructLayout(LayoutKind.Sequential)]
+        internal struct STORAGE_PROPERTY_QUERY
+        {
+            public uint PropertyId;
+            public uint QueryType;
+            [MarshalAs(UnmanagedType.ByValArray, SizeConst = 1)]
+            public byte[] AdditionalParameters;
+        }
+
+        [StructLayout(LayoutKind.Sequential)]
+        internal struct DEVICE_SEEK_PENALTY_DESCRIPTOR
+        {
+            public uint Version;
+            public uint Size;
+            [MarshalAs(UnmanagedType.U1)]
+            public bool IncursSeekPenalty;
+        }
+
+        [DllImport("kernel32.dll", SetLastError = true, CharSet = CharSet.Unicode)]
+        internal static extern SafeFileHandle CreateFile(string lpFileName, uint dwDesiredAccess, uint dwShareMode, IntPtr lpSecurityAttributes, uint dwCreationDisposition, uint dwFlagsAndAttributes, IntPtr hTemplateFile);
+
+        [DllImport("kernel32.dll", SetLastError = true)]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        internal static extern bool DeviceIoControl(SafeFileHandle hDevice, uint dwIoControlCode, ref STORAGE_PROPERTY_QUERY lpInBuffer, uint nInBufferSize, ref DEVICE_SEEK_PENALTY_DESCRIPTOR lpOutBuffer, uint nOutBufferSize, out uint lpBytesReturned, IntPtr lpOverlapped);
     }
 }
+
 
 
 
