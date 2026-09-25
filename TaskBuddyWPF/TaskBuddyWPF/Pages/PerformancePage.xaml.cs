@@ -227,7 +227,7 @@ namespace TaskBuddyWPF.Pages
                     Stat2Value.Text = FormatBytesPerSec(_lastDiskRead);
                     Stat3Label.Text = "Write speed";
                     Stat3Value.Text = FormatBytesPerSec(_lastDiskWrite);
-                    Stat4Label.Text = ""; Stat4Value.Text = "";
+                    Stat4Label.Text = "Response time"; Stat4Value.Text = $"{_lastDiskResponse:F1} ms";
                     break;
 
                 case PerformanceResource.Wifi:
@@ -361,6 +361,7 @@ namespace TaskBuddyWPF.Pages
         }
     }
 }
+
 
 
 
