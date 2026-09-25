@@ -182,8 +182,32 @@
                 </StackPanel>
             </StackPanel>
         </Grid>
+
+        <StackPanel x:Name="DiskInfoPanel" Grid.Column="2" Margin="16,0,0,0" Width="180" Visibility="Collapsed">
+            <StackPanel Margin="0,0,0,10">
+                <TextBlock Text="Capacity" FontSize="11" Foreground="{DynamicResource TextFillColorSecondaryBrush}"/>
+                <TextBlock x:Name="DiskCapacityValue" FontSize="14" FontWeight="SemiBold" Margin="0,2,0,0" Foreground="{DynamicResource TextFillColorPrimaryBrush}"/>
+            </StackPanel>
+            <StackPanel Margin="0,0,0,10">
+                <TextBlock Text="Formatted size" FontSize="11" Foreground="{DynamicResource TextFillColorSecondaryBrush}"/>
+                <TextBlock x:Name="DiskFormattedValue" FontSize="14" FontWeight="SemiBold" Margin="0,2,0,0" Foreground="{DynamicResource TextFillColorPrimaryBrush}"/>
+            </StackPanel>
+            <StackPanel Margin="0,0,0,10">
+                <TextBlock Text="System disk" FontSize="11" Foreground="{DynamicResource TextFillColorSecondaryBrush}"/>
+                <TextBlock x:Name="DiskSystemValue" FontSize="14" FontWeight="SemiBold" Margin="0,2,0,0" Foreground="{DynamicResource TextFillColorPrimaryBrush}"/>
+            </StackPanel>
+            <StackPanel Margin="0,0,0,10">
+                <TextBlock Text="Page file" FontSize="11" Foreground="{DynamicResource TextFillColorSecondaryBrush}"/>
+                <TextBlock x:Name="DiskPageFileValue" FontSize="14" FontWeight="SemiBold" Margin="0,2,0,0" Foreground="{DynamicResource TextFillColorPrimaryBrush}"/>
+            </StackPanel>
+            <StackPanel>
+                <TextBlock Text="Type" FontSize="11" Foreground="{DynamicResource TextFillColorSecondaryBrush}"/>
+                <TextBlock x:Name="DiskTypeValue" FontSize="14" FontWeight="SemiBold" Margin="0,2,0,0" Foreground="{DynamicResource TextFillColorPrimaryBrush}"/>
+            </StackPanel>
+        </StackPanel>
     </Grid>
 </Page>
+
 
 
 
