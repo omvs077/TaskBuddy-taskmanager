@@ -25,6 +25,8 @@ namespace TaskBuddyWPF.Services
     public class GpuEnumerator : IDisposable
     {
         private static readonly Regex PhysRegex = new(@"phys_(\d+)", RegexOptions.Compiled);
+        private static readonly Regex PidRegex = new(@"pid_(\d+)", RegexOptions.Compiled);
+        private static readonly Regex EngTypeRegex = new(@"engtype_(\w+)", RegexOptions.Compiled);
 
         private IntPtr _query = IntPtr.Zero;
         private IntPtr _engineCounter = IntPtr.Zero;
@@ -128,6 +130,47 @@ namespace TaskBuddyWPF.Services
             return result;
         }
 
+        // Per-process GPU usage for the Processes tab. Reuses the same PDH
+        // "GPU Engine" instance names already parsed for phys_N in
+        // GetSnapshot(), extracting pid_N and engtype_X instead. Callers
+        // should invoke this on a separate GpuEnumerator instance from the
+        // one driving the Performance page's aggregate cards, since each
+        // instance opens its own PDH query and PdhCollectQueryData() is
+        // tied to that query's own polling interval.
+        public Dictionary<uint, (double utilizationPercent, string engineLabel)> GetPerProcessUsage()
+        {
+            var result = new Dictionary<uint, (double, string)>();
+            EnsureInitialized();
+            if (!_initialized) return result;
+
+            if (NativeMethods.PdhCollectQueryData(_query) != 0)
+                return result;
+
+            foreach (var (instanceName, value) in ReadCounterArray(_engineCounter))
+            {
+                if (value <= 0) continue;
+                var pidMatch = PidRegex.Match(instanceName);
+                if (!pidMatch.Success || !uint.TryParse(pidMatch.Groups[1].Value, out uint pid)) continue;
+
+                string engineType = EngTypeRegex.Match(instanceName) is { Success: true } m ? m.Groups[1].Value : "Unknown";
+                int phys = TryGetPhys(instanceName, out int p) ? p : 0;
+
+                if (!result.TryGetValue(pid, out var existing))
+                {
+                    result[pid] = (value, $"GPU {phys} - {engineType}");
+                }
+                else
+                {
+                    double totalUtil = existing.Item1 + value;
+                    // Label follows the single busiest engine, matching how
+                    // Task Manager''s own "GPU engine" column behaves.
+                    string label = value > existing.Item1 ? $"GPU {phys} - {engineType}" : existing.Item2;
+                    result[pid] = (totalUtil, label);
+                }
+            }
+            return result;
+        }
+
         private static bool TryGetPhys(string instanceName, out int phys)
         {
             var match = PhysRegex.Match(instanceName);
@@ -184,4 +227,5 @@ namespace TaskBuddyWPF.Services
         }
     }
 }
+
 
