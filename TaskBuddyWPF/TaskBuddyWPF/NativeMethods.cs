@@ -624,6 +624,9 @@ namespace TaskBuddyWPF.Native
         [DllImport("powrprof.dll")]
         internal static extern uint PowerGetActiveScheme(IntPtr UserRootPowerKey, out IntPtr ActivePolicyGuid);
 
+        [DllImport("kernel32.dll")]
+        internal static extern IntPtr LocalFree(IntPtr hMem);
+
         [StructLayout(LayoutKind.Sequential)]
         internal struct SYSTEM_POWER_STATUS
         {
@@ -640,6 +643,7 @@ namespace TaskBuddyWPF.Native
         internal static extern bool GetSystemPowerStatus(out SYSTEM_POWER_STATUS lpSystemPowerStatus);
     }
 }
+
 
 
 
