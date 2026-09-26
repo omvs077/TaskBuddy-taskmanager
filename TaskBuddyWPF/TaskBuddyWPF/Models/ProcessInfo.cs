@@ -105,5 +105,20 @@ namespace TaskBuddyWPF.Models
             get => _diskBytesPerSec;
             set { if (_diskBytesPerSec != value) { _diskBytesPerSec = value; Notify(nameof(DiskBytesPerSec)); } }
         }
+
+        private double _gpuUsagePercent;
+        public double GpuUsagePercent
+        {
+            get => _gpuUsagePercent;
+            set { if (_gpuUsagePercent != value) { _gpuUsagePercent = value; Notify(nameof(GpuUsagePercent)); } }
+        }
+
+        private string _gpuEngineLabel = string.Empty;
+        public string GpuEngineLabel
+        {
+            get => _gpuEngineLabel;
+            set { if (_gpuEngineLabel != value) { _gpuEngineLabel = value; Notify(nameof(GpuEngineLabel)); } }
+        }
     }
 }
+
