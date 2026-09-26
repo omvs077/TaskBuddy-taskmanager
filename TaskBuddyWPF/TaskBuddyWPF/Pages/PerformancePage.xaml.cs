@@ -247,6 +247,11 @@ namespace TaskBuddyWPF.Pages
                     DiskPageFileValue.Text = DiskStaticInfo.HasPageFile ? "Yes" : "No";
                     DiskTypeValue.Text = DiskStaticInfo.DiskType;
                     DiskHealthValue.Text = DiskStaticInfo.HealthStatus;
+                    var smart = TaskBuddyWPF.Services.DiskSmartInfo.Get();
+                    DiskTemperatureValue.Text = smart.IsAvailable ? $"{smart.TemperatureCelsius} C" : "N/A";
+                    DiskWearValue.Text = smart.IsAvailable ? $"{smart.PercentageUsed}%" : "N/A";
+                    DiskPowerOnHoursValue.Text = smart.IsAvailable ? $"{smart.PowerOnHours} hrs" : "N/A";
+                    DiskDataWrittenValue.Text = smart.IsAvailable ? $"{smart.DataUnitsWrittenBytes / 1024.0 / 1024.0 / 1024.0:F1} GB" : "N/A";
                     break;
 
                 case PerformanceResource.Wifi:
@@ -401,6 +406,7 @@ namespace TaskBuddyWPF.Pages
         }
     }
 }
+
 
 
 
