@@ -211,9 +211,25 @@
                 <TextBlock Text="Type" FontSize="11" Foreground="{DynamicResource TextFillColorSecondaryBrush}"/>
                 <TextBlock x:Name="DiskTypeValue" FontSize="14" FontWeight="SemiBold" Margin="0,2,0,0" Foreground="{DynamicResource TextFillColorPrimaryBrush}"/>
             </StackPanel>
-            <StackPanel>
+            <StackPanel Margin="0,0,0,10">
                 <TextBlock Text="Health" FontSize="11" Foreground="{DynamicResource TextFillColorSecondaryBrush}"/>
                 <TextBlock x:Name="DiskHealthValue" FontSize="14" FontWeight="SemiBold" Margin="0,2,0,0" Foreground="{DynamicResource TextFillColorPrimaryBrush}"/>
+            </StackPanel>
+            <StackPanel Margin="0,0,0,10">
+                <TextBlock Text="Temperature" FontSize="11" Foreground="{DynamicResource TextFillColorSecondaryBrush}"/>
+                <TextBlock x:Name="DiskTemperatureValue" FontSize="14" FontWeight="SemiBold" Margin="0,2,0,0" Foreground="{DynamicResource TextFillColorPrimaryBrush}"/>
+            </StackPanel>
+            <StackPanel Margin="0,0,0,10">
+                <TextBlock Text="Wear level (used)" FontSize="11" Foreground="{DynamicResource TextFillColorSecondaryBrush}"/>
+                <TextBlock x:Name="DiskWearValue" FontSize="14" FontWeight="SemiBold" Margin="0,2,0,0" Foreground="{DynamicResource TextFillColorPrimaryBrush}"/>
+            </StackPanel>
+            <StackPanel Margin="0,0,0,10">
+                <TextBlock Text="Power-on hours" FontSize="11" Foreground="{DynamicResource TextFillColorSecondaryBrush}"/>
+                <TextBlock x:Name="DiskPowerOnHoursValue" FontSize="14" FontWeight="SemiBold" Margin="0,2,0,0" Foreground="{DynamicResource TextFillColorPrimaryBrush}"/>
+            </StackPanel>
+            <StackPanel Margin="0,0,0,10">
+                <TextBlock Text="Total data written" FontSize="11" Foreground="{DynamicResource TextFillColorSecondaryBrush}"/>
+                <TextBlock x:Name="DiskDataWrittenValue" FontSize="14" FontWeight="SemiBold" Margin="0,2,0,0" Foreground="{DynamicResource TextFillColorPrimaryBrush}"/>
             </StackPanel>
         </StackPanel>
 
@@ -245,6 +261,7 @@
         </StackPanel>
     </Grid>
 </Page>
+
 
 
 
