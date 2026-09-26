@@ -211,7 +211,7 @@ namespace TaskBuddyWPF.Pages
                         MemPagedPoolValue.Text = FormatCacheSize(_lastMemDetail.PagedPoolBytes);
                         MemNonPagedPoolValue.Text = FormatCacheSize(_lastMemDetail.NonPagedPoolBytes);
                         MemSpeedValue.Text = _lastMemDetail.SpeedMhz > 0 ? $"{_lastMemDetail.SpeedMhz} MHz" : "—";
-                        MemSlotsValue.Text = _lastMemDetail.SlotsUsed > 0 ? _lastMemDetail.SlotsUsed.ToString() : "—";
+                        MemSlotsValue.Text = _lastMemDetail.SlotsUsed > 0 ? $"{_lastMemDetail.SlotsUsed} / {_lastMemDetail.TotalSlots}" : "—";
                         MemFormFactorValue.Text = _lastMemDetail.FormFactor;
                         MemHardwareReservedValue.Text = FormatCacheSize(_lastMemDetail.HardwareReservedBytes);
                     }
@@ -369,6 +369,7 @@ namespace TaskBuddyWPF.Pages
         }
     }
 }
+
 
 
 
