@@ -12,7 +12,9 @@
         public ulong TotalBytes { get; set; }
         public uint SpeedMhz { get; set; }
         public int SlotsUsed { get; set; }
+        public int TotalSlots { get; set; }
         public string FormFactor { get; set; } = "";
         public ulong HardwareReservedBytes { get; set; }
     }
 }
+

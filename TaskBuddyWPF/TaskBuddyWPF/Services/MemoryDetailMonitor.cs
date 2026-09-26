@@ -89,6 +89,15 @@ namespace TaskBuddyWPF.Services
                 result.SpeedMhz = speed;
                 result.SlotsUsed = count;
                 result.FormFactor = formFactorMap.TryGetValue(ff, out var ffStr) ? ffStr : "Unknown";
+
+                using var arraySearcher = new ManagementObjectSearcher(
+                    "SELECT MemoryDevices FROM Win32_PhysicalMemoryArray");
+                foreach (ManagementObject arr in arraySearcher.Get())
+                {
+                    if (arr["MemoryDevices"] is ushort total)
+                        result.TotalSlots = total;
+                    break;
+                }
             }
             catch { result.FormFactor = "Unknown"; }
             _cachedHardwareInfo = result;
@@ -96,3 +105,4 @@ namespace TaskBuddyWPF.Services
         }
     }
 }
+
