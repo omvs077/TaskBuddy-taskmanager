@@ -23,9 +23,16 @@ namespace TaskBuddyWPF.Services
                     uint status = Convert.ToUInt32(mo["BatteryStatus"]);
                     info.StatusText = status switch
                     {
-                        1 or 4 or 5 => "Discharging",
-                        2 or 3 => "Not charging",
-                        6 or 7 or 8 or 9 => "Charging",
+                        1 => "Discharging",
+                        2 => info.ChargePercent >= 100 ? "Fully charged" : "Plugged in, not charging",
+                        3 => "Fully charged",
+                        4 => "Low",
+                        5 => "Critical",
+                        6 => "Charging",
+                        7 => "Charging (high)",
+                        8 => "Charging (low)",
+                        9 => "Charging (critical)",
+                        11 => "Partially charged",
                         _ => "Unknown"
                     };
                     break;
@@ -36,3 +43,4 @@ namespace TaskBuddyWPF.Services
         }
     }
 }
+
