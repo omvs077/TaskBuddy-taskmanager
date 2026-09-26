@@ -48,6 +48,8 @@
                         <CheckBox x:Name="ColStatusCheck" Content="Status" IsChecked="True" Margin="0,4" Checked="ColumnCheck_Changed" Unchecked="ColumnCheck_Changed"/>
                         <CheckBox x:Name="ColCpuCheck" Content="CPU %" IsChecked="True" Margin="0,4" Checked="ColumnCheck_Changed" Unchecked="ColumnCheck_Changed"/>
                         <CheckBox x:Name="ColMemoryCheck" Content="Memory (MB)" IsChecked="True" Margin="0,4" Checked="ColumnCheck_Changed" Unchecked="ColumnCheck_Changed"/>
+                        <CheckBox x:Name="ColGpuCheck" Content="GPU %" IsChecked="False" Margin="0,4" Checked="ColumnCheck_Changed" Unchecked="ColumnCheck_Changed"/>
+                        <CheckBox x:Name="ColGpuEngineCheck" Content="GPU engine" IsChecked="False" Margin="0,4" Checked="ColumnCheck_Changed" Unchecked="ColumnCheck_Changed"/>
                         <CheckBox x:Name="ColDiskCheck" Content="Disk (MB/s)" IsChecked="True" Margin="0,4" Checked="ColumnCheck_Changed" Unchecked="ColumnCheck_Changed"/>
                         <CheckBox x:Name="ColPublisherCheck" Content="Publisher" IsChecked="False" Margin="0,4" Checked="ColumnCheck_Changed" Unchecked="ColumnCheck_Changed"/>
                         <CheckBox x:Name="ColProcessNameCheck" Content="Process name" IsChecked="False" Margin="0,4" Checked="ColumnCheck_Changed" Unchecked="ColumnCheck_Changed"/>
@@ -97,6 +99,14 @@
                         </Style>
                     </DataGridTextColumn.CellStyle>
                 </DataGridTextColumn>
+                <DataGridTextColumn x:Name="GpuColumn" Header="GPU %" Binding="{Binding GpuUsagePercent, StringFormat={}{0:F1}}" Width="*" MinWidth="70" Visibility="Collapsed">
+                    <DataGridTextColumn.CellStyle>
+                        <Style TargetType="DataGridCell">
+                            <Setter Property="Background" Value="{Binding GpuUsagePercent, Converter={StaticResource CpuHeatBrushConverter}}"/>
+                        </Style>
+                    </DataGridTextColumn.CellStyle>
+                </DataGridTextColumn>
+                <DataGridTextColumn x:Name="GpuEngineColumn" Header="GPU engine" Binding="{Binding GpuEngineLabel}" Width="*" MinWidth="110" Visibility="Collapsed"/>
                 <DataGridTextColumn x:Name="DiskColumn" Header="Disk (MB/s)" Binding="{Binding DiskBytesPerSec, Converter={StaticResource BytesPerSecToMBpsConverter}}" Width="*" MinWidth="90">
                     <DataGridTextColumn.CellStyle>
                         <Style TargetType="DataGridCell">
@@ -179,6 +189,9 @@
         </DataGrid>
     </Grid>
 </Page>
+
+
+
 
 
 
