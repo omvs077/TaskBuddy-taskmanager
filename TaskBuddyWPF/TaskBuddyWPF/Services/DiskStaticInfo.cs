@@ -91,6 +91,38 @@ namespace TaskBuddyWPF.Services
             }
         }
 
+        private static string? _healthStatus;
+        public static string HealthStatus
+        {
+            get
+            {
+                if (_healthStatus == null)
+                {
+                    _healthStatus = "Unknown";
+                    try
+                    {
+                        var scope = new ManagementScope(@"root\Microsoft\Windows\Storage");
+                        var query = new ObjectQuery("SELECT HealthStatus FROM MSFT_PhysicalDisk");
+                        using var searcher = new ManagementObjectSearcher(scope, query);
+                        foreach (ManagementObject mo in searcher.Get())
+                        {
+                            uint hs = Convert.ToUInt32(mo["HealthStatus"]);
+                            _healthStatus = hs switch
+                            {
+                                0 => "Healthy",
+                                1 => "Warning",
+                                2 => "Unhealthy",
+                                _ => "Unknown"
+                            };
+                            break;
+                        }
+                    }
+                    catch { }
+                }
+                return _healthStatus;
+            }
+        }
+
         private static string? _diskType;
         public static string DiskType
         {
@@ -128,3 +160,4 @@ namespace TaskBuddyWPF.Services
         }
     }
 }
+
