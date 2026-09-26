@@ -20,6 +20,7 @@ namespace TaskBuddyWPF.Pages
         private readonly DiskPerformanceMonitor _diskMonitor = new();
         private readonly WifiEnumerator _wifiEnumerator = new();
         private readonly GpuEnumerator _gpuEnumerator = new();
+        private readonly BatteryEnumerator _batteryEnumerator = new();
         private readonly TaskBuddyWPF.Services.MemoryDetailMonitor _memDetailMonitor = new();
         private readonly DispatcherTimer _timer;
         private int _processCountCache;
@@ -31,6 +32,7 @@ namespace TaskBuddyWPF.Pages
         private readonly Queue<double> _diskActiveHistory = new();
         private readonly Queue<double> _wifiReceiveHistory = new();
         private readonly Queue<double> _wifiSendHistory = new();
+        private readonly Queue<double> _batteryHistory = new();
         private readonly Queue<double> _gpu0History = new();
         private readonly Queue<double> _gpu1History = new();
 
@@ -39,6 +41,7 @@ namespace TaskBuddyWPF.Pages
         private TaskBuddyWPF.Models.WifiInfo? _lastWifi;
         private TaskBuddyWPF.Models.GpuInfo? _lastGpu0;
         private TaskBuddyWPF.Models.GpuInfo? _lastGpu1;
+        private TaskBuddyWPF.Models.BatteryInfo? _lastBattery;
         private TaskBuddyWPF.Models.MemoryDetailInfo? _lastMemDetail;
 
         private PerformanceResource _selected = PerformanceResource.Cpu;
@@ -77,14 +80,15 @@ namespace TaskBuddyWPF.Pages
 
             try
             {
-                var (cpu, memUsed, memTotal, diskActive, diskRead, diskWrite, diskResponse, wifi, gpus) = await Task.Run(() =>
+                var (cpu, memUsed, memTotal, diskActive, diskRead, diskWrite, diskResponse, wifi, gpus, battery) = await Task.Run(() =>
                 {
                     double c = _sysMonitor.GetCpuPercent();
                     var (used, total) = _sysMonitor.GetMemoryUsage();
                     var (active, read, write, response) = _diskMonitor.Sample();
                     var w = _wifiEnumerator.GetSnapshot();
                     var g = _gpuEnumerator.GetSnapshot();
-                    return (c, used, total, active, read, write, response, w, g);
+                    var batt = _batteryEnumerator.GetSnapshot();
+                    return (c, used, total, active, read, write, response, w, g, batt);
                 });
 
                 _lastMemUsed = memUsed;
@@ -96,6 +100,7 @@ namespace TaskBuddyWPF.Pages
                 _lastWifi = wifi;
                 _lastGpu0 = gpus.Count > 0 ? gpus[0] : null;
                 _lastGpu1 = gpus.Count > 1 ? gpus[1] : null;
+                _lastBattery = battery;
                 _lastMemDetail = _memDetailMonitor.GetSnapshot(memUsed, memTotal);
 
                 Enqueue(_cpuHistory, cpu);
@@ -129,6 +134,10 @@ namespace TaskBuddyWPF.Pages
                 Gpu1MiniGraph.SetData(_gpu1History.ToArray(), 100);
                 Gpu1MiniValue.Text = _lastGpu1 != null ? $"{_lastGpu1.UtilizationPercent:F0}%" : "—";
 
+                if (battery.IsPresent) Enqueue(_batteryHistory, battery.ChargePercent);
+                BatteryMiniGraph.SetData(_batteryHistory.ToArray(), 100);
+                BatteryMiniValue.Text = battery.IsPresent ? $"{battery.ChargePercent}%" : "No battery";
+
                 RefreshDetail();
             }
             finally
@@ -154,6 +163,7 @@ namespace TaskBuddyWPF.Pages
             CpuInfoPanel.Visibility = Visibility.Collapsed;
             MemInfoPanel.Visibility = Visibility.Collapsed;
             DiskInfoPanel.Visibility = Visibility.Collapsed;
+            BatteryInfoPanel.Visibility = Visibility.Collapsed;
 
             switch (_selected)
             {
@@ -266,6 +276,24 @@ namespace TaskBuddyWPF.Pages
                 case PerformanceResource.Gpu1:
                     RefreshGpuDetail(_lastGpu1, _gpu1History, System.Windows.Media.Color.FromRgb(90, 220, 140));
                     break;
+
+                case PerformanceResource.Battery:
+                    DetailTitle.Text = "Battery";
+                    DetailSubtitle.Text = _lastBattery?.IsPresent == true ? _lastBattery.StatusText : "Not detected";
+                    DetailGraph.AccentColor = System.Windows.Media.Color.FromRgb(90, 220, 140);
+                    DetailGraph.SetData(_batteryHistory.ToArray(), 100);
+                    Stat1Label.Text = "Charge";
+                    Stat1Value.Text = _lastBattery?.IsPresent == true ? $"{_lastBattery.ChargePercent}%" : "—";
+                    Stat2Label.Text = ""; Stat2Value.Text = "";
+                    Stat3Label.Text = ""; Stat3Value.Text = "";
+                    Stat4Label.Text = ""; Stat4Value.Text = "";
+
+                    BatteryInfoPanel.Visibility = Visibility.Visible;
+                    BatteryStatusValue.Text = _lastBattery?.IsPresent == true ? _lastBattery.StatusText : "—";
+                    BatteryHealthValue.Text = BatteryStaticInfo.DesignedCapacity > 0 ? $"{BatteryStaticInfo.HealthPercent}%" : "—";
+                    BatteryDesignCapacityValue.Text = BatteryStaticInfo.DesignedCapacity > 0 ? $"{BatteryStaticInfo.DesignedCapacity} mWh" : "—";
+                    BatteryFullCapacityValue.Text = BatteryStaticInfo.FullChargedCapacity > 0 ? $"{BatteryStaticInfo.FullChargedCapacity} mWh" : "—";
+                    break;
             }
         }
 
@@ -371,6 +399,10 @@ namespace TaskBuddyWPF.Pages
         }
     }
 }
+
+
+
+
 
 
 
