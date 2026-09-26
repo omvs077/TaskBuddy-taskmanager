@@ -293,6 +293,8 @@ namespace TaskBuddyWPF.Pages
                     BatteryHealthValue.Text = BatteryStaticInfo.DesignedCapacity > 0 ? $"{BatteryStaticInfo.HealthPercent}%" : "—";
                     BatteryDesignCapacityValue.Text = BatteryStaticInfo.DesignedCapacity > 0 ? $"{BatteryStaticInfo.DesignedCapacity} mWh" : "—";
                     BatteryFullCapacityValue.Text = BatteryStaticInfo.FullChargedCapacity > 0 ? $"{BatteryStaticInfo.FullChargedCapacity} mWh" : "—";
+                    PowerModeValue.Text = PowerModeService.GetActivePlanName();
+                    BatterySaverValue.Text = PowerModeService.IsBatterySaverOn() ? "On" : "Off";
                     break;
             }
         }
@@ -399,6 +401,7 @@ namespace TaskBuddyWPF.Pages
         }
     }
 }
+
 
 
 
