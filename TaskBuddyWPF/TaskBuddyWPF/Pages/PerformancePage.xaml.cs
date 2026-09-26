@@ -236,6 +236,7 @@ namespace TaskBuddyWPF.Pages
                     DiskSystemValue.Text = DiskStaticInfo.IsSystemDisk ? "Yes" : "No";
                     DiskPageFileValue.Text = DiskStaticInfo.HasPageFile ? "Yes" : "No";
                     DiskTypeValue.Text = DiskStaticInfo.DiskType;
+                    DiskHealthValue.Text = DiskStaticInfo.HealthStatus;
                     break;
 
                 case PerformanceResource.Wifi:
@@ -369,6 +370,7 @@ namespace TaskBuddyWPF.Pages
         }
     }
 }
+
 
 
 

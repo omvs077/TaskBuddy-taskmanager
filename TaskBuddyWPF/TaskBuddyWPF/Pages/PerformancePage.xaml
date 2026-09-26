@@ -200,13 +200,18 @@
                 <TextBlock Text="Page file" FontSize="11" Foreground="{DynamicResource TextFillColorSecondaryBrush}"/>
                 <TextBlock x:Name="DiskPageFileValue" FontSize="14" FontWeight="SemiBold" Margin="0,2,0,0" Foreground="{DynamicResource TextFillColorPrimaryBrush}"/>
             </StackPanel>
-            <StackPanel>
+            <StackPanel Margin="0,0,0,10">
                 <TextBlock Text="Type" FontSize="11" Foreground="{DynamicResource TextFillColorSecondaryBrush}"/>
                 <TextBlock x:Name="DiskTypeValue" FontSize="14" FontWeight="SemiBold" Margin="0,2,0,0" Foreground="{DynamicResource TextFillColorPrimaryBrush}"/>
+            </StackPanel>
+            <StackPanel>
+                <TextBlock Text="Health" FontSize="11" Foreground="{DynamicResource TextFillColorSecondaryBrush}"/>
+                <TextBlock x:Name="DiskHealthValue" FontSize="14" FontWeight="SemiBold" Margin="0,2,0,0" Foreground="{DynamicResource TextFillColorPrimaryBrush}"/>
             </StackPanel>
         </StackPanel>
     </Grid>
 </Page>
+
 
 
 
