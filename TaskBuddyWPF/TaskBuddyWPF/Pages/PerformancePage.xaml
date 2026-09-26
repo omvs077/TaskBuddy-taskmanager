@@ -230,13 +230,22 @@
                 <TextBlock Text="Design capacity" FontSize="11" Foreground="{DynamicResource TextFillColorSecondaryBrush}"/>
                 <TextBlock x:Name="BatteryDesignCapacityValue" FontSize="14" FontWeight="SemiBold" Margin="0,2,0,0" Foreground="{DynamicResource TextFillColorPrimaryBrush}"/>
             </StackPanel>
-            <StackPanel>
+            <StackPanel Margin="0,0,0,10">
                 <TextBlock Text="Full charge capacity" FontSize="11" Foreground="{DynamicResource TextFillColorSecondaryBrush}"/>
                 <TextBlock x:Name="BatteryFullCapacityValue" FontSize="14" FontWeight="SemiBold" Margin="0,2,0,0" Foreground="{DynamicResource TextFillColorPrimaryBrush}"/>
+            </StackPanel>
+            <StackPanel Margin="0,0,0,10">
+                <TextBlock Text="Power mode" FontSize="11" Foreground="{DynamicResource TextFillColorSecondaryBrush}"/>
+                <TextBlock x:Name="PowerModeValue" FontSize="14" FontWeight="SemiBold" Margin="0,2,0,0" Foreground="{DynamicResource TextFillColorPrimaryBrush}"/>
+            </StackPanel>
+            <StackPanel>
+                <TextBlock Text="Battery saver" FontSize="11" Foreground="{DynamicResource TextFillColorSecondaryBrush}"/>
+                <TextBlock x:Name="BatterySaverValue" FontSize="14" FontWeight="SemiBold" Margin="0,2,0,0" Foreground="{DynamicResource TextFillColorPrimaryBrush}"/>
             </StackPanel>
         </StackPanel>
     </Grid>
 </Page>
+
 
 
 
