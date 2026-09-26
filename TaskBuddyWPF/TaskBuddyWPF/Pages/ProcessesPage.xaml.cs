@@ -21,6 +21,7 @@ namespace TaskBuddyWPF.Pages
     public partial class ProcessesPage : Page
     {
         private readonly ProcessEnumerator _enumerator = new();
+        private readonly TaskBuddyWPF.Services.GpuEnumerator _gpuEnumerator = new();
         private readonly ObservableCollection<ProcessInfo> _processes = new();
         private readonly Dictionary<uint, ProcessInfo> _byPidLookup = new();
         private readonly DispatcherTimer _timer;
@@ -66,6 +67,17 @@ namespace TaskBuddyWPF.Pages
             try
             {
                 var snapshot = await Task.Run(() => _enumerator.GetSnapshot());
+
+                var gpuByPid = await Task.Run(() => _gpuEnumerator.GetPerProcessUsage());
+                foreach (var proc in snapshot)
+                {
+                    if (gpuByPid.TryGetValue(proc.Pid, out var gpu))
+                    {
+                        proc.GpuUsagePercent = gpu.utilizationPercent;
+                        proc.GpuEngineLabel = gpu.engineLabel;
+                    }
+                }
+
                 ApplyDiff(snapshot);
             }
             finally
@@ -458,6 +470,7 @@ namespace TaskBuddyWPF.Pages
         }
     }
 }
+
 
 
 
