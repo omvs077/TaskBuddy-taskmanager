@@ -10,7 +10,7 @@ using TaskBuddyWPF.Services;
 
 namespace TaskBuddyWPF.Pages
 {
-    public enum PerformanceResource { Cpu, Memory, Disk, Wifi, Gpu0, Gpu1 }
+    public enum PerformanceResource { Cpu, Memory, Disk, Wifi, Gpu0, Gpu1, Battery }
 
     public partial class PerformancePage : Page
     {
@@ -331,6 +331,7 @@ namespace TaskBuddyWPF.Pages
         private void WifiCard_Click(object sender, MouseButtonEventArgs e) { _selected = PerformanceResource.Wifi; HighlightSelected(); RefreshDetail(); }
         private void Gpu0Card_Click(object sender, MouseButtonEventArgs e) { _selected = PerformanceResource.Gpu0; HighlightSelected(); RefreshDetail(); }
         private void Gpu1Card_Click(object sender, MouseButtonEventArgs e) { _selected = PerformanceResource.Gpu1; HighlightSelected(); RefreshDetail(); }
+        private void BatteryCard_Click(object sender, MouseButtonEventArgs e) { _selected = PerformanceResource.Battery; HighlightSelected(); RefreshDetail(); }
 
         private void HighlightSelected()
         {
@@ -370,6 +371,8 @@ namespace TaskBuddyWPF.Pages
         }
     }
 }
+
+
 
 
 
