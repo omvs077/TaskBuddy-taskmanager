@@ -58,6 +58,7 @@ namespace TaskBuddyWPF.Services
             var hw = GetHardwareInfo();
             info.SpeedMhz = hw.SpeedMhz;
             info.SlotsUsed = hw.SlotsUsed;
+            info.TotalSlots = hw.TotalSlots;
             info.FormFactor = hw.FormFactor;
 
             return info;
@@ -94,8 +95,7 @@ namespace TaskBuddyWPF.Services
                     "SELECT MemoryDevices FROM Win32_PhysicalMemoryArray");
                 foreach (ManagementObject arr in arraySearcher.Get())
                 {
-                    if (arr["MemoryDevices"] is ushort total)
-                        result.TotalSlots = total;
+                    result.TotalSlots = Convert.ToInt32(arr["MemoryDevices"]);
                     break;
                 }
             }
@@ -105,4 +105,6 @@ namespace TaskBuddyWPF.Services
         }
     }
 }
+
+
 
