@@ -148,7 +148,6 @@ namespace TaskBuddyWPF.Services
 
             foreach (var (instanceName, value) in ReadCounterArray(_engineCounter))
             {
-                if (value <= 0) continue;
                 var pidMatch = PidRegex.Match(instanceName);
                 if (!pidMatch.Success || !uint.TryParse(pidMatch.Groups[1].Value, out uint pid)) continue;
 
@@ -227,5 +226,6 @@ namespace TaskBuddyWPF.Services
         }
     }
 }
+
 
 
