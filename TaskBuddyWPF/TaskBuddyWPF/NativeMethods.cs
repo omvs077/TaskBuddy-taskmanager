@@ -627,6 +627,17 @@ namespace TaskBuddyWPF.Native
         [DllImport("kernel32.dll")]
         internal static extern IntPtr LocalFree(IntPtr hMem);
 
+        // NVMe SMART/Health Info log page, retrieved via IOCTL_STORAGE_QUERY_PROPERTY.
+        // Constants confirmed against winioctl.h / ntddstor.h documentation.
+        internal const uint StorageDeviceProtocolSpecificProperty = 50;
+        internal const uint ProtocolTypeNvme = 3;
+        internal const uint NVMeDataTypeLogPage = 2;
+        internal const uint NVME_LOG_PAGE_HEALTH_INFO = 0x02;
+
+        [DllImport("kernel32.dll", SetLastError = true)]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        internal static extern bool DeviceIoControl(SafeFileHandle hDevice, uint dwIoControlCode, byte[] lpInBuffer, uint nInBufferSize, byte[] lpOutBuffer, uint nOutBufferSize, out uint lpBytesReturned, IntPtr lpOverlapped);
+
         [StructLayout(LayoutKind.Sequential)]
         internal struct SYSTEM_POWER_STATUS
         {
@@ -643,6 +654,7 @@ namespace TaskBuddyWPF.Native
         internal static extern bool GetSystemPowerStatus(out SYSTEM_POWER_STATUS lpSystemPowerStatus);
     }
 }
+
 
 
 
