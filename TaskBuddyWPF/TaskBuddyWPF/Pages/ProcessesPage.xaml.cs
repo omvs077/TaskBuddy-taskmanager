@@ -22,6 +22,7 @@ namespace TaskBuddyWPF.Pages
     {
         private readonly ProcessEnumerator _enumerator = new();
         private readonly TaskBuddyWPF.Services.GpuEnumerator _gpuEnumerator = new();
+        private DateTime _lastNetworkPoll = DateTime.UtcNow;
         private readonly ObservableCollection<ProcessInfo> _processes = new();
         private readonly Dictionary<uint, ProcessInfo> _byPidLookup = new();
         private readonly DispatcherTimer _timer;
@@ -68,9 +69,17 @@ namespace TaskBuddyWPF.Pages
             {
                 var snapshot = await Task.Run(() => _enumerator.GetSnapshot());
 
+                TaskBuddyWPF.Services.NetworkTraceMonitor.Instance.EnsureStarted();
+                var netDeltas = await Task.Run(() => TaskBuddyWPF.Services.NetworkTraceMonitor.Instance.GetAndResetDeltas());
+                var nowPoll = DateTime.UtcNow;
+                double netElapsed = (nowPoll - _lastNetworkPoll).TotalSeconds;
+                _lastNetworkPoll = nowPoll;
+
                 var gpuByPid = await Task.Run(() => _gpuEnumerator.GetPerProcessUsage());
                 foreach (var proc in snapshot)
                 {
+                    if (netElapsed > 0 && netDeltas.TryGetValue((int)proc.Pid, out var net))
+                        proc.NetworkBytesPerSec = (net.sent + net.received) / netElapsed;
                     if (gpuByPid.TryGetValue(proc.Pid, out var gpu))
                     {
                         proc.GpuUsagePercent = gpu.utilizationPercent;
@@ -129,6 +138,7 @@ namespace TaskBuddyWPF.Pages
                     current.DiskBytesPerSec = fresh.DiskBytesPerSec;
                     current.GpuUsagePercent = fresh.GpuUsagePercent;
                     current.GpuEngineLabel = fresh.GpuEngineLabel;
+                    current.NetworkBytesPerSec = fresh.NetworkBytesPerSec;
                     current.Icon = fresh.Icon;
                     current.Category = fresh.Category;
                     current.GroupPid = fresh.GroupPid;
@@ -513,6 +523,9 @@ namespace TaskBuddyWPF.Pages
         }
     }
 }
+
+
+
 
 
 
