@@ -48,6 +48,7 @@
                         <CheckBox x:Name="ColStatusCheck" Content="Status" IsChecked="True" Margin="0,4" Checked="ColumnCheck_Changed" Unchecked="ColumnCheck_Changed"/>
                         <CheckBox x:Name="ColCpuCheck" Content="CPU %" IsChecked="True" Margin="0,4" Checked="ColumnCheck_Changed" Unchecked="ColumnCheck_Changed"/>
                         <CheckBox x:Name="ColMemoryCheck" Content="Memory (MB)" IsChecked="True" Margin="0,4" Checked="ColumnCheck_Changed" Unchecked="ColumnCheck_Changed"/>
+                        <CheckBox x:Name="ColNetworkCheck" Content="Network (MB/s)" IsChecked="False" Margin="0,4" Checked="ColumnCheck_Changed" Unchecked="ColumnCheck_Changed"/>
                         <CheckBox x:Name="ColGpuCheck" Content="GPU %" IsChecked="False" Margin="0,4" Checked="ColumnCheck_Changed" Unchecked="ColumnCheck_Changed"/>
                         <CheckBox x:Name="ColGpuEngineCheck" Content="GPU engine" IsChecked="False" Margin="0,4" Checked="ColumnCheck_Changed" Unchecked="ColumnCheck_Changed"/>
                         <CheckBox x:Name="ColDiskCheck" Content="Disk (MB/s)" IsChecked="True" Margin="0,4" Checked="ColumnCheck_Changed" Unchecked="ColumnCheck_Changed"/>
@@ -108,6 +109,7 @@
                         </Style>
                     </DataGridTextColumn.CellStyle>
                 </DataGridTextColumn>
+                <DataGridTextColumn x:Name="NetworkColumn" Header="Network (MB/s)" Binding="{Binding NetworkBytesPerSec, Converter={StaticResource BytesPerSecToMBpsConverter}}" Width="*" MinWidth="100" Visibility="Collapsed"/>
                 <DataGridTextColumn x:Name="GpuColumn" Header="GPU %" Binding="{Binding GpuUsagePercent, StringFormat={}{0:F1}}" Width="*" MinWidth="70" Visibility="Collapsed">
                     <DataGridTextColumn.CellStyle>
                         <Style TargetType="DataGridCell">
@@ -198,6 +200,7 @@
         </DataGrid>
     </Grid>
 </Page>
+
 
 
 

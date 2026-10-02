@@ -342,6 +342,7 @@ namespace TaskBuddyWPF.Pages
             StatusColumn.Visibility = ColStatusCheck.IsChecked == true ? Visibility.Visible : Visibility.Collapsed;
             CpuColumn.Visibility = ColCpuCheck.IsChecked == true ? Visibility.Visible : Visibility.Collapsed;
             MemoryColumn.Visibility = ColMemoryCheck.IsChecked == true ? Visibility.Visible : Visibility.Collapsed;
+            NetworkColumn.Visibility = ColNetworkCheck.IsChecked == true ? Visibility.Visible : Visibility.Collapsed;
             GpuColumn.Visibility = ColGpuCheck.IsChecked == true ? Visibility.Visible : Visibility.Collapsed;
             GpuEngineColumn.Visibility = ColGpuEngineCheck.IsChecked == true ? Visibility.Visible : Visibility.Collapsed;
             DiskColumn.Visibility = ColDiskCheck.IsChecked == true ? Visibility.Visible : Visibility.Collapsed;
@@ -364,6 +365,7 @@ namespace TaskBuddyWPF.Pages
                 if (saved.TryGetValue("Status", out var status)) { ColStatusCheck.IsChecked = status; StatusColumn.Visibility = status ? Visibility.Visible : Visibility.Collapsed; }
                 if (saved.TryGetValue("CPU", out var cpu)) { ColCpuCheck.IsChecked = cpu; CpuColumn.Visibility = cpu ? Visibility.Visible : Visibility.Collapsed; }
                 if (saved.TryGetValue("Memory", out var mem)) { ColMemoryCheck.IsChecked = mem; MemoryColumn.Visibility = mem ? Visibility.Visible : Visibility.Collapsed; }
+                if (saved.TryGetValue("Network", out var network)) { ColNetworkCheck.IsChecked = network; NetworkColumn.Visibility = network ? Visibility.Visible : Visibility.Collapsed; }
                 if (saved.TryGetValue("Gpu", out var gpu)) { ColGpuCheck.IsChecked = gpu; GpuColumn.Visibility = gpu ? Visibility.Visible : Visibility.Collapsed; }
                 if (saved.TryGetValue("GpuEngine", out var gpuEngine)) { ColGpuEngineCheck.IsChecked = gpuEngine; GpuEngineColumn.Visibility = gpuEngine ? Visibility.Visible : Visibility.Collapsed; }
                 if (saved.TryGetValue("Disk", out var disk)) { ColDiskCheck.IsChecked = disk; DiskColumn.Visibility = disk ? Visibility.Visible : Visibility.Collapsed; }
@@ -389,6 +391,7 @@ namespace TaskBuddyWPF.Pages
                 ["Publisher"] = ColPublisherCheck.IsChecked == true,
                 ["ProcessName"] = ColProcessNameCheck.IsChecked == true,
                 ["CommandLine"] = ColCommandLineCheck.IsChecked == true,
+                ["Network"] = ColNetworkCheck.IsChecked == true,
                 ["Gpu"] = ColGpuCheck.IsChecked == true,
                 ["GpuEngine"] = ColGpuEngineCheck.IsChecked == true
             });
@@ -523,6 +526,7 @@ namespace TaskBuddyWPF.Pages
         }
     }
 }
+
 
 
 
