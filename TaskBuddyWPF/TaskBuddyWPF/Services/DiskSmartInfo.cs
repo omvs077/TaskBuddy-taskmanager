@@ -23,6 +23,17 @@ namespace TaskBuddyWPF.Services
         {
             if (_cached != null) return _cached;
             var result = new Models.DiskSmartInfo();
+
+            // DISABLED 2026-10-02: a session using this IOCTL path ended in a
+            // 0x3B SYSTEM_SERVICE_EXCEPTION bugcheck (access violation inside
+            // a kernel-mode call). Root cause not yet confirmed — could be the
+            // manually-constructed input/output buffer here, or unrelated.
+            // Short-circuiting to a safe no-op until verified fixed in a VM
+            // or on non-primary hardware. Do not re-enable without that
+            // verification.
+            _cached = result;
+            return result;
+
             try
             {
                 using var handle = NativeMethods.CreateFile(@"\\.\PhysicalDrive0", NativeMethods.GENERIC_READ,
@@ -66,3 +77,4 @@ namespace TaskBuddyWPF.Services
         }
     }
 }
+
