@@ -277,11 +277,15 @@ namespace TaskBuddyWPF.Pages
 
         private bool FilterProcess(object obj)
         {
-            if (string.IsNullOrWhiteSpace(SearchBox.Text))
-                return true;
-
             if (obj is not ProcessInfo p)
                 return false;
+
+            // Hide child rows under a collapsed leader, independent of search state.
+            if (p.IndentLevel > 0 && _byPidLookup.TryGetValue(p.GroupPid, out var leader) && !leader.IsExpanded)
+                return false;
+
+            if (string.IsNullOrWhiteSpace(SearchBox.Text))
+                return true;
 
             string query = SearchBox.Text.Trim();
             return p.ImageName.Contains(query, StringComparison.OrdinalIgnoreCase)
@@ -490,6 +494,8 @@ namespace TaskBuddyWPF.Pages
         }
     }
 }
+
+
 
 
 
