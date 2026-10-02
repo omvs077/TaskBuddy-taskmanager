@@ -142,6 +142,17 @@ namespace TaskBuddyWPF.Pages
                     _byPidLookup[fresh.Pid] = fresh;
                 }
             }
+
+            // Set visibility after all adds/updates above, so every child''s
+            // leader lookup sees the leader''s fully-current IsExpanded state
+            // regardless of which order rows were processed in.
+            foreach (var p in _processes)
+            {
+                if (p.IndentLevel > 0 && _byPidLookup.TryGetValue(p.GroupPid, out var leader))
+                    p.IsVisibleInTree = leader.IsExpanded;
+                else
+                    p.IsVisibleInTree = true;
+            }
         }
 
         private void ProcessGrid_PreviewMouseRightButtonDown(object sender, MouseButtonEventArgs e)
@@ -280,10 +291,6 @@ namespace TaskBuddyWPF.Pages
             if (obj is not ProcessInfo p)
                 return false;
 
-            // Hide child rows under a collapsed leader, independent of search state.
-            if (p.IndentLevel > 0 && _byPidLookup.TryGetValue(p.GroupPid, out var leader) && !leader.IsExpanded)
-                return false;
-
             if (string.IsNullOrWhiteSpace(SearchBox.Text))
                 return true;
 
@@ -297,7 +304,9 @@ namespace TaskBuddyWPF.Pages
             if (sender is FrameworkElement fe && fe.DataContext is ProcessInfo p)
             {
                 p.IsExpanded = !p.IsExpanded;
-                CollectionViewSource.GetDefaultView(_processes).Refresh();
+                foreach (var child in _processes)
+                    if (child.IndentLevel > 0 && child.GroupPid == p.Pid)
+                        child.IsVisibleInTree = p.IsExpanded;
             }
             e.Handled = true; // stop the DataGrid row-select behind it from also firing
         }
@@ -504,6 +513,12 @@ namespace TaskBuddyWPF.Pages
         }
     }
 }
+
+
+
+
+
+
 
 
 
