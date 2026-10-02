@@ -113,6 +113,13 @@ namespace TaskBuddyWPF.Models
             set { if (_isExpanded != value) { _isExpanded = value; Notify(nameof(IsExpanded)); } }
         }
 
+        private bool _isVisibleInTree = true;
+        public bool IsVisibleInTree
+        {
+            get => _isVisibleInTree;
+            set { if (_isVisibleInTree != value) { _isVisibleInTree = value; Notify(nameof(IsVisibleInTree)); } }
+        }
+
         private bool _hasChildren;
         public bool HasChildren
         {
@@ -135,5 +142,6 @@ namespace TaskBuddyWPF.Models
         }
     }
 }
+
 
 

@@ -71,6 +71,11 @@
                   GridLinesVisibility="None"
                   PreviewMouseRightButtonDown="ProcessGrid_PreviewMouseRightButtonDown"
                   Sorting="ProcessGrid_Sorting">
+            <DataGrid.RowStyle>
+                <Style TargetType="DataGridRow">
+                    <Setter Property="Visibility" Value="{Binding IsVisibleInTree, Converter={StaticResource BoolToVisibilityConverter}}"/>
+                </Style>
+            </DataGrid.RowStyle>
             <DataGrid.Columns>
                 <DataGridTemplateColumn Header="Name" Width="2*" MinWidth="180" SortMemberPath="ImageName">
                     <DataGridTemplateColumn.CellTemplate>
@@ -193,6 +198,8 @@
         </DataGrid>
     </Grid>
 </Page>
+
+
 
 
 
