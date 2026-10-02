@@ -63,6 +63,9 @@
                   Grid.Row="1"
                   AutoGenerateColumns="False"
                   IsReadOnly="True"
+                  VirtualizingPanel.IsVirtualizingWhenGrouping="True"
+                  VirtualizingPanel.IsVirtualizing="True"
+                  VirtualizingPanel.VirtualizationMode="Recycling"
                   CanUserAddRows="False"
                   CanUserDeleteRows="False"
                   GridLinesVisibility="None"
@@ -190,6 +193,7 @@
         </DataGrid>
     </Grid>
 </Page>
+
 
 
 
