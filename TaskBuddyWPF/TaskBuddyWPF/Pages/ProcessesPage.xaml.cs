@@ -292,6 +292,16 @@ namespace TaskBuddyWPF.Pages
                 || p.Pid.ToString().Contains(query, StringComparison.OrdinalIgnoreCase);
         }
 
+        private void ExpandArrow_Click(object sender, MouseButtonEventArgs e)
+        {
+            if (sender is FrameworkElement fe && fe.DataContext is ProcessInfo p)
+            {
+                p.IsExpanded = !p.IsExpanded;
+                CollectionViewSource.GetDefaultView(_processes).Refresh();
+            }
+            e.Handled = true; // stop the DataGrid row-select behind it from also firing
+        }
+
         private void SearchBox_TextChanged(object sender, TextChangedEventArgs e)
         {
             SearchPlaceholder.Visibility = string.IsNullOrEmpty(SearchBox.Text) ? Visibility.Visible : Visibility.Collapsed;
@@ -494,6 +504,7 @@ namespace TaskBuddyWPF.Pages
         }
     }
 }
+
 
 
 
