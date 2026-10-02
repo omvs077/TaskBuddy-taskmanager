@@ -116,6 +116,8 @@ namespace TaskBuddyWPF.Pages
                     current.IsSuspended = fresh.IsSuspended;
                     current.IsEfficiencyMode = fresh.IsEfficiencyMode;
                     current.DiskBytesPerSec = fresh.DiskBytesPerSec;
+                    current.GpuUsagePercent = fresh.GpuUsagePercent;
+                    current.GpuEngineLabel = fresh.GpuEngineLabel;
                     current.Icon = fresh.Icon;
                     current.Category = fresh.Category;
                     current.GroupPid = fresh.GroupPid;
@@ -476,6 +478,9 @@ namespace TaskBuddyWPF.Pages
         }
     }
 }
+
+
+
 
 
 
