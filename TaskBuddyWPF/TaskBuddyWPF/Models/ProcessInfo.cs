@@ -127,6 +127,13 @@ namespace TaskBuddyWPF.Models
             set { if (_hasChildren != value) { _hasChildren = value; Notify(nameof(HasChildren)); } }
         }
 
+        private double _networkBytesPerSec;
+        public double NetworkBytesPerSec
+        {
+            get => _networkBytesPerSec;
+            set { if (_networkBytesPerSec != value) { _networkBytesPerSec = value; Notify(nameof(NetworkBytesPerSec)); } }
+        }
+
         private double _gpuUsagePercent;
         public double GpuUsagePercent
         {
@@ -142,6 +149,7 @@ namespace TaskBuddyWPF.Models
         }
     }
 }
+
 
 
 
