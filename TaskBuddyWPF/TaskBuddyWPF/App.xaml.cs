@@ -10,4 +10,3 @@ namespace TaskBuddyWPF;
 public partial class App : Application
 {
 }
-
