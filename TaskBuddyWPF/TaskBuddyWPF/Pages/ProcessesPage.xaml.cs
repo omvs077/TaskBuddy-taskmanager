@@ -92,6 +92,17 @@ namespace TaskBuddyWPF.Pages
             foreach (var p in snapshot)
                 incoming[p.Pid] = p;
 
+            // HasChildren is recomputed fresh every tick (children can appear
+            // or disappear as an app opens/closes windows). IsExpanded is
+            // deliberately NOT touched here — it''s user-controlled UI state
+            // that must survive across refreshes, same principle as not
+            // resetting a user''s scroll position on every tick.
+            var groupsWithChildren = new HashSet<uint>();
+            foreach (var p in snapshot)
+                if (p.GroupPid != p.Pid) groupsWithChildren.Add(p.GroupPid);
+            foreach (var p in snapshot)
+                p.HasChildren = p.IndentLevel == 0 && groupsWithChildren.Contains(p.Pid);
+
             for (int i = _processes.Count - 1; i >= 0; i--)
             {
                 if (!incoming.ContainsKey(_processes[i].Pid))
@@ -123,6 +134,7 @@ namespace TaskBuddyWPF.Pages
                     current.GroupPid = fresh.GroupPid;
                     current.IndentLevel = fresh.IndentLevel;
                     current.HasVisibleWindow = fresh.HasVisibleWindow;
+                    current.HasChildren = fresh.HasChildren;
                 }
                 else
                 {
@@ -478,6 +490,7 @@ namespace TaskBuddyWPF.Pages
         }
     }
 }
+
 
 
 
