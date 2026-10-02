@@ -106,6 +106,20 @@ namespace TaskBuddyWPF.Models
             set { if (_diskBytesPerSec != value) { _diskBytesPerSec = value; Notify(nameof(DiskBytesPerSec)); } }
         }
 
+        private bool _isExpanded = true;
+        public bool IsExpanded
+        {
+            get => _isExpanded;
+            set { if (_isExpanded != value) { _isExpanded = value; Notify(nameof(IsExpanded)); } }
+        }
+
+        private bool _hasChildren;
+        public bool HasChildren
+        {
+            get => _hasChildren;
+            set { if (_hasChildren != value) { _hasChildren = value; Notify(nameof(HasChildren)); } }
+        }
+
         private double _gpuUsagePercent;
         public double GpuUsagePercent
         {
@@ -121,4 +135,5 @@ namespace TaskBuddyWPF.Models
         }
     }
 }
+
 

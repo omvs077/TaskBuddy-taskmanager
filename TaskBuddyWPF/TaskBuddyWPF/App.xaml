@@ -13,6 +13,7 @@
             </ResourceDictionary.MergedDictionaries>
             <conv:BytesToMbConverter x:Key="BytesToMbConverter"/>
             <conv:IndentLevelToMarginConverter x:Key="IndentLevelToMarginConverter"/>
+            <conv:ExpandArrowConverter x:Key="ExpandArrowConverter"/>
             <conv:PercentToStarWidthConverter x:Key="PercentToStarWidthConverter"/>
             <conv:BytesPerSecToMBpsConverter x:Key="BytesPerSecToMBpsConverter"/>
             <conv:CpuHeatBrushConverter x:Key="CpuHeatBrushConverter"/>
@@ -23,5 +24,6 @@
         </ResourceDictionary>
     </Application.Resources>
 </Application>
+
 
 
