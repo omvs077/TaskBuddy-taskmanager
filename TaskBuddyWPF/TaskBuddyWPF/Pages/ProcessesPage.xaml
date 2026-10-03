@@ -109,7 +109,7 @@
                         </Style>
                     </DataGridTextColumn.CellStyle>
                 </DataGridTextColumn>
-                <DataGridTextColumn x:Name="NetworkColumn" Header="Network (MB/s)" Binding="{Binding NetworkBytesPerSec, Converter={StaticResource BytesPerSecToMBpsConverter}}" Width="*" MinWidth="100" Visibility="Collapsed"/>
+                <DataGridTextColumn x:Name="NetworkColumn" Header="Network" Binding="{Binding NetworkBytesPerSec, Converter={StaticResource BytesPerSecAutoScaleConverter}}" Width="*" MinWidth="100" Visibility="Collapsed"/>
                 <DataGridTextColumn x:Name="GpuColumn" Header="GPU %" Binding="{Binding GpuUsagePercent, StringFormat={}{0:F1}}" Width="*" MinWidth="70" Visibility="Collapsed">
                     <DataGridTextColumn.CellStyle>
                         <Style TargetType="DataGridCell">
@@ -200,6 +200,7 @@
         </DataGrid>
     </Grid>
 </Page>
+
 
 
 
