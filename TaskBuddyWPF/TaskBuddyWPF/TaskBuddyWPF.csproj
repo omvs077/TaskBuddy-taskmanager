@@ -3,6 +3,9 @@
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
     <AssemblyName>TaskBuddy</AssemblyName>
+    <Company>Dvvyom labs</Company>
+    <Product>TaskBuddy</Product>
+    <Authors>Dvvyom labs</Authors>
     <TargetFramework>net8.0-windows</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
@@ -30,5 +33,6 @@
   </ItemGroup>
 
 </Project>
+
 
 
