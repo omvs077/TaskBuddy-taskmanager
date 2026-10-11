@@ -15,6 +15,86 @@
             <conv:IndentLevelToMarginConverter x:Key="IndentLevelToMarginConverter"/>
             <conv:ExpandArrowConverter x:Key="ExpandArrowConverter"/>
             <conv:BytesPerSecAutoScaleConverter x:Key="BytesPerSecAutoScaleConverter"/>
+
+            <Style x:Key="TbScrollTrackButton" TargetType="RepeatButton">
+                <Setter Property="Focusable" Value="False"/>
+                <Setter Property="IsTabStop" Value="False"/>
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="RepeatButton">
+                            <Border Background="Transparent"/>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
+
+            <Style x:Key="TbScrollThumb" TargetType="Thumb">
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="Thumb">
+                            <Border x:Name="ThumbBorder" Background="#66FFFFFF" CornerRadius="5" Margin="3"/>
+                            <ControlTemplate.Triggers>
+                                <Trigger Property="IsMouseOver" Value="True">
+                                    <Setter TargetName="ThumbBorder" Property="Background" Value="#99FFFFFF"/>
+                                </Trigger>
+                                <Trigger Property="IsDragging" Value="True">
+                                    <Setter TargetName="ThumbBorder" Property="Background" Value="#CCFFFFFF"/>
+                                </Trigger>
+                            </ControlTemplate.Triggers>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
+
+            <ControlTemplate x:Key="TbScrollBarVertical" TargetType="ScrollBar">
+                <Border Background="{TemplateBinding Background}" CornerRadius="5">
+                    <Track x:Name="PART_Track" IsDirectionReversed="True">
+                        <Track.DecreaseRepeatButton>
+                            <RepeatButton Command="ScrollBar.PageUpCommand" Style="{StaticResource TbScrollTrackButton}"/>
+                        </Track.DecreaseRepeatButton>
+                        <Track.Thumb>
+                            <Thumb Style="{StaticResource TbScrollThumb}" MinHeight="40"/>
+                        </Track.Thumb>
+                        <Track.IncreaseRepeatButton>
+                            <RepeatButton Command="ScrollBar.PageDownCommand" Style="{StaticResource TbScrollTrackButton}"/>
+                        </Track.IncreaseRepeatButton>
+                    </Track>
+                </Border>
+            </ControlTemplate>
+
+            <ControlTemplate x:Key="TbScrollBarHorizontal" TargetType="ScrollBar">
+                <Border Background="{TemplateBinding Background}" CornerRadius="5">
+                    <Track x:Name="PART_Track" IsDirectionReversed="False">
+                        <Track.DecreaseRepeatButton>
+                            <RepeatButton Command="ScrollBar.PageLeftCommand" Style="{StaticResource TbScrollTrackButton}"/>
+                        </Track.DecreaseRepeatButton>
+                        <Track.Thumb>
+                            <Thumb Style="{StaticResource TbScrollThumb}" MinWidth="40"/>
+                        </Track.Thumb>
+                        <Track.IncreaseRepeatButton>
+                            <RepeatButton Command="ScrollBar.PageRightCommand" Style="{StaticResource TbScrollTrackButton}"/>
+                        </Track.IncreaseRepeatButton>
+                    </Track>
+                </Border>
+            </ControlTemplate>
+
+            <Style TargetType="ScrollBar">
+                <Setter Property="SnapsToDevicePixels" Value="True"/>
+                <Setter Property="OverridesDefaultStyle" Value="True"/>
+                <Setter Property="Background" Value="#14FFFFFF"/>
+                <Style.Triggers>
+                    <Trigger Property="Orientation" Value="Horizontal">
+                        <Setter Property="Width" Value="Auto"/>
+                        <Setter Property="Height" Value="16"/>
+                        <Setter Property="Template" Value="{StaticResource TbScrollBarHorizontal}"/>
+                    </Trigger>
+                    <Trigger Property="Orientation" Value="Vertical">
+                        <Setter Property="Width" Value="16"/>
+                        <Setter Property="Height" Value="Auto"/>
+                        <Setter Property="Template" Value="{StaticResource TbScrollBarVertical}"/>
+                    </Trigger>
+                </Style.Triggers>
+            </Style>
             <conv:PercentToStarWidthConverter x:Key="PercentToStarWidthConverter"/>
             <conv:BytesPerSecToMBpsConverter x:Key="BytesPerSecToMBpsConverter"/>
             <conv:CpuHeatBrushConverter x:Key="CpuHeatBrushConverter"/>
@@ -25,6 +105,7 @@
         </ResourceDictionary>
     </Application.Resources>
 </Application>
+
 
 
 
