@@ -3,6 +3,7 @@
       xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
       Title="ProcessesPage"
       Loaded="Page_Loaded">
+    <Grid MaxHeight="{Binding ViewportHeight, RelativeSource={RelativeSource AncestorType=ScrollViewer}}">
     <Grid x:Name="RootGrid" Margin="12">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
@@ -199,7 +200,9 @@
             </DataGrid.ContextMenu>
         </DataGrid>
     </Grid>
+    </Grid>
 </Page>
+
 
 
 

@@ -25,6 +25,7 @@
                             IsPaneToggleVisible="True"
                             ScrollViewer.CanContentScroll="False"
                             ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                            ScrollViewer.VerticalScrollBarVisibility="Disabled"
                             Loaded="RootNav_Loaded">
             <ui:NavigationView.MenuItems>
                 <ui:NavigationViewItem Content="Processes" TargetPageType="{x:Type Pages:ProcessesPage}" Icon="{ui:SymbolIcon Apps24}"/>
@@ -41,6 +42,7 @@
         </ui:NavigationView>
     </Grid>
 </ui:FluentWindow>
+
 
 
 
