@@ -1,0 +1,151 @@
+﻿<Application x:Class="TaskBuddyWPF.App"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:local="clr-namespace:TaskBuddyWPF"
+             xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+             xmlns:conv="clr-namespace:TaskBuddyWPF.Converters"
+             StartupUri="MainWindow.xaml">
+    <Application.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ui:ThemesDictionary Theme="Dark" />
+                <ui:ControlsDictionary />
+            </ResourceDictionary.MergedDictionaries>
+            <conv:BytesToMbConverter x:Key="BytesToMbConverter"/>
+            <conv:IndentLevelToMarginConverter x:Key="IndentLevelToMarginConverter"/>
+            <conv:ExpandArrowConverter x:Key="ExpandArrowConverter"/>
+            <conv:BytesPerSecAutoScaleConverter x:Key="BytesPerSecAutoScaleConverter"/>
+
+            <Style x:Key="TbScrollTrackButton" TargetType="RepeatButton">
+                <Setter Property="Focusable" Value="False"/>
+                <Setter Property="IsTabStop" Value="False"/>
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="RepeatButton">
+                            <Border Background="Transparent"/>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>            <Style x:Key="TbScrollThumbV" TargetType="Thumb">
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="Thumb">
+                            <Border x:Name="ThumbBorder" Background="#77FFFFFF" CornerRadius="6" Margin="4,2"/>
+                            <ControlTemplate.Triggers>
+                                <DataTrigger Binding="{Binding IsMouseOver, RelativeSource={RelativeSource AncestorType=ScrollBar}}" Value="True">
+                                    <DataTrigger.EnterActions><BeginStoryboard><Storyboard>
+                                        <ThicknessAnimation Storyboard.TargetName="ThumbBorder" Storyboard.TargetProperty="Margin" To="2,2" Duration="0:0:0.12"/>
+                                        <ColorAnimation Storyboard.TargetName="ThumbBorder" Storyboard.TargetProperty="(Border.Background).(SolidColorBrush.Color)" To="#AAFFFFFF" Duration="0:0:0.12"/>
+                                    </Storyboard></BeginStoryboard></DataTrigger.EnterActions>
+                                    <DataTrigger.ExitActions><BeginStoryboard><Storyboard>
+                                        <ThicknessAnimation Storyboard.TargetName="ThumbBorder" Storyboard.TargetProperty="Margin" To="4,2" Duration="0:0:0.25"/>
+                                        <ColorAnimation Storyboard.TargetName="ThumbBorder" Storyboard.TargetProperty="(Border.Background).(SolidColorBrush.Color)" To="#77FFFFFF" Duration="0:0:0.25"/>
+                                    </Storyboard></BeginStoryboard></DataTrigger.ExitActions>
+                                </DataTrigger>
+                            </ControlTemplate.Triggers>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
+            <Style x:Key="TbScrollThumbH" TargetType="Thumb">
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="Thumb">
+                            <Border x:Name="ThumbBorder" Background="#77FFFFFF" CornerRadius="6" Margin="2,4"/>
+                            <ControlTemplate.Triggers>
+                                <DataTrigger Binding="{Binding IsMouseOver, RelativeSource={RelativeSource AncestorType=ScrollBar}}" Value="True">
+                                    <DataTrigger.EnterActions><BeginStoryboard><Storyboard>
+                                        <ThicknessAnimation Storyboard.TargetName="ThumbBorder" Storyboard.TargetProperty="Margin" To="2,2" Duration="0:0:0.12"/>
+                                        <ColorAnimation Storyboard.TargetName="ThumbBorder" Storyboard.TargetProperty="(Border.Background).(SolidColorBrush.Color)" To="#AAFFFFFF" Duration="0:0:0.12"/>
+                                    </Storyboard></BeginStoryboard></DataTrigger.EnterActions>
+                                    <DataTrigger.ExitActions><BeginStoryboard><Storyboard>
+                                        <ThicknessAnimation Storyboard.TargetName="ThumbBorder" Storyboard.TargetProperty="Margin" To="2,4" Duration="0:0:0.25"/>
+                                        <ColorAnimation Storyboard.TargetName="ThumbBorder" Storyboard.TargetProperty="(Border.Background).(SolidColorBrush.Color)" To="#77FFFFFF" Duration="0:0:0.25"/>
+                                    </Storyboard></BeginStoryboard></DataTrigger.ExitActions>
+                                </DataTrigger>
+                            </ControlTemplate.Triggers>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
+            <ControlTemplate x:Key="TbScrollBarV" TargetType="ScrollBar">
+                <Border x:Name="Root" CornerRadius="8">
+                    <Border.Background><SolidColorBrush x:Name="TrackBrush" Color="#00FFFFFF"/></Border.Background>
+                    <Track x:Name="PART_Track" IsDirectionReversed="True">
+                        <Track.DecreaseRepeatButton>
+                            <RepeatButton Command="ScrollBar.PageUpCommand" Style="{StaticResource TbScrollTrackButton}"/>
+                        </Track.DecreaseRepeatButton>
+                        <Track.Thumb>
+                            <Thumb Style="{StaticResource TbScrollThumbV}" MinHeight="40"/>
+                        </Track.Thumb>
+                        <Track.IncreaseRepeatButton>
+                            <RepeatButton Command="ScrollBar.PageDownCommand" Style="{StaticResource TbScrollTrackButton}"/>
+                        </Track.IncreaseRepeatButton>
+                    </Track>
+                </Border>
+                <ControlTemplate.Triggers>
+                    <Trigger Property="IsMouseOver" Value="True">
+                        <Trigger.EnterActions><BeginStoryboard><Storyboard>
+                            <ColorAnimation Storyboard.TargetName="TrackBrush" Storyboard.TargetProperty="Color" To="#14FFFFFF" Duration="0:0:0.12"/>
+                        </Storyboard></BeginStoryboard></Trigger.EnterActions>
+                        <Trigger.ExitActions><BeginStoryboard><Storyboard>
+                            <ColorAnimation Storyboard.TargetName="TrackBrush" Storyboard.TargetProperty="Color" To="#00FFFFFF" Duration="0:0:0.25"/>
+                        </Storyboard></BeginStoryboard></Trigger.ExitActions>
+                    </Trigger>
+                </ControlTemplate.Triggers>
+            </ControlTemplate>
+            <ControlTemplate x:Key="TbScrollBarH" TargetType="ScrollBar">
+                <Border x:Name="Root" CornerRadius="8">
+                    <Border.Background><SolidColorBrush x:Name="TrackBrush" Color="#00FFFFFF"/></Border.Background>
+                    <Track x:Name="PART_Track" IsDirectionReversed="False">
+                        <Track.DecreaseRepeatButton>
+                            <RepeatButton Command="ScrollBar.PageLeftCommand" Style="{StaticResource TbScrollTrackButton}"/>
+                        </Track.DecreaseRepeatButton>
+                        <Track.Thumb>
+                            <Thumb Style="{StaticResource TbScrollThumbH}" MinWidth="40"/>
+                        </Track.Thumb>
+                        <Track.IncreaseRepeatButton>
+                            <RepeatButton Command="ScrollBar.PageRightCommand" Style="{StaticResource TbScrollTrackButton}"/>
+                        </Track.IncreaseRepeatButton>
+                    </Track>
+                </Border>
+                <ControlTemplate.Triggers>
+                    <Trigger Property="IsMouseOver" Value="True">
+                        <Trigger.EnterActions><BeginStoryboard><Storyboard>
+                            <ColorAnimation Storyboard.TargetName="TrackBrush" Storyboard.TargetProperty="Color" To="#14FFFFFF" Duration="0:0:0.12"/>
+                        </Storyboard></BeginStoryboard></Trigger.EnterActions>
+                        <Trigger.ExitActions><BeginStoryboard><Storyboard>
+                            <ColorAnimation Storyboard.TargetName="TrackBrush" Storyboard.TargetProperty="Color" To="#00FFFFFF" Duration="0:0:0.25"/>
+                        </Storyboard></BeginStoryboard></Trigger.ExitActions>
+                    </Trigger>
+                </ControlTemplate.Triggers>
+            </ControlTemplate>
+            <Style TargetType="ScrollBar">
+                <Setter Property="SnapsToDevicePixels" Value="True"/>
+                <Setter Property="OverridesDefaultStyle" Value="True"/>
+                <Setter Property="Background" Value="Transparent"/>
+                <Style.Triggers>
+                    <Trigger Property="Orientation" Value="Horizontal">
+                        <Setter Property="Width" Value="Auto"/>
+                        <Setter Property="Height" Value="12"/>
+                        <Setter Property="Template" Value="{StaticResource TbScrollBarH}"/>
+                    </Trigger>
+                    <Trigger Property="Orientation" Value="Vertical">
+                        <Setter Property="Width" Value="12"/>
+                        <Setter Property="Height" Value="Auto"/>
+                        <Setter Property="Template" Value="{StaticResource TbScrollBarV}"/>
+                    </Trigger>
+                </Style.Triggers>
+            </Style>
+            <conv:PercentToStarWidthConverter x:Key="PercentToStarWidthConverter"/>
+            <conv:BytesPerSecToMBpsConverter x:Key="BytesPerSecToMBpsConverter"/>
+            <conv:CpuHeatBrushConverter x:Key="CpuHeatBrushConverter"/>
+            <conv:MemoryHeatBrushConverter x:Key="MemoryHeatBrushConverter"/>
+            <conv:DiskHeatBrushConverter x:Key="DiskHeatBrushConverter"/>
+            <conv:StartupImpactBrushConverter x:Key="StartupImpactBrushConverter"/>
+            <BooleanToVisibilityConverter x:Key="BoolToVisibilityConverter"/>
+        </ResourceDictionary>
+    </Application.Resources>
+</Application>
+
+

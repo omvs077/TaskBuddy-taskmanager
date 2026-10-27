@@ -1,12 +1,12 @@
-﻿build/
+build/
 bin/
 out/
 *.user
 *.suo
 config.ini
 .vs/
-build_log.txt
+[Bb]in/
+[Oo]bj/
+build_log*.txt
 imgui.ini
 vcpkg_installed/
-build_log_debug.txt
-build_log_release.txt

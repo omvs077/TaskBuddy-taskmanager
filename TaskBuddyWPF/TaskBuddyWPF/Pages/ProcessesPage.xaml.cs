@@ -1,0 +1,578 @@
+﻿using System;
+using System.ComponentModel;
+using System.Windows.Data;
+using System.Windows.Media;
+using System.Collections.Generic;
+using System.Linq;
+using System.Collections.ObjectModel;
+using System.Diagnostics;
+using System.Threading.Tasks;
+using System.Windows;
+using System.Windows.Controls;
+using System.Windows.Input;
+using System.Windows.Threading;
+using TaskBuddyWPF.Dialogs;
+using TaskBuddyWPF.Native;
+using TaskBuddyWPF.Models;
+using TaskBuddyWPF.Services;
+
+namespace TaskBuddyWPF.Pages
+{
+    public partial class ProcessesPage : Page
+    {
+        private readonly ProcessEnumerator _enumerator = new();
+        private readonly TaskBuddyWPF.Services.GpuEnumerator _gpuEnumerator = new();
+        private DateTime _lastNetworkPoll = DateTime.UtcNow;
+        private readonly ObservableCollection<ProcessInfo> _processes = new();
+        private readonly Dictionary<uint, ProcessInfo> _byPidLookup = new();
+        private readonly DispatcherTimer _timer;
+        private bool _isRefreshing;
+        private bool _isApplyingLoadedLayout;
+        private bool _pageInitialized;
+        private string _sortProperty = nameof(ProcessInfo.WorkingSetBytes);
+        private ListSortDirection _sortDirection = ListSortDirection.Descending;
+
+        public ProcessesPage()
+        {
+            InitializeComponent();
+            ProcessGrid.ItemsSource = _processes;
+            SizeChanged += ProcessesPage_SizeChanged;
+
+            var view = (ListCollectionView)CollectionViewSource.GetDefaultView(_processes);
+            view.Filter = FilterProcess;
+            view.GroupDescriptions.Add(new PropertyGroupDescription(nameof(ProcessInfo.Category)));
+            view.CustomSort = new ClusterComparer(_byPidLookup, _sortProperty, _sortDirection);
+            view.IsLiveSorting = true;
+            view.LiveSortingProperties.Add(nameof(ProcessInfo.WorkingSetBytes));
+            view.LiveSortingProperties.Add(nameof(ProcessInfo.CpuPercent));
+            view.LiveSortingProperties.Add(nameof(ProcessInfo.GroupPid));
+            view.LiveSortingProperties.Add(nameof(ProcessInfo.IndentLevel));
+            view.LiveSortingProperties.Add(nameof(ProcessInfo.Category));
+            view.IsLiveGrouping = true;
+            view.LiveGroupingProperties.Add(nameof(ProcessInfo.Category));
+
+            _timer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(TaskBuddyWPF.Services.AppSettings.RefreshIntervalSeconds) };
+            _timer.Tick += async (s, e) => await RefreshAsync();
+            _timer.Start();
+
+            LoadColumnLayout();
+            _pageInitialized = true;
+            _ = RefreshAsync();
+        }
+
+        private async Task RefreshAsync()
+        {
+            if (_isRefreshing) return;
+            _isRefreshing = true;
+
+            try
+            {
+                var snapshot = await Task.Run(() => _enumerator.GetSnapshot());
+
+                TaskBuddyWPF.Services.NetworkTraceMonitor.Instance.EnsureStarted();
+                var netDeltas = await Task.Run(() => TaskBuddyWPF.Services.NetworkTraceMonitor.Instance.GetAndResetDeltas());
+                var nowPoll = DateTime.UtcNow;
+                double netElapsed = (nowPoll - _lastNetworkPoll).TotalSeconds;
+                _lastNetworkPoll = nowPoll;
+
+                var gpuByPid = await Task.Run(() => _gpuEnumerator.GetPerProcessUsage());
+                foreach (var proc in snapshot)
+                {
+                    if (netElapsed > 0 && netDeltas.TryGetValue((int)proc.Pid, out var net))
+                        proc.NetworkBytesPerSec = (net.sent + net.received) / netElapsed;
+                    if (gpuByPid.TryGetValue(proc.Pid, out var gpu))
+                    {
+                        proc.GpuUsagePercent = gpu.utilizationPercent;
+                        proc.GpuEngineLabel = gpu.engineLabel;
+                    }
+                }
+
+                ApplyDiff(snapshot);
+            }
+            finally
+            {
+                _isRefreshing = false;
+            }
+        }
+
+        private void ApplyDiff(List<ProcessInfo> snapshot)
+        {
+            var incoming = new Dictionary<uint, ProcessInfo>();
+            foreach (var p in snapshot)
+                incoming[p.Pid] = p;
+
+            // HasChildren is recomputed fresh every tick (children can appear
+            // or disappear as an app opens/closes windows). IsExpanded is
+            // deliberately NOT touched here — it''s user-controlled UI state
+            // that must survive across refreshes, same principle as not
+            // resetting a user''s scroll position on every tick.
+            var groupsWithChildren = new HashSet<uint>();
+            foreach (var p in snapshot)
+                if (p.GroupPid != p.Pid) groupsWithChildren.Add(p.GroupPid);
+            foreach (var p in snapshot)
+                p.HasChildren = p.IndentLevel == 0 && groupsWithChildren.Contains(p.Pid);
+
+            for (int i = _processes.Count - 1; i >= 0; i--)
+            {
+                if (!incoming.ContainsKey(_processes[i].Pid))
+                {
+                    _byPidLookup.Remove(_processes[i].Pid);
+                    _processes.RemoveAt(i);
+                }
+            }
+
+            var existing = new Dictionary<uint, ProcessInfo>();
+            foreach (var p in _processes)
+                existing[p.Pid] = p;
+
+            foreach (var fresh in snapshot)
+            {
+                if (existing.TryGetValue(fresh.Pid, out var current))
+                {
+                    current.CpuPercent = fresh.CpuPercent;
+                    current.CpuTime100ns = fresh.CpuTime100ns;
+                    current.WorkingSetBytes = fresh.WorkingSetBytes;
+                    current.ImagePath = fresh.ImagePath;
+                    current.IsSuspended = fresh.IsSuspended;
+                    current.IsEfficiencyMode = fresh.IsEfficiencyMode;
+                    current.DiskBytesPerSec = fresh.DiskBytesPerSec;
+                    current.GpuUsagePercent = fresh.GpuUsagePercent;
+                    current.GpuEngineLabel = fresh.GpuEngineLabel;
+                    current.NetworkBytesPerSec = fresh.NetworkBytesPerSec;
+                    current.Icon = fresh.Icon;
+                    current.Category = fresh.Category;
+                    current.GroupPid = fresh.GroupPid;
+                    current.IndentLevel = fresh.IndentLevel;
+                    current.HasVisibleWindow = fresh.HasVisibleWindow;
+                    current.HasChildren = fresh.HasChildren;
+                }
+                else
+                {
+                    _processes.Add(fresh);
+                    _byPidLookup[fresh.Pid] = fresh;
+                }
+            }
+
+            // Set visibility after all adds/updates above, so every child''s
+            // leader lookup sees the leader''s fully-current IsExpanded state
+            // regardless of which order rows were processed in.
+            foreach (var p in _processes)
+            {
+                if (p.IndentLevel > 0 && _byPidLookup.TryGetValue(p.GroupPid, out var leader))
+                    p.IsVisibleInTree = leader.IsExpanded;
+                else
+                    p.IsVisibleInTree = true;
+            }
+        }
+
+        private void ProcessGrid_PreviewMouseRightButtonDown(object sender, MouseButtonEventArgs e)
+        {
+            var row = ItemsControl.ContainerFromElement(ProcessGrid, (DependencyObject)e.OriginalSource) as DataGridRow;
+            if (row != null)
+                row.IsSelected = true;
+        }
+
+        private void ContextMenu_Opened(object sender, RoutedEventArgs e)
+        {
+            if (ProcessGrid.SelectedItem is not ProcessInfo selected) return;
+
+            SuspendResumeMenuItem.Header = selected.IsSuspended ? "Resume" : "Suspend";
+            EfficiencyModeMenuItem.IsChecked = selected.IsEfficiencyMode;
+            GoToServiceMenuItem.IsEnabled = string.Equals(selected.ImageName, "svchost.exe", StringComparison.OrdinalIgnoreCase);
+
+            uint? currentPriority = _enumerator.GetProcessPriority(selected.Pid);
+            PriorityRealtimeItem.IsChecked = currentPriority == NativeMethods.REALTIME_PRIORITY_CLASS;
+            PriorityHighItem.IsChecked = currentPriority == NativeMethods.HIGH_PRIORITY_CLASS;
+            PriorityAboveNormalItem.IsChecked = currentPriority == NativeMethods.ABOVE_NORMAL_PRIORITY_CLASS;
+            PriorityNormalItem.IsChecked = currentPriority == NativeMethods.NORMAL_PRIORITY_CLASS;
+            PriorityBelowNormalItem.IsChecked = currentPriority == NativeMethods.BELOW_NORMAL_PRIORITY_CLASS;
+            PriorityIdleItem.IsChecked = currentPriority == NativeMethods.IDLE_PRIORITY_CLASS;
+        }
+
+        private async void SuspendResume_Click(object sender, RoutedEventArgs e)
+        {
+            if (ProcessGrid.SelectedItem is not ProcessInfo selected) return;
+            await ProcessActions.ToggleSuspend(_enumerator, selected.Pid, selected.ImageName, selected.IsSuspended, RefreshAsync);
+        }
+
+        private async void EfficiencyMode_Click(object sender, RoutedEventArgs e)
+        {
+            if (ProcessGrid.SelectedItem is not ProcessInfo selected) return;
+            await ProcessActions.ToggleEfficiencyMode(_enumerator, selected.Pid, selected.ImageName, selected.IsEfficiencyMode, RefreshAsync);
+        }
+
+        private async void EndTask_Click(object sender, RoutedEventArgs e)
+        {
+            if (ProcessGrid.SelectedItem is not ProcessInfo selected) return;
+            await ProcessActions.EndTask(_enumerator, selected.Pid, selected.ImageName, RefreshAsync);
+        }
+
+        private async void EndProcessTree_Click(object sender, RoutedEventArgs e)
+        {
+            if (ProcessGrid.SelectedItem is not ProcessInfo selected) return;
+            await ProcessActions.EndProcessTree(_enumerator, selected.Pid, selected.ImageName, RefreshAsync);
+        }
+
+        private async void CreateDumpFile_Click(object sender, RoutedEventArgs e)
+        {
+            if (ProcessGrid.SelectedItem is not ProcessInfo selected) return;
+            await ProcessActions.CreateDumpFile(_enumerator, selected.Pid, selected.ImageName);
+        }
+
+        private void RunNewTask_Click(object sender, RoutedEventArgs e)
+        {
+            var dialog = new RunTaskDialog { Owner = Window.GetWindow(this) };
+            if (dialog.ShowDialog() == true && !string.IsNullOrWhiteSpace(dialog.SelectedPath))
+            {
+                try
+                {
+                    Process.Start(new ProcessStartInfo(dialog.SelectedPath) { UseShellExecute = true });
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show($"Could not start '{dialog.SelectedPath}':\n{ex.Message}",
+                        "TaskBuddy", MessageBoxButton.OK, MessageBoxImage.Warning);
+                }
+            }
+        }
+
+        private void OpenFileLocation_Click(object sender, RoutedEventArgs e)
+        {
+            if (ProcessGrid.SelectedItem is not ProcessInfo selected) return;
+            ProcessActions.OpenFileLocation(selected.ImagePath);
+        }
+
+        private void CopyPid_Click(object sender, RoutedEventArgs e)
+        {
+            if (ProcessGrid.SelectedItem is not ProcessInfo selected) return;
+            ProcessActions.CopyPid(selected.Pid);
+        }
+
+        private async void SetPriority_Click(object sender, RoutedEventArgs e)
+        {
+            if (ProcessGrid.SelectedItem is not ProcessInfo selected) return;
+            if (sender is not MenuItem { Tag: string tag }) return;
+
+            uint priorityClass = tag switch
+            {
+                "Realtime" => NativeMethods.REALTIME_PRIORITY_CLASS,
+                "High" => NativeMethods.HIGH_PRIORITY_CLASS,
+                "AboveNormal" => NativeMethods.ABOVE_NORMAL_PRIORITY_CLASS,
+                "BelowNormal" => NativeMethods.BELOW_NORMAL_PRIORITY_CLASS,
+                "Idle" => NativeMethods.IDLE_PRIORITY_CLASS,
+                _ => NativeMethods.NORMAL_PRIORITY_CLASS
+            };
+
+            await ProcessActions.SetPriority(_enumerator, selected.Pid, selected.ImageName, priorityClass, RefreshAsync);
+        }
+
+        private async void SetAffinity_Click(object sender, RoutedEventArgs e)
+        {
+            if (ProcessGrid.SelectedItem is not ProcessInfo selected) return;
+            await ProcessActions.SetAffinity(_enumerator, selected.Pid, selected.ImageName, Window.GetWindow(this));
+        }
+
+        private void SearchOnline_Click(object sender, RoutedEventArgs e)
+        {
+            if (ProcessGrid.SelectedItem is not ProcessInfo selected) return;
+            ProcessActions.SearchOnline(selected.ImageName);
+        }
+
+        private void Properties_Click(object sender, RoutedEventArgs e)
+        {
+            if (ProcessGrid.SelectedItem is not ProcessInfo selected) return;
+            ProcessActions.Properties(selected.ImagePath);
+        }
+
+        private void GoToDetails_Click(object sender, RoutedEventArgs e)
+        {
+            if (ProcessGrid.SelectedItem is not ProcessInfo selected) return;
+            ProcessActions.GoToDetails(selected.Pid, Window.GetWindow(this));
+        }
+
+        private void GoToService_Click(object sender, RoutedEventArgs e)
+        {
+            if (ProcessGrid.SelectedItem is not ProcessInfo selected) return;
+            ProcessActions.GoToService(selected.Pid, Window.GetWindow(this));
+        }
+
+        private bool FilterProcess(object obj)
+        {
+            if (obj is not ProcessInfo p)
+                return false;
+
+            if (string.IsNullOrWhiteSpace(SearchBox.Text))
+                return true;
+
+            string query = SearchBox.Text.Trim();
+            return p.ImageName.Contains(query, StringComparison.OrdinalIgnoreCase)
+                || p.Pid.ToString().Contains(query, StringComparison.OrdinalIgnoreCase);
+        }
+
+        private void ExpandArrow_Click(object sender, MouseButtonEventArgs e)
+        {
+            if (sender is FrameworkElement fe && fe.DataContext is ProcessInfo p)
+            {
+                p.IsExpanded = !p.IsExpanded;
+                foreach (var child in _processes)
+                    if (child.IndentLevel > 0 && child.GroupPid == p.Pid)
+                        child.IsVisibleInTree = p.IsExpanded;
+            }
+            e.Handled = true; // stop the DataGrid row-select behind it from also firing
+        }
+
+        private void SearchBox_TextChanged(object sender, TextChangedEventArgs e)
+        {
+            SearchPlaceholder.Visibility = string.IsNullOrEmpty(SearchBox.Text) ? Visibility.Visible : Visibility.Collapsed;
+            CollectionViewSource.GetDefaultView(_processes).Refresh();
+        }
+
+        // --- Column visibility (Milestone 6.1) ---
+
+        private void ColumnsButton_Click(object sender, RoutedEventArgs e)
+        {
+            ColumnsPopup.IsOpen = !ColumnsPopup.IsOpen;
+        }
+
+        private void ColumnCheck_Changed(object sender, RoutedEventArgs e)
+        {
+            if (!_pageInitialized || _isApplyingLoadedLayout) return; // guard against XAML's IsChecked="True" firing this during InitializeComponent, before named columns are assigned, and against re-saving while we're the ones setting checkbox state on load
+
+            PidColumn.Visibility = ColPidCheck.IsChecked == true ? Visibility.Visible : Visibility.Collapsed;
+            StatusColumn.Visibility = ColStatusCheck.IsChecked == true ? Visibility.Visible : Visibility.Collapsed;
+            CpuColumn.Visibility = ColCpuCheck.IsChecked == true ? Visibility.Visible : Visibility.Collapsed;
+            MemoryColumn.Visibility = ColMemoryCheck.IsChecked == true ? Visibility.Visible : Visibility.Collapsed;
+            NetworkColumn.Visibility = ColNetworkCheck.IsChecked == true ? Visibility.Visible : Visibility.Collapsed;
+            GpuColumn.Visibility = ColGpuCheck.IsChecked == true ? Visibility.Visible : Visibility.Collapsed;
+            GpuEngineColumn.Visibility = ColGpuEngineCheck.IsChecked == true ? Visibility.Visible : Visibility.Collapsed;
+            DiskColumn.Visibility = ColDiskCheck.IsChecked == true ? Visibility.Visible : Visibility.Collapsed;
+            PublisherColumn.Visibility = ColPublisherCheck.IsChecked == true ? Visibility.Visible : Visibility.Collapsed;
+            ProcessNameColumn.Visibility = ColProcessNameCheck.IsChecked == true ? Visibility.Visible : Visibility.Collapsed;
+            CommandLineColumn.Visibility = ColCommandLineCheck.IsChecked == true ? Visibility.Visible : Visibility.Collapsed;
+
+            SaveColumnLayout();
+        }
+
+        private void LoadColumnLayout()
+        {
+            var saved = LayoutSettingsHelper.LoadColumnVisibility();
+            if (saved.Count == 0) return; // no saved layout yet — keep all-visible defaults
+
+            _isApplyingLoadedLayout = true;
+            try
+            {
+                if (saved.TryGetValue("PID", out var pid)) { ColPidCheck.IsChecked = pid; PidColumn.Visibility = pid ? Visibility.Visible : Visibility.Collapsed; }
+                if (saved.TryGetValue("Status", out var status)) { ColStatusCheck.IsChecked = status; StatusColumn.Visibility = status ? Visibility.Visible : Visibility.Collapsed; }
+                if (saved.TryGetValue("CPU", out var cpu)) { ColCpuCheck.IsChecked = cpu; CpuColumn.Visibility = cpu ? Visibility.Visible : Visibility.Collapsed; }
+                if (saved.TryGetValue("Memory", out var mem)) { ColMemoryCheck.IsChecked = mem; MemoryColumn.Visibility = mem ? Visibility.Visible : Visibility.Collapsed; }
+                if (saved.TryGetValue("Network", out var network)) { ColNetworkCheck.IsChecked = network; NetworkColumn.Visibility = network ? Visibility.Visible : Visibility.Collapsed; }
+                if (saved.TryGetValue("Gpu", out var gpu)) { ColGpuCheck.IsChecked = gpu; GpuColumn.Visibility = gpu ? Visibility.Visible : Visibility.Collapsed; }
+                if (saved.TryGetValue("GpuEngine", out var gpuEngine)) { ColGpuEngineCheck.IsChecked = gpuEngine; GpuEngineColumn.Visibility = gpuEngine ? Visibility.Visible : Visibility.Collapsed; }
+                if (saved.TryGetValue("Disk", out var disk)) { ColDiskCheck.IsChecked = disk; DiskColumn.Visibility = disk ? Visibility.Visible : Visibility.Collapsed; }
+                if (saved.TryGetValue("Publisher", out var pub)) { ColPublisherCheck.IsChecked = pub; PublisherColumn.Visibility = pub ? Visibility.Visible : Visibility.Collapsed; }
+                if (saved.TryGetValue("ProcessName", out var pname)) { ColProcessNameCheck.IsChecked = pname; ProcessNameColumn.Visibility = pname ? Visibility.Visible : Visibility.Collapsed; }
+                if (saved.TryGetValue("CommandLine", out var cmdline)) { ColCommandLineCheck.IsChecked = cmdline; CommandLineColumn.Visibility = cmdline ? Visibility.Visible : Visibility.Collapsed; }
+            }
+            finally
+            {
+                _isApplyingLoadedLayout = false;
+            }
+        }
+
+        private void SaveColumnLayout()
+        {
+            LayoutSettingsHelper.SaveColumnVisibility(new Dictionary<string, bool>
+            {
+                ["PID"] = ColPidCheck.IsChecked == true,
+                ["Status"] = ColStatusCheck.IsChecked == true,
+                ["CPU"] = ColCpuCheck.IsChecked == true,
+                ["Memory"] = ColMemoryCheck.IsChecked == true,
+                ["Disk"] = ColDiskCheck.IsChecked == true,
+                ["Publisher"] = ColPublisherCheck.IsChecked == true,
+                ["ProcessName"] = ColProcessNameCheck.IsChecked == true,
+                ["CommandLine"] = ColCommandLineCheck.IsChecked == true,
+                ["Network"] = ColNetworkCheck.IsChecked == true,
+                ["Gpu"] = ColGpuCheck.IsChecked == true,
+                ["GpuEngine"] = ColGpuEngineCheck.IsChecked == true
+            });
+        }
+
+        // WPF-UI's NavigationView wraps its Frame content in its own ScrollViewer that
+        // ignores the Page's row layout, letting the whole page scroll instead of just
+        // the DataGrid. Fix: pin RootGrid's height to that ScrollViewer's actual viewport
+        // size, so the ancestor ScrollViewer never has anything to scroll, and the
+        // DataGrid's own internal scrolling (with fixed headers) takes over naturally.
+        private void Page_Loaded(object sender, RoutedEventArgs e)
+        {
+            _enumerator.IncludeIdleProcess = TaskBuddyWPF.Services.AppSettings.ShowIdleProcess;
+            UpdatePinnedHeight();
+        }
+
+        private void ProcessesPage_SizeChanged(object sender, SizeChangedEventArgs e)
+        {
+            UpdatePinnedHeight();
+        }
+
+        private void UpdatePinnedHeight()
+        {
+            var scrollViewer = FindAncestorScrollViewer(this);
+            if (scrollViewer == null) return;
+
+            scrollViewer.VerticalScrollBarVisibility = ScrollBarVisibility.Hidden;
+            if (scrollViewer != null && scrollViewer.ActualHeight > 0)
+                RootGrid.Height = Math.Max(0, scrollViewer.ActualHeight - RootGrid.Margin.Top - RootGrid.Margin.Bottom);
+        }
+
+        private static ScrollViewer? FindAncestorScrollViewer(DependencyObject child)
+        {
+            DependencyObject? parent = VisualTreeHelper.GetParent(child);
+            while (parent != null)
+            {
+                if (parent is ScrollViewer sv)
+                    return sv;
+                parent = VisualTreeHelper.GetParent(parent);
+            }
+            return null;
+        }
+
+        private void ProcessGrid_Sorting(object sender, DataGridSortingEventArgs e)
+        {
+            e.Handled = true;
+            string property = e.Column.SortMemberPath;
+            if (string.IsNullOrEmpty(property)) return;
+
+            _sortDirection = (_sortProperty == property && _sortDirection == ListSortDirection.Ascending)
+                ? ListSortDirection.Descending
+                : (_sortProperty == property ? ListSortDirection.Ascending : ListSortDirection.Descending);
+            _sortProperty = property;
+
+            foreach (var col in ProcessGrid.Columns) col.SortDirection = null;
+            e.Column.SortDirection = _sortDirection;
+
+            var view = (ListCollectionView)CollectionViewSource.GetDefaultView(_processes);
+            view.CustomSort = new ClusterComparer(_byPidLookup, _sortProperty, _sortDirection);
+        }
+
+        // Sorts by Category (App/Background/Windows process) first, then keeps each
+        // app's clustered children adjacent to it (ordered by the cluster's own
+        // resource usage under the current sort column), then parent-before-children,
+        // then the chosen column within each cluster. Needed because ListCollectionView
+        // ignores SortDescriptions once CustomSort is set, so this comparer must also
+        // reproduce the plain column-sort behavior for ungrouped/uncustered rows.
+        // Takes the page's PID lookup by reference (not a snapshot copy) so it
+        // always sees current membership as ApplyDiff adds/removes processes,
+        // without needing to be reconstructed every refresh tick.
+        private class ClusterComparer : System.Collections.IComparer
+        {
+            private readonly Dictionary<uint, ProcessInfo> _byPid;
+            private readonly string _property;
+            private readonly ListSortDirection _direction;
+
+            public ClusterComparer(Dictionary<uint, ProcessInfo> byPid, string property, ListSortDirection direction)
+            {
+                _byPid = byPid;
+                _property = property;
+                _direction = direction;
+            }
+
+            private static int CategoryOrder(string category) => category switch
+            {
+                "App" => 0,
+                "Background process" => 1,
+                "Windows process" => 2,
+                _ => 3
+            };
+
+            // Plain switch instead of reflection: this runs O(n log n) times per
+            // sort, and reflection's PropertyInfo lookup/Invoke cost compounds
+            // noticeably at that call volume.
+            private IComparable? GetValue(ProcessInfo p) => _property switch
+            {
+                nameof(ProcessInfo.Pid) => p.Pid,
+                nameof(ProcessInfo.ImageName) => p.ImageName,
+                nameof(ProcessInfo.CpuPercent) => p.CpuPercent,
+                nameof(ProcessInfo.WorkingSetBytes) => p.WorkingSetBytes,
+                nameof(ProcessInfo.DiskBytesPerSec) => p.DiskBytesPerSec,
+                nameof(ProcessInfo.StatusText) => p.StatusText,
+                _ => null
+            };
+
+            public int Compare(object? ox, object? oy)
+            {
+                if (ox is not ProcessInfo a || oy is not ProcessInfo b) return 0;
+
+                int catCompare = CategoryOrder(a.Category).CompareTo(CategoryOrder(b.Category));
+                if (catCompare != 0) return catCompare;
+
+                var leaderA = _byPid.TryGetValue(a.GroupPid, out var la) ? la : a;
+                var leaderB = _byPid.TryGetValue(b.GroupPid, out var lb) ? lb : b;
+
+                if (leaderA.Pid != leaderB.Pid)
+                {
+                    var va = GetValue(leaderA);
+                    var vb = GetValue(leaderB);
+                    int result = va != null && vb != null ? va.CompareTo(vb) : 0;
+                    return _direction == ListSortDirection.Descending ? -result : result;
+                }
+
+                if (a.IndentLevel != b.IndentLevel)
+                    return a.IndentLevel.CompareTo(b.IndentLevel);
+
+                var vx = GetValue(a);
+                var vy = GetValue(b);
+                int r = vx != null && vy != null ? vx.CompareTo(vy) : 0;
+                return _direction == ListSortDirection.Descending ? -r : r;
+            }
+        }
+    }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
