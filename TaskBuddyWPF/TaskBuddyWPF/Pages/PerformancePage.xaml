@@ -4,7 +4,7 @@
       xmlns:controls="clr-namespace:TaskBuddyWPF.Controls"
       Title="PerformancePage"
       Loaded="Page_Loaded">
-    <Grid MaxHeight="{Binding ViewportHeight, RelativeSource={RelativeSource AncestorType=ScrollViewer}, Converter={StaticResource SubtractConverter}, ConverterParameter=30}">
+    <Grid VerticalAlignment="Top" Height="{Binding ViewportHeight, RelativeSource={RelativeSource AncestorType=ScrollViewer}}">
     <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled">
     <Grid x:Name="RootGrid" Margin="16" MinWidth="720">
         <Grid.ColumnDefinitions>
@@ -269,6 +269,7 @@
     </ScrollViewer>
     </Grid>
 </Page>
+
 
 
 

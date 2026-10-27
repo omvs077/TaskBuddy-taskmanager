@@ -3,6 +3,7 @@
       xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
       xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
       Loaded="Page_Loaded" x:Name="RootPage">
+    <Grid VerticalAlignment="Top" Height="{Binding ViewportHeight, RelativeSource={RelativeSource AncestorType=ScrollViewer}}">
     <Grid x:Name="RootGrid" Margin="16">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
@@ -14,7 +15,7 @@
                         TextChanged="SearchBox_TextChanged"/>
         </StackPanel>
 
-        <DataGrid Grid.Row="1" x:Name="DetailsGrid" AutoGenerateColumns="False"
+        <DataGrid Grid.Row="1" x:Name="DetailsGrid" ScrollViewer.HorizontalScrollBarVisibility="Auto" ScrollViewer.VerticalScrollBarVisibility="Auto" AutoGenerateColumns="False"
                   IsReadOnly="True" CanUserAddRows="False"
                   PreviewMouseRightButtonDown="DetailsGrid_PreviewMouseRightButtonDown">
             <DataGrid.Columns>
@@ -64,5 +65,8 @@
             </DataGrid.ContextMenu>
         </DataGrid>
     </Grid>
+    </Grid>
 </Page>
+
+
 

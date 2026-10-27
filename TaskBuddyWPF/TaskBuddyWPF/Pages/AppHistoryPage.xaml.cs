@@ -97,7 +97,7 @@ namespace TaskBuddyWPF.Pages
             var sv = FindAncestorScrollViewer(this);
             if (sv == null) return;
             sv.VerticalScrollBarVisibility = ScrollBarVisibility.Hidden;
-            RootGrid.Height = sv.ActualHeight;
+            RootGrid.Height = Math.Max(0, sv.ActualHeight - RootGrid.Margin.Top - RootGrid.Margin.Bottom);
         }
 
         private static ScrollViewer? FindAncestorScrollViewer(DependencyObject d)
@@ -108,3 +108,4 @@ namespace TaskBuddyWPF.Pages
         }
     }
 }
+
